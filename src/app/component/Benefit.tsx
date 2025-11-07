@@ -3,7 +3,7 @@ import React from 'react'
 export default function Benefit() {
   return (
    <section className="py-16 bg-white">
-  <div className="lg:container lg:mx-auto px-6">
+  <div className="lg:w-5/6 lg:mx-auto px-6">
     <div className="bg-gray-100 rounded-2xl p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-8 font-['Montserrat']">
       
       {/* Left: Heading */}

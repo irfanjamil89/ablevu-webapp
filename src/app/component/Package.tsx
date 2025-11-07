@@ -5,7 +5,7 @@ export default function Package() {
     <section className="bg-white py-20">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
     {/* Heading */}
-    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-14 pb-20 lg:text-[48px] font-['Montserrat']">
+    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-30 pb-20 lg:text-[48px] font-['Montserrat']">
       List Your Business For More Customer Reach
     </h2>
 
@@ -15,7 +15,7 @@ export default function Package() {
       {/* Monthly Plan */}
       <div className="relative w-full lg:max-w-[300px] lg:h-[450px] md:h-[400px] h-[400px] sm:max-w-[320px] md:max-w-[280px] max-w-[280px] mx-auto border border-[#00AEEF]/30 rounded-[40px] overflow-visible shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
         {/* Tab */}
-        <div className="absolute w-[90%] -top-5 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 text-sm px-6 py-3 rounded-full font-medium shadow-md font-['Helvetica'] lg:text-[18px]">
+        <div className="absolute w-[240px] -top-6 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700  px-6 py-3 rounded-full font-medium shadow-md font-['Helvetica'] lg:text-[14px]">
           Monthly
         </div>
 
@@ -47,8 +47,8 @@ export default function Package() {
       </div>
 
       {/* Yearly Plan (Highlighted) */}
-      <div className="relative w-full lg:max-w-[300px] lg:h-[430px] md:h-[400px] h-[400px] sm:max-w-[320px] max-w-[300px] mx-auto bg-[#00AEEF] text-white rounded-[40px] shadow-lg flex flex-col justify-between border border-transparent">
-        <div className="absolute w-[90%] -top-5 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 text-sm px-6 py-3 rounded-full font-medium shadow-md font-['Helvetica'] lg:text-[18px]">
+      <div className="relative -top-20 w-full lg:max-w-[300px] lg:h-[430px] md:h-[400px] h-[400px] sm:max-w-[320px] max-w-[300px] mx-auto bg-[#00AEEF] text-white rounded-[40px] shadow-lg flex flex-col justify-between border border-transparent">
+        <div className="absolute w-[240px] -top-6 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700  px-6 py-3 rounded-full font-medium shadow-md font-['Helvetica'] lg:text-[14px]">
           Yearly
         </div>
 
@@ -82,7 +82,7 @@ export default function Package() {
 
       {/* Custom Plan */}
       <div className="relative w-full lg:max-w-[300px] lg:h-[450px] md:h-[500px] sm:h-[500px] h-[450px] sm:max-w-[320px] md:max-w-[280px] max-w-[280px] mx-auto border border-[#00AEEF]/30 rounded-[40px] shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
-        <div className="absolute w-[90%] -top-5 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 text-sm px-6 py-3 rounded-full font-medium shadow-md font-['Helvetica'] lg:text-[18px]">
+        <div className="absolute w-[240px] -top-6 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700  px-6 py-3 rounded-full font-medium shadow-md font-['Helvetica'] lg:text-[14px]">
           Custom
         </div>
 
@@ -105,10 +105,10 @@ export default function Package() {
                 </li>
               ))}
             </ul>
-            <p className="text-xs sm:text-sm text-gray-600 text-left leading-relaxed text-[12px]">
+            <p className="  text-gray-500 text-left leading-relaxed text-[12px]">
               For Convention & Visitors Bureau, Entertainment Parks and Destination Marketing Organizations and more.
             </p>
-            <p className="text-xs sm:text-sm text-gray-600 text-left mt-2 leading-relaxed text-[12px]">
+            <p className="  text-gray-500 text-left mt-2 leading-relaxed text-[12px]">
               Contact us to discuss customized pricing and features for organizations managing multiple locations.
             </p>
           </div>

@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function Mapsections() {
   return (
-    <section className="max-w-7xl lg:container lg:mx-auto px-4 py-12 mt-10">
+    <section className="  w-5/6 lg:mx-auto px-4 py-12 mt-10">
       <h1 className="font-['Helvetica'] md:text-4xl lg:text-[48px] text-4xl font-bold mb-8">
         Interactive Map
       </h1>

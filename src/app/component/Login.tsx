@@ -3,10 +3,11 @@ import React, { useState } from "react";
 import axios from "axios";
 
 interface LoginProps {
-  onClose?: () => void;
+  setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Login: React.FC<LoginProps> = ({ onClose }) => {
+const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal }) => {
   // Local state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +21,6 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
     setLoading(true);
 
     try {
-      // ✅ Call your own Next.js API route instead of direct backend
       const response = await axios.post("http://51.75.68.69:3006/auth/login", {
         username: email,
         password: password,
@@ -28,17 +28,19 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
 
       if (response.data?.success) {
         alert("✅ Login successful!");
-        onClose?.(); // Close modal
+        setOpenLoginModal(false); // Close modal
       } else {
         setError(response.data?.message || "Invalid credentials.");
       }
-    } catch (err) {
-      console.error("❌ Login failed:", err);
+    } catch (err: any) {
+      console.error("❌ Login failed:", err?.response?.data || err);
       setError("Invalid credentials or server error.");
     } finally {
       setLoading(false);
     }
   };
+
+  
 
   return (
     <div className="fixed inset-0  flex items-center justify-center z-50 top-100 right-120">
@@ -46,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
       <div className="bg-white rounded-2xl shadow-2xl w-11/12 sm:w-96 p-6 relative animate-fadeIn">
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={()=>setOpenLoginModal(false)}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold"
         >
           ×
@@ -127,9 +129,12 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
         {/* Footer */}
         <p className="text-center text-sm text-gray-700 mt-4">
           New to AbleVu?{" "}
-          <a href="#" className="text-[#0519CE] underline font-bold">
+          <button className="text-[#0519CE] underline font-bold" onClick={()=>{
+            setOpenLoginModal(false)
+            setOpenSignupModal(true) 
+          }}>
             Sign Up
-          </a>
+          </button>
         </p>
       </div>
     </div>

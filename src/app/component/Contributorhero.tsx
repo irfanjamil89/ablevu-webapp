@@ -10,15 +10,15 @@ export default function Contributorhero() {
   }}
 >
   {/* Content container */}
-  <div className="flex lg:justify-start md:justify-center justify-center relative z-10 w-full lg:container lg:mx-auto px-6 md:px-12 lg:px-6 text-center md:text-left">
+  <div className="flex lg:justify-start md:justify-center justify-center relative z-10 w-full lg:w-5/6 lg:mx-auto px-6 md:px-12 lg:px-6 text-center md:text-left">
     <div className="mx-auto max-w-[830px] text-black md:mx-0">
-      <h1 className="font-['Righteous'] text-5xl sm:text-5xl md:text-6xl md:text-center lg:text-[64px] lg:md:text-start font-normal mb-[20px]">
+      <h1 className="font-['Montserrat'] font-semibold text-5xl sm:text-5xl md:text-6xl md:text-center lg:text-[64px] lg:md:text-start mb-[20px]">
         Become an
       </h1>
-      <h1 className="font-['Righteous'] text-5xl sm:text-5xl md:text-6xl md:text-center lg:text-[64px] lg:md:text-start font-normal mt-[20px]">
+      <h1 className="font-['Montserrat'] font-semibold text-5xl sm:text-5xl md:text-6xl md:text-center lg:text-[64px] lg:md:text-start mt-[20px]">
         Accessibility Contributor
       </h1>
-      <p className="font-['Montserrat'] lg:text-[18px] lg:leading-[1.5] lg:text-start font-medium md:text-3xl md:text-center sm:text-3xl sm:text-lg text-2xl my-[40px]">
+      <p className="font-['Montserrat'] lg:text-[18px] lg:leading-[1.5] lg:text-start font-medium md:text-3xl md:text-center sm:text-lg text-2xl my-[40px]">
         Help people experience better accessibility by sharing local knowledge.
       </p>
       <button className="flex font-['Montserrat'] lg:mx-0 md:mx-auto sm:mx-auto mx-auto bg-[rgba(255,255,255,0.01)] border border-black cursor-pointer text-black font-semibold py-3 px-6 sm:px-8 rounded-lg transition duration-300 hover:border-white hover:bg-white">

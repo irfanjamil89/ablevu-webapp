@@ -4,7 +4,7 @@ export default function Partner() {
   return (
     <section className="bg-white py-16">
   {/* Partner Logos */}
-  <div className="lg:container lg:mx-auto bg-gray-100 rounded-2xl flex flex-wrap justify-center lg:justify-between items-center gap-10 py-10 px-10">
+  <div className="lg:w-5/6 lg:mx-auto bg-gray-100 rounded-2xl flex flex-wrap justify-center lg:justify-between items-center gap-10 py-10 px-10">
     <img
       src="/assets/images/brand-1-Photoroom.png"
       alt="Logo 1"

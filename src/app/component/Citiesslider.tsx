@@ -2,7 +2,7 @@ import React from 'react'
 
 export default function Citiesslider() {
   return (
-    <section className="mx-0 relative z-100 md:mx-auto lg:container mt-0 md:-mt-28 flex w-full mt-10 md:w-10/12 lg:w-10/12 flex-col items-center justify-between gap-0 rounded-[25px] bg-white/70 p-6 shadow-2xl backdrop-blur-md md:p-10 lg:flex-row">
+    <section className="mx-auto relative z-100 w-5/6  md:-mt-28 flex  mt-10 md:w-10/12 lg:w-10/12 flex-col items-center justify-between gap-0 rounded-[25px] bg-white/70 p-6 shadow-2xl backdrop-blur-md md:p-10 lg:flex-row">
       {/* LEFT SIDE */}
       <div className="flex-1 text-center lg:text-left">
         <h2 className="font-['Helvetica'] mb-5 font-bold text-gray-900 md:text-4xl lg:text-[48px] text-4xl">

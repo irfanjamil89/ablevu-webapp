@@ -3,15 +3,16 @@ import React, { useState } from "react";
 import axios from "axios";
 
 interface SignupProps {
-  onClose?: () => void;
+  setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Signup: React.FC<SignupProps> = ({ onClose }) => {
+const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    emailAddress: "",
+    email: "", // Changed from emailAddress to email
     password: "",
     userType: "",
   });
@@ -36,30 +37,43 @@ const Signup: React.FC<SignupProps> = ({ onClose }) => {
     setError("");
     setSuccess("");
 
+    // Ensure the correct payload format
+    const payload = {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email, // Matching field name
+      password: form.password,
+      userType: form.userType,
+    };
+
     try {
-      const response = await axios.post("http://51.75.68.69:3006/users/signup", form);
+      const response = await axios.post(
+        "http://51.75.68.69:3006/users/signup",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
 
       if (response.data?.success) {
         setSuccess("Account created successfully!");
         alert("🎉 Signup successful!");
-        onClose?.();
+        setOpenSignupModal(false);
       } else {
         setError(response.data?.message || "Signup failed. Please try again.");
       }
-    } catch (err) {
-      console.error("❌ Signup error:", err);
-      setError("Server error. Please try again.");
+    } catch (err: any) {
+      console.error("❌ Signup error:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Server error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/ flex items-center justify-center z-50 top-100 right-120">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50  top-90 right-100">
       <div className="relative bg-white rounded-2xl shadow-2xl w-11/12 sm:w-[50%] md:w-[40%] lg:w-[900px] p-8 animate-fadeIn">
         {/* Close Button */}
         <button
-          onClick={onClose}
+          onClick={() =>setOpenSignupModal(false)}
           className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold"
         >
           ×
@@ -121,9 +135,11 @@ const Signup: React.FC<SignupProps> = ({ onClose }) => {
 
             <p className="mt-4 text-center text-sm text-gray-700">
               Already have an account?{" "}
-              <a href="#" className="font-bold text-[#0519CE] underline">
-                Login
-              </a>
+              <button className="font-bold text-[#0519CE] underline" onClick={()=>{
+                  setOpenSignupModal(false) 
+                  setOpenLoginModal(true)}}>
+                  Login
+                </button>
             </p>
           </>
         ) : (
@@ -187,15 +203,15 @@ const Signup: React.FC<SignupProps> = ({ onClose }) => {
               <div className="relative">
                 <input
                   type="email"
-                  id="emailAddress"
-                  value={form.emailAddress}
+                  id="email"
+                  value={form.email}
                   onChange={handleChange}
                   required
                   placeholder=" "
                   className="peer block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] focus:ring-0"
                 />
                 <label
-                  htmlFor="emailAddress"
+                  htmlFor="email"
                   className="absolute start-1 top-2 text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:scale-75"
                 >
                   Email Address
@@ -221,6 +237,28 @@ const Signup: React.FC<SignupProps> = ({ onClose }) => {
                 </label>
               </div>
 
+              <p className="text-[12px] text-[rgba(50,53,57,1)]-2 mb-1"> Password must:</p>
+              <ul className="list-disc pl-5 text-[12px]  text-[#32353991]">
+                <li>Be a minimum of 12 characters</li>
+                <li>Include at least one lowercase letter (a-z)</li>
+                <li>Include at least one uppercase letter (A-Z)</li>
+                <li>Include at least one number (0-9)</li>
+                <li>Include at least one special character (!@#$%)</li>
+              </ul>
+            
+
+          <div className="flex items-start gap-2 text-sm">
+            <input type="checkbox" id="agree"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#0519CE] focus:ring-[#0519CE]" />
+            <label htmlFor="agree" className="text-gray-700 text-[13px] ">
+              By creating an account, I agree to our
+              <a href="#" className="font-normal text-[#0519CE] underline"> Terms &
+                Conditions </a>
+               and
+              <a href="#" className="font-normal text-[#0519CE] underline"> Privacy
+                Policy</a>.
+            </label>
+          </div>
               {/* Error and Success Messages */}
               {error && <p className="text-red-500 text-sm">{error}</p>}
               {success && <p className="text-green-600 text-sm">{success}</p>}
@@ -236,9 +274,11 @@ const Signup: React.FC<SignupProps> = ({ onClose }) => {
 
               <p className="mt-1 text-center text-sm text-gray-700">
                 Already have an account?{" "}
-                <a href="#" className="font-bold text-[#0519CE] underline">
+                <button className="font-bold text-[#0519CE] underline" onClick={()=>{
+                  setOpenSignupModal(false) 
+                  setOpenLoginModal(true)}}>
                   Login
-                </a>
+                </button>
               </p>
             </form>
 

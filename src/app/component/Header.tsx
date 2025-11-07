@@ -5,11 +5,9 @@ export default function Header() {
 
 
   return (
-    <header className="absolute z-[1000] mt-20 w-full lg:rounded-full sm:mt-10">
-      <div
-        className="bg-white px-6 lg:container lg:mx-auto lg:rounded-full lg:px-6 lg:py-4 md:px-12 md:bg-transparent">
-        <div
-          className="flex w-full items-center justify-between rounded-full bg-white md:px-10 lg:px-0 py-2">
+    <header className="absolute z-[1000] mt-20 w-full lg:rounded-full sm:mt-10 ">
+      <div className="bg-white px-6 w-5/6 lg:mx-auto lg:rounded-full lg:px-6 lg:py-4 md:px-12 md:bg-transparent">
+        <div className="flex w-full items-center justify-between rounded-full bg-white md:px-10 lg:px-0 py-2">
           <div className="relative z-20 ps-4">
             <Link href="/" className="flex items-center gap-2" aria-label="Home">
               <img
@@ -19,7 +17,7 @@ export default function Header() {
           </div>
 
           <div
-            className="flex items-center justify-end border-l lg:border-l-0 pe-4">
+            className="flex items-center border-l justify-center lg:border-l-0 pe-4">
             <input type="checkbox" name="hamburger" id="hamburger" className="peer"
               hidden />
             <label htmlFor="hamburger"
@@ -32,7 +30,7 @@ export default function Header() {
 
             <div
               className="fixed inset-0 w-[100%] translate-x-[-100%] border-r bg-white shadow-xl transition duration-300 peer-checked:translate-x-0 lg:static lg:w-auto lg:translate-x-0 lg:border-r-0 lg:shadow-none">
-              <div className="flex h-full flex-col justify-between lg:flex-row lg:items-center">
+              <div className="flex h-full flex-col justify-center lg:flex-row lg:items-center">
                 <ul className="space-y-8 px-6 pt-32 text-gray-700 md:pe-6 lg:flex lg:space-x-4 lg:space-y-0 lg:pt-0 font-['Roboto'] font-bold">
                   <li>
                     <Link href="/"

@@ -3,14 +3,14 @@ import React from 'react'
 export default function Features() {
   return (
     <section className="bg-white py-16">
-  <div className="lg:container lg:mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-start justify-center">
+  <div className="lg:container lg:mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-start justify-center">
     
     {/* Left-side image */}
-    <div className="relative flex justify-center">
+    <div className="relative">
       <img
         src="/assets/images/business-img-2.png"
         alt="Wheelchair user working"
-        className="w-[650px] object-cover"
+        className="w-[700px] object-cover"
       />
     </div>
 
