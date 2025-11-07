@@ -21,7 +21,7 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
 
     try {
       // ✅ Call your own Next.js API route instead of direct backend
-      const response = await axios.post("http://51.75.68.69:3006//auth/login", {
+      const response = await axios.post("http://51.75.68.69:3006/auth/login", {
         username: email,
         password: password,
       });
@@ -32,7 +32,7 @@ const Login: React.FC<LoginProps> = ({ onClose }) => {
       } else {
         setError(response.data?.message || "Invalid credentials.");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("❌ Login failed:", err);
       setError("Invalid credentials or server error.");
     } finally {

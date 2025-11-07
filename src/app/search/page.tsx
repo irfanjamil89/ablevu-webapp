@@ -128,7 +128,7 @@ export default function page() {
               Looking for a specific business?
             </h3>
             <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-              If you're looking for a specific business and cannot find it on
+              If you&apos;re looking for a specific business and cannot find it on
               AbleVu yet, let us know and we will get it
               added.
             </p>
