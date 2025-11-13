@@ -13,7 +13,7 @@ export default function AccessibilityFeatureForm() {
       .then((response) => response.json())
       .then((data) => {
         if (data && Array.isArray(data.data)) {
-          setFeatures(data.data.map(item => item.name));
+          setFeatures(data.data.map((item :any) => item.name));
         } else {
           console.error('No data found in the response:', data);
         }
@@ -149,7 +149,7 @@ export default function AccessibilityFeatureForm() {
                 {businessTypes.map((business, index) => (
                   <label key={index} className="flex w-1/2 items-center gap-2 text-gray-700 text-sm">
                     <input type="checkbox" className="category h-4 w-4 text-[#0519CE] border-gray-300 rounded" />
-                    {business.name}
+                    {/* {business.name} */}
                   </label>
                 ))}
               </div>
