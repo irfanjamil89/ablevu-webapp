@@ -5,9 +5,12 @@ import axios from "axios";
 interface LoginProps {
   setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenForgotPasswordModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenSuccessModal:React.Dispatch<React.SetStateAction<boolean>>
+  
 }
 
-const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal }) => {
+const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, setOpenForgotPasswordModal,setOpenSuccessModal }) => {
   // Local state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,31 +24,35 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal }) 
     setLoading(true);
 
     try {
-      const response = await axios.post("http://51.75.68.69:3006/auth/login", {
-        username: email,
-        password: password,
-      });
+  const response = await axios.post("http://51.75.68.69:3006/auth/login", {
+    username: email,
+    password: password,
+  });
 
-      if (response.data?.success) {
-        alert("✅ Login successful!");
-        setOpenLoginModal(false); // Close modal
-      } else {
-        setError(response.data?.message || "Invalid credentials.");
-      }
-    } catch (err: any) {
-      console.error("❌ Login failed:", err?.response?.data || err);
-      setError("Invalid credentials or server error.");
-    } finally {
-      setLoading(false);
-    }
+  
+
+  // The API returns { access_token: "..." } with status 201
+  if (response.status === 201 && response.data?.access_token) {
+    localStorage.setItem("access_token", response.data.access_token);
+    setOpenSuccessModal(true);
+  } 
+  else {
+    setError("Invalid credentials or unexpected response.");
+  }
+} catch (err: any) {
+  console.error("❌ Login failed:", err?.response?.data || err);
+  setError("Invalid credentials or server error.");
+} finally {
+  setLoading(false);
+}
+
   };
 
   
 
   return (
-    <div className="fixed inset-0  flex items-center justify-center z-50 top-100 right-120">
-      {/* Card */}
-      <div className="bg-white rounded-2xl shadow-2xl w-11/12 sm:w-96 p-6 relative animate-fadeIn">
+   <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-xs">
+  <div className="relative bg-white rounded-2xl shadow-2xl w-[550px] max-w-md p-8">
         {/* Close Button */}
         <button
           onClick={()=>setOpenLoginModal(false)}
@@ -115,6 +122,33 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal }) 
 
           {/* Error Message */}
           {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          <div className="flex items-center justify-between">
+            {/* Keep me logged in checkbox */}
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="keepMeLoggedIn"
+                className="h-4 w-4 text-[#0519CE] border-gray-300 rounded"
+              />
+              <label
+                htmlFor="keepMeLoggedIn"
+                className="ml-2 text-sm text-gray-600"
+              >
+                Keep me logged in
+              </label>
+            </div>
+
+            {/* Forgot Password link */}
+            <div>
+              <button
+                onClick={() => {setOpenForgotPasswordModal(true),setOpenLoginModal(false)} }
+                className="text-sm text-[#0519CE] hover:underline"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          </div>
 
           {/* Login Button */}
           <button

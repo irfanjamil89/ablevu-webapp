@@ -5,14 +5,15 @@ import axios from "axios";
 interface SignupProps {
   setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenSuccessModal:React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}) => {
+const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal, setOpenSuccessModal}) => {
   const [step, setStep] = useState<1 | 2>(1);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    email: "", // Changed from emailAddress to email
+    emailAddress: "", // Changed from emailAddress to email
     password: "",
     userType: "",
   });
@@ -21,13 +22,21 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
   const [success, setSuccess] = useState("");
 
   // Handle input changes
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {  
     setForm({ ...form, [e.target.id]: e.target.value });
   };
+  
 
   // Handle user type selection
   const handleUserType = (type: string) => {
     setForm({ ...form, userType: type });
+  };
+
+  const [passwordFocus, setPasswordFocus] = useState(false);
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const password = e.target.value;
+    handleChange(e); // Call your handleChange to update form state
   };
 
   // Submit signup form
@@ -41,7 +50,7 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
     const payload = {
       firstName: form.firstName,
       lastName: form.lastName,
-      email: form.email, // Matching field name
+      emailAddress: form.emailAddress, // Matching field name
       password: form.password,
       userType: form.userType,
     };
@@ -53,10 +62,11 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
         { headers: { "Content-Type": "application/json" } }
       );
 
-      if (response.data?.success) {
-        setSuccess("Account created successfully!");
-        alert("🎉 Signup successful!");
+
+      if (response.status === 201) {
+        setSuccess("Your account has been created successfully! You’ll be redirected shortly.");
         setOpenSignupModal(false);
+        setOpenSuccessModal(true);
       } else {
         setError(response.data?.message || "Signup failed. Please try again.");
       }
@@ -69,8 +79,8 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50  top-90 right-100">
-      <div className="relative bg-white rounded-2xl shadow-2xl w-11/12 sm:w-[50%] md:w-[40%] lg:w-[900px] p-8 animate-fadeIn">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-xs">
+  <div className="relative bg-white rounded-2xl shadow-2xl w-[550px]  p-8">
         {/* Close Button */}
         <button
           onClick={() =>setOpenSignupModal(false)}
@@ -83,19 +93,15 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
           <>
             {/* STEP 1: Choose User Type */}
             <div className="mb-6 text-center">
-              <h2 className="text-2xl font-semibold text-black">
-                Sign up for AbleVu
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Connect with inclusive businesses
-              </p>
+              <h2 className="text-center text-2xl font-bold text-black">Sign up for AbleVu</h2>
+              <p className="mt-1 text-center  text-sm sm:text-lg text-gray-600">Connect with Inclusive businesses</p>
             </div>
 
             <form className="space-y-6">
               {["User", "Business", "Contributor"].map((type) => (
                 <label
                   key={type}
-                  className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border border-gray-300 p-4 transition hover:border-[#0519CE] ${
                     form.userType === type
                       ? "border-[#0519CE]"
                       : "border-gray-300"
@@ -109,15 +115,15 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
                     className="mt-1 h-5 w-5 text-[#0519CE] focus:ring-[#0519CE]"
                   />
                   <div>
-                    <h3 className="text-base font-semibold text-gray-800">
+                    <h3 className="text-base sm:text-lg font-semibold text-black">
                       As a {type}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
                       {type === "User"
-                        ? "View, review, and save profiles."
+                        ? "Would like to view, review, provide feedback and save profiles?"
                         : type === "Business"
-                        ? "Represent and manage a business profile."
-                        : "Contribute verified accessibility data."}
+                        ? "Are you a business representative who would like to view a created profile or create your own?"
+                        : "Would you like to be able to edit and create detailed business profiles to showcase key information and services. This can be done as a volunteer to help build the platform or update to a paid contributor to receive payments for creating business profiles after they are approved by the associated business"}
                     </p>
                   </div>
                 </label>
@@ -203,8 +209,8 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
               <div className="relative">
                 <input
                   type="email"
-                  id="email"
-                  value={form.email}
+                  id="emailAddress"
+                  value={form.emailAddress}
                   onChange={handleChange}
                   required
                   placeholder=" "
@@ -220,31 +226,42 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
 
               {/* Password */}
               <div className="relative">
-                <input
-                  type="password"
-                  id="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                  placeholder=" "
-                  className="peer block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] focus:ring-0"
-                />
-                <label
-                  htmlFor="password"
-                  className="absolute start-1 top-2 text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:scale-75"
-                >
-                  Password
-                </label>
-              </div>
+              <input
+                type="password"
+                id="password"
+                value={form.password}
+                onChange={handlePasswordChange}
+                required
+                placeholder=" "
+                onFocus={() => setPasswordFocus(true)} // Show validation rules when focused
+                onBlur={() => setPasswordFocus(false)} // Hide validation rules when focus is lost
+                className="peer block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] focus:ring-0"
+              />
+              <label
+                htmlFor="password"
+                className="absolute start-1 top-2 text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:scale-75"
+              >
+                Password
+              </label>
 
-              <p className="text-[12px] text-[rgba(50,53,57,1)]-2 mb-1"> Password must:</p>
-              <ul className="list-disc pl-5 text-[12px]  text-[#32353991]">
-                <li>Be a minimum of 12 characters</li>
-                <li>Include at least one lowercase letter (a-z)</li>
-                <li>Include at least one uppercase letter (A-Z)</li>
-                <li>Include at least one number (0-9)</li>
-                <li>Include at least one special character (!@#$%)</li>
-              </ul>
+              {/* Toggle visibility of password validation rules */}
+              <div
+                  style={{
+                    maxHeight: passwordFocus ? "200px" : "0", // Adjust max-height for smooth transition
+                    opacity: passwordFocus ? 1 : 0, // Fade in/out
+                  }}
+                  className="mt-2 text-xs text-gray-600 transition-all duration-500 overflow-hidden"
+                >
+                <p><strong>Password must:</strong></p>
+                <ul className="list-disc pl-5">
+                  <li>Be a minimum of 12 characters</li>
+                  <li>Include at least one lowercase letter (a-z)</li>
+                  <li>Include at least one uppercase letter (A-Z)</li>
+                  <li>Include at least one number (0-9)</li>
+                  <li>Include at least one special character (!@#$%)</li>
+                </ul>
+              </div>
+            </div>
             
 
           <div className="flex items-start gap-2 text-sm">
@@ -293,6 +310,7 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal , setOpenLoginModal}
           </>
         )}
       </div>
+      
     </div>
   );
 };

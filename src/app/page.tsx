@@ -31,8 +31,7 @@ export const metadata = {
 export default function Homepage() {
   return (
     <main>
-      <Header />
-
+      <Header/>
       <Herosection />
       <Citiesslider />
       <Mapsection />

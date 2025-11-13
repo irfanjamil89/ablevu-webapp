@@ -5,7 +5,6 @@ import { FaUserCircle } from "react-icons/fa";
 import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
-import Successmodal from "./Successmodal";
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -13,9 +12,9 @@ export default function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openSignupModal, setOpenSignupModal] = useState(false);
-  const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
-  
+  const [message, setMessage] = useState("");
+
   // Run only after client-side hydration
   useEffect(() => {
     setIsMounted(true);
@@ -38,30 +37,45 @@ export default function Header() {
 
   return (
   <div>
-    <header className="absolute z-50 mt-10 w-full lg:rounded-full sm:mt-10">
-      <div className="m-auto bg-white px-1 w-5/6 lg:mx-auto rounded-full lg:px-6 lg:py-4 md:px-12 md:bg-transparent">
-        <div className="flex w-full items-center justify-between rounded-full bg-white px-5 md:px-4 py-2">
-          <div className="z-20">
+    <header className="absolute z-50 mt-20 w-full lg:rounded-full sm:mt-10">
+      <div className="bg-white px-6 w-5/6 lg:mx-auto lg:rounded-full lg:px-6 lg:py-4 md:px-12 md:bg-transparent">
+        <div className="flex w-full items-center justify-between rounded-full bg-white md:px-10 lg:px-0 py-2">
+          <div className="z-20 ps-4">
             <Link href="/" className="flex items-center gap-2" aria-label="Home">
               <img src="/assets/images/logo.png" alt="logo-Ablevu" className="w-32" />
             </Link>
           </div>
 
-          <div className="flex items-center justify-center">
-            <input type="checkbox" name="hamburger" id="hamburger" className="peer hidden" />
+          <div className="flex items-center border-l justify-center lg:border-l-0 pe-4">
+            <input
+              type="checkbox"
+              name="hamburger"
+              id="hamburger"
+              className="peer"
+              hidden
+            />
             <label
               htmlFor="hamburger"
-              className="peer-checked:hamburger z-20 block cursor-pointer p-2 lg:hidden"
+              className="peer-checked:hamburger z-20 -mr-6 block cursor-pointer p-6 lg:hidden"
             >
-              <div className="m-auto h-0.5 w-6 rounded bg-sky-900 transition duration-300"></div>
-              <div className="m-auto mt-2 h-0.5 w-6 rounded bg-sky-900 transition duration-300"></div>
+              <div
+                aria-hidden="true"
+                className="m-auto h-0.5 w-6 rounded bg-sky-900 transition duration-300"
+              ></div>
+              <div
+                aria-hidden="true"
+                className="m-auto mt-2 h-0.5 w-6 rounded bg-sky-900 transition duration-300"
+              ></div>
             </label>
 
-            <div className="fixed inset-0 w-[100%] translate-x-[-100%] border-r shadow-xl transition duration-300 peer-checked:translate-x-0 lg:static lg:w-auto lg:translate-x-0 lg:border-r-0 lg:shadow-none">
-              <div className="flex h-full flex-col justify-center lg:flex-row lg:items-center w-full bg-white lg:bg-transparent">
+            <div className="fixed inset-0 w-[100%] translate-x-[-100%] border-r bg-white shadow-xl transition duration-300 peer-checked:translate-x-0 lg:static lg:w-auto lg:translate-x-0 lg:border-r-0 lg:shadow-none">
+              <div className="flex h-full flex-col justify-center lg:flex-row lg:items-center w-full">
                 <ul className="space-y-8 px-6 pt-32 text-gray-700 md:pe-6 lg:flex lg:space-x-4 lg:space-y-0 lg:pt-0 font-['Roboto'] font-bold">
                   <li>
-                    <Link href="/" className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2">
+                    <Link
+                      href="/"
+                      className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2"
+                    >
                       <span className="text-black-800 relative">Home</span>
                     </Link>
                   </li>
@@ -70,7 +84,9 @@ export default function Header() {
                       href="/business"
                       className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                     >
-                      <span className="group-hover:text-black-800 relative">Businesses</span>
+                      <span className="group-hover:text-black-800 relative">
+                        Businesses
+                      </span>
                     </Link>
                   </li>
                   <li>
@@ -78,7 +94,9 @@ export default function Header() {
                       href="/contributor"
                       className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                     >
-                      <span className="group-hover:text-black-800 relative">Contributor</span>
+                      <span className="group-hover:text-black-800 relative">
+                        Contributor
+                      </span>
                     </Link>
                   </li>
                   <li>
@@ -86,7 +104,9 @@ export default function Header() {
                       href="/access-friendly-city"
                       className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                     >
-                      <span className="group-hover:text-black-800 relative">Access-friendly Cities</span>
+                      <span className="group-hover:text-black-800 relative">
+                        Access-friendly Cities
+                      </span>
                     </Link>
                   </li>
                   <li>
@@ -94,7 +114,9 @@ export default function Header() {
                       href="#"
                       className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                     >
-                      <span className="group-hover:text-black-800 relative">Add Business</span>
+                      <span className="group-hover:text-black-800 relative">
+                        Add Business
+                      </span>
                     </Link>
                   </li>
                   <li>
@@ -102,7 +124,9 @@ export default function Header() {
                       href="/search"
                       className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                     >
-                      <span className="group-hover:text-black-800 relative">Search</span>
+                      <span className="group-hover:text-black-800 relative">
+                        Search
+                      </span>
                     </Link>
                   </li>
                 </ul>
@@ -125,6 +149,8 @@ export default function Header() {
                           Log In
                         </button>
                       </div>
+
+                     
                     </>
                   ) : (
                     <div className="relative user-dropdown">
@@ -170,33 +196,20 @@ export default function Header() {
             setOpenLoginModal={setOpenLoginModal}
             setOpenSignupModal={setOpenSignupModal}
             setOpenForgotPasswordModal={setOpenForgotPasswordModal}
-            setOpenSuccessModal={setOpenSuccessModal}
           />
         )}
         {openSignupModal && (
           <Signup
             setOpenSignupModal={setOpenSignupModal}
             setOpenLoginModal={setOpenLoginModal}
-            setOpenSuccessModal={setOpenSuccessModal}
           />
       )}
         {OpenForgotPasswordModal && (
           <ForgotPassword
             setOpenForgotPasswordModal={setOpenForgotPasswordModal}
             setOpenLoginModal={setOpenLoginModal}
-            setOpenSuccessModal={setOpenSuccessModal}
           />
       )}
-
-      {openSuccessModal && (
-          <Successmodal
-            setOpenSuccessModal={setOpenSuccessModal}
-            setOpenLoginModal={setOpenLoginModal}
-            setOpenSignupModal={setOpenSignupModal}
-          />
-      )}
-
-       
 
     </div>
     

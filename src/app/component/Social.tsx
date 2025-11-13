@@ -18,7 +18,7 @@ export default function Social() {
     </div>
 
     {/* Right-side content */}
-    <div className="text-center md:text-left md:flex md:flex-col md:justify-center font-['Montserrat'] lg:w-[50%] md:w-[80%] lg:text-start md:text-center">
+    <div className="text-center md:flex md:flex-col md:justify-center font-['Montserrat'] lg:w-[50%] md:w-[80%] lg:text-start md:text-center">
       <h2 className="font-bold text-[#1A1A1A] mb-8 lg:leading-[1.2] md:text-4xl lg:text-[48px] text-4xl">
         SOCIAL IMPACT PLUS <br /> ECONOMIC IMPACT
       </h2>
