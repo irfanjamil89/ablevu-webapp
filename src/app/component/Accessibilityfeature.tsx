@@ -18,7 +18,7 @@ export default function AccessibilityFeature() {
             <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
               {/* <!-- Title --> */}
 
-              <h1 className="text-2xl font-semibold text-gray-900">Accessible Features (89)</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Accessible Features (6)</h1>
 
               <Accessibilityfeatureform/>
 

@@ -34,7 +34,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
   // The API returns { access_token: "..." } with status 201
   if (response.status === 201 && response.data?.access_token) {
     localStorage.setItem("access_token", response.data.access_token);
-    setOpenSuccessModal(true);
+    window.location.href="/dashboard";
   } 
   else {
     setError("Invalid credentials or unexpected response.");

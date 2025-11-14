@@ -16,7 +16,7 @@ export default function Sidebar() {
     }
 
     // Fetch user data using the token for authentication
-    fetch('http://51.75.68.69:3006/users?id=1', {
+    fetch('http://51.75.68.69:3006/users/1', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}` // Send the token in the Authorization header
@@ -25,8 +25,8 @@ export default function Sidebar() {
       .then(response => response.json())
       .then(data => {
         console.log('API response:', data);
-        if (data && data.length > 0) {
-          setUser(data[0]); // Set user data if fetched successfully
+        if (data) {
+          setUser(data); // Set user data if fetched successfully
         }
       })
       .catch(error => {
@@ -71,49 +71,6 @@ export default function Sidebar() {
                             Overview
                         </a>
                     </li>
-                    {/* <!-- Accessibility feature type --> */}
-                    <li>
-                        <a href="/dashboard/accessibility-feature-type"
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/accessibility-feature-type")
-                                ? "bg-blue-700 text-white font-semibold"
-                                : "text-gray-700 hover:bg-gray-100"
-                                }`}>
-                            {/* <!-- Thumbs Up Icon --> */}
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5 text-gray-600"
-                                viewBox="0 0 32 32"><path
-                                    d="M27 11h-8.52L19 9.8A6.42 6.42 0 0 0 13 1a1 1 0 0 0-.93.63L8.32 11H5a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h18.17a3 3 0 0 0 2.12-.88l3.83-3.83a3 3 0 0 0 .88-2.12V14a3 3 0 0 0-3-3zM4 28V14a1 1 0 0 1 1-1h3v16H5a1 1 0 0 1-1-1zm24-3.83a1 1 0 0 1-.29.71l-3.83 3.83a1.05 1.05 0 0 1-.71.29H10V12.19l3.66-9.14a4.31 4.31 0 0 1 3 1.89 4.38 4.38 0 0 1 .44 4.12l-1 2.57A1 1 0 0 0 17 13h10a1 1 0 0 1 1 1z"
-                                    data-name="thumb up android app aplication phone" /></svg>
-                            Features type
-                        </a>
-                    </li>
-                    {/* <!-- Accessibility Features --> */}
-                    <li>
-                        <a href="/dashboard/accessibility-features"
-                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/accessibility-features")
-                                ? "bg-blue-700 text-white font-semibold"
-                                : "text-gray-700 hover:bg-gray-100"
-                                }`}>
-                            {/* <!-- User Icon --> */}
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-5 h-5 text-gray-600"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                                />
-                            </svg>
-
-                            Accessibility Features
-                        </a>
-                    </li>
-
                     {/* <!-- Business type --> */}
                     <li>
                         <a href="/dashboard/business-type"
@@ -159,6 +116,50 @@ export default function Sidebar() {
                             Business Type
                         </a>
                     </li>
+                    {/* <!-- Accessibility feature type --> */}
+                    <li>
+                        <a href="/dashboard/accessibility-feature-type"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/accessibility-feature-type")
+                                ? "bg-blue-700 text-white font-semibold"
+                                : "text-gray-700 hover:bg-gray-100"
+                                }`}>
+                            {/* <!-- Thumbs Up Icon --> */}
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                className="w-5 h-5 text-gray-600"
+                                viewBox="0 0 32 32"><path
+                                    d="M27 11h-8.52L19 9.8A6.42 6.42 0 0 0 13 1a1 1 0 0 0-.93.63L8.32 11H5a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h18.17a3 3 0 0 0 2.12-.88l3.83-3.83a3 3 0 0 0 .88-2.12V14a3 3 0 0 0-3-3zM4 28V14a1 1 0 0 1 1-1h3v16H5a1 1 0 0 1-1-1zm24-3.83a1 1 0 0 1-.29.71l-3.83 3.83a1.05 1.05 0 0 1-.71.29H10V12.19l3.66-9.14a4.31 4.31 0 0 1 3 1.89 4.38 4.38 0 0 1 .44 4.12l-1 2.57A1 1 0 0 0 17 13h10a1 1 0 0 1 1 1z"
+                                    data-name="thumb up android app aplication phone" /></svg>
+                            Features type
+                        </a>
+                    </li>
+                    {/* <!-- Accessibility Features --> */}
+                    <li>
+                        <a href="/dashboard/accessibility-features"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/accessibility-features")
+                                ? "bg-blue-700 text-white font-semibold"
+                                : "text-gray-700 hover:bg-gray-100"
+                                }`}>
+                            {/* <!-- User Icon --> */}
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-5 h-5 text-gray-600"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
+                                />
+                            </svg>
+
+                            Accessibility Features
+                        </a>
+                    </li>
+
+                    
                     <li>
                         <a href="/dashboard/businesses"
                             className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")

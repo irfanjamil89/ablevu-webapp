@@ -27,13 +27,13 @@ export default function BusinessTypeForm({ onSuccess }: { onSuccess?: () => void
       );
 
       if (response.status === 201) {
-        setMessage("🎉 Business type added successfully!");
+        setMessage("Business type added successfully!");
         setName("");
         if (onSuccess) onSuccess(); // trigger reload on success
       }
     } catch (error: any) {
-      console.error("❌ Error:", error.response?.data || error);
-      setMessage("❌ Failed to add business type. Please try again.");
+      console.error("Error:", error.response?.data || error);
+      setMessage("Failed to add business type. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -79,9 +79,7 @@ export default function BusinessTypeForm({ onSuccess }: { onSuccess?: () => void
 
             {message && (
               <p
-                className={`text-sm ${
-                  message.startsWith("🎉") ? "text-green-600" : "text-red-500"
-                }`}
+                className="text-sm text-green-600"
               >
                 {message}
               </p>

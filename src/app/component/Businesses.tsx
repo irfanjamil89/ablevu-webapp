@@ -1,6 +1,51 @@
-import React from 'react'
+"use client";
+import React, { useState, useEffect } from 'react';
+
 
 export default function Business() {
+
+const [businesses, setBusinesses] = useState([]);
+const [businessTypes, setBusinessTypes] = useState([]);
+const [features, setFeatures] = useState([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  // Fetch business types
+  fetch('http://51.75.68.69:3006/business-type/list')
+    .then(response => response.json())
+    .then(data => {
+      setBusinessTypes(data.data);
+    })
+    .catch((error) => {
+      console.error('Error fetching business types:', error);
+    });
+
+  // Fetch accessibility features
+  fetch('http://51.75.68.69:3006/accessible-feature-types/list')
+    .then(response => response.json())
+    .then(data => {
+      setFeatures(data.data);
+    })
+    .catch((error) => {
+      console.error('Error fetching features:', error);
+    });
+
+  // Fetch business list
+  fetch('http://51.75.68.69:3006/business/list')
+    .then(response => response.json())
+    .then(data => {
+      setBusinesses(data.data); // Set the businesses data
+    })
+    .catch((error) => {
+      console.error('Error fetching data:', error);
+    })
+    .finally(() => {
+      setLoading(false); // Hide loading spinner
+    });
+}, []);
+
+
+
   return (
     <div className="w-full h-screen">
       <div
@@ -249,143 +294,88 @@ export default function Business() {
               <div>
                 {/* <!-- Card --> */}
 
-                <div
-                  className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white">
+                {businesses.map((business) => (
+                  <div key={business.id} className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white">
 
-                  {/* <!-- left-side --> */}
-                  <div
-                    className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
-                    style={{ backgroundImage: "url('/assets/images/b-img.png')" }}>
-
-                    {/* <!-- Approved Badge --> */}
-                    <span
-                      className="absolute top-3 md:right-2 right-14 bg-[#ECFDF3] text-[#039877] text-sm font-semibold px-2 py-1 rounded-md shadow-sm">
-                      Claimed
-                    </span>
-                  </div>
-
-                  {/* <!-- right-side --> */}
-                  <div
-                    className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
-                    <div
-                      className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
-                      <h3
-                        className="font-semibold text-gray-800 text-2xl">
-                        12 West Brewing
-                      </h3>
-
-                      <div
-                        className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
-                        {/* <!-- Saved Button --> */}
-                        <label
-                          className="inline-flex items-center gap-1 cursor-pointer">
-                          <input type="checkbox"
-                            className="peer hidden" />
-                          <div
-                            className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2"
-                              stroke="black"
-                              fill="white"
-                              className="w-3.5 h-4 peer-checked:fill-black peer-checked:stroke-black transition-colors">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z" />
+                    {/* Business Card Left Side */}
+                    <div className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95" style={{ backgroundImage: `url(${business.logo_url || '/assets/images/b-img.png'})` }}>
+                      {/* Approved Badge */}
+                      <span className="absolute top-3 md:right-2 right-14 bg-[#FDE8E8] text-[#F03E3E]'} text-sm font-semibold px-2 py-1 rounded-md shadow-sm">
+                         Inactive
+                      </span>
+                    </div>
+<script>
+  console.log(business);
+</script>
+                    {/* Business Card Right Side */}
+                    <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
+                      <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
+                        <h3 className="font-semibold text-gray-800 text-2xl">{business.name}</h3>
+                        <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
+                          {/* Saved Button */}
+                          <label className="inline-flex items-center gap-1 cursor-pointer">
+                            <input type="checkbox" className="peer hidden" />
+                            <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" strokeWidth="2" stroke="black" fill="white" className="w-3.5 h-4 peer-checked:fill-black peer-checked:stroke-black transition-colors">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z" />
+                              </svg>
+                              <span>0 Saved</span>
+                            </div>
+                          </label>
+                          {/* Views Button */}
+                          <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24" strokeWidth="2" stroke="black" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              <circle cx="12" cy="12" r="3" />
                             </svg>
-                            <span>0 Saved</span>
-                          </div>
-                        </label>
-
-                        {/* <!-- Views Button --> */}
-                        <button
-                          className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="white"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2"
-                            stroke="black"
-                            className="w-4 h-4">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            <circle cx="12"
-                              cy="12" r="3" />
-                          </svg>
-                          18.0 Views
-                        </button>
-
-                        {/* <!-- Recommendations Button --> */}
-                        <button
-                          className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="white"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2"
-                            stroke="black"
-                            className="w-4 h-4">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z" />
-                          </svg>
-                          1.0 Recommendations
-                        </button>
-
+                            0 Views
+                          </button>
+                          {/* Recommendations Button */}
+                          <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="white" viewBox="0 0 24 24" strokeWidth="2" stroke="black" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z" />
+                            </svg>
+                            0 Recommendations
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-md">
-                      <div className="flex">
-                        <span
-                          className="font-medium text-gray-500 pe-2">Categories</span>
-                        <ul
-                          className="flex flex-wrap md:flex-nowrap space-x-2">
-                          <li
-                            className="bg-[#F7F7F7] rounded-full px-2">Restaurant</li>
-                        </ul>
+                      <div className="text-md">
+                        <div className="flex">
+                          <span className="font-medium text-gray-500 pe-2">Categories</span>
+                          <ul className="flex flex-wrap md:flex-nowrap space-x-2">
+                            {business.linkedTypes.map((type) => (
+                              <li key={type.id} className="bg-[#F7F7F7] rounded-full px-2">
+                                {type.business_type_id} {/* You can replace with more descriptive text */}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                    <div
-                      className="text-md text-gray-500 mt-2">
-                      <div
-                        className="flex flex-wrap md:gap-0 gap-2">
-                        <span
-                          className="font-medium text-gray-500 pe-2">Accessible
-                          Features</span>
-                        <ul
-                          className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                          <li
-                            className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">Accessible entrance available</li>
-                          <li
-                            className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">Accessible restrooms/stalls</li>
-                          <li
-                            className="bg-[#F7F7F7] font-bold text-black rounded-full px-2">+7</li>
-                        </ul>
+                      <div className="text-md text-gray-500 mt-2">
+                        <div className="flex flex-wrap md:gap-0 gap-2">
+                          <span className="font-medium text-gray-500 pe-2">Accessible Features</span>
+                          <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
+                            {business.accessibilityFeatures.map((feature) => (
+                              <li key={feature.id} className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
+                                {feature.accessible_feature_id} {/* You can replace with feature name */}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                    <div
-                      className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-                      <img
-                        src="assets/images/clock.webp"
-                        className="w-4 h-4" /> <span
-                          className="text-md text-gray-700">Operating
-                        hours not
-                        specified</span>
-                    </div>
-                    <div
-                      className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-                      <img
-                        src="assets/images/location.png"
-                        className="w-4 h-4" /> <span
-                          className="text-md text-gray-700">12 W Main St, Mesa, AZ 85201, USA</span>
+                      <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                        <img src="assets/images/clock.webp" className="w-4 h-4" />
+                        <span className="text-md text-gray-700"> Operating hours not specified
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                        <img src="assets/images/location.png" className="w-4 h-4" />
+                        <span className="text-md text-gray-700">{business.address}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ))}
+
               </div>
             </section>
           </div>

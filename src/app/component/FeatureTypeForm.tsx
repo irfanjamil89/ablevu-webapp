@@ -42,14 +42,14 @@ export default function FeatureTypeForm({ onSuccess }: FeatureTypeFormProps) {
       );
 
       if (response.status === 201 && response.data) {
-        setSuccess("🎉 Accessibility feature type added successfully!");
+        setSuccess("Accessibility feature type added successfully!");
         setForm({ name: "" });
         onSuccess(); // refresh list
       } else {
         setError(response.data?.message || "Failed to add feature type.");
       }
     } catch (err: any) {
-      console.error("❌ Error creating feature type:", err.response?.data || err.message);
+      console.error("Error creating feature type:", err.response?.data || err.message);
       setError(err.response?.data?.message || "Server error. Please try again.");
     } finally {
       setLoading(false);

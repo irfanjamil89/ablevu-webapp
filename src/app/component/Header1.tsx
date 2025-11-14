@@ -22,7 +22,7 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
     }
 
     // Fetch user data using the token for authentication
-    fetch('http://51.75.68.69:3006/users?id=1', {
+    fetch('http://51.75.68.69:3006/users/1', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`, // Make sure the token is being included in the header
@@ -30,12 +30,10 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
     })
       .then(response => response.json())
       .then(data => {
-        console.log('API response:', data);
-        if (data && data.length > 0) {
-          setUser(data[0]); // Set user data if fetched successfully
-        } else {
-          setError('User not found.');
-        }
+        // console.log('API response:', data);
+       
+          setUser(data); 
+        
         setLoading(false); // Set loading to false after fetch is done
       })
       .catch(error => {
@@ -79,7 +77,7 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
           <div className="flex items-center gap-5 text-gray-700">
             <span className="text-2xl">👋</span>
             <span className="font-medium text-xl">
-              Welcome Back! <span>{user.first_name} {user.last_name}</span>
+              Welcome Back! <span>{user.first_name} {user.last_name} ({user.user_role})</span>
             </span>
           </div>
         </div>

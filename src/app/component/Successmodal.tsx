@@ -41,7 +41,7 @@ const Successmodal: React.FC<SuccessmodalProps> = ({
 
         {/* Modal content */}
         <h2 className="text-2xl font-semibold text-gray-800 mb-2">Success</h2>
-        <p className="text-gray-600 text-sm mb-6">Your action was successful!</p>
+        <p className="text-gray-600 text-sm mb-6">Your account has been created. Please login to continue</p>
 
         {/* OK Button */}
         <button
