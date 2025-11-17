@@ -9,7 +9,7 @@ export default function AccessibilityFeatureForm() {
 
   useEffect(() => {
     // Fetch accessibility features
-    fetch('http://51.75.68.69:3006/accessible-feature-types/list')
+    fetch('https://staging-api.qtpack.co.uk/accessible-feature-types/list')
       .then((response) => response.json())
       .then((data) => {
         if (data && Array.isArray(data.data)) {
@@ -24,7 +24,7 @@ export default function AccessibilityFeatureForm() {
       });
 
     // Fetch business types
-    fetch('http://51.75.68.69:3006/business-type/list')
+    fetch('https://staging-api.qtpack.co.uk/business-type/list')
       .then((response) => response.json())
       .then((data) => {
         if (data && Array.isArray(data.data)) {

@@ -23,7 +23,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
     setLoading(true);
 
     try {
-  const response = await axios.post("http://51.75.68.69:3006/auth/login", {
+  const response = await axios.post("https://staging-api.qtpack.co.uk/auth/login", {
     username: email,
     password: password,
   });

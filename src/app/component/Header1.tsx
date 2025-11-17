@@ -22,7 +22,7 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
     }
 
     // Fetch user data using the token for authentication
-    fetch('http://51.75.68.69:3006/users/1', {
+    fetch('https://staging-api.qtpack.co.uk/users/1', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`, // Make sure the token is being included in the header

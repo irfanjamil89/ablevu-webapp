@@ -13,7 +13,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        "http://51.75.68.69:3006/accessible-feature-types/list",
+        "https://staging-api.qtpack.co.uk/accessible-feature-types/list",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -47,7 +47,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
 
     try {
       await axios.put(
-        `http://51.75.68.69:3006/accessible-feature-types/update/${id}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
+        `https://staging-api.qtpack.co.uk/accessible-feature-types/update/${id}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
         { name: newName },
         {
           headers: {
@@ -71,7 +71,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
 
     try {
       await axios.delete(
-        `http://51.75.68.69:3006/accessible-feature-types/delete/${id}`,
+        `https://staging-api.qtpack.co.uk/accessible-feature-types/delete/${id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,

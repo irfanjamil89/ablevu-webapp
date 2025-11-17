@@ -26,7 +26,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
 
     try {
       // Replace with actual API call
-      const response = await fetch("http://51.75.68.69:3006/auth/forgot-password", {
+      const response = await fetch("https://staging-api.qtpack.co.uk/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

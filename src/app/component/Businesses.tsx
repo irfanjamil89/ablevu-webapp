@@ -39,7 +39,7 @@ type FeatureType = {
 
 useEffect(() => {
   // Fetch business types
-  fetch('http://51.75.68.69:3006/business-type/list')
+  fetch('https://staging-api.qtpack.co.uk/business-type/list')
     .then(response => response.json())
     .then(data => {
       setBusinessTypes(data.data);
@@ -49,7 +49,7 @@ useEffect(() => {
     });
 
   // Fetch accessibility features
-  fetch('http://51.75.68.69:3006/accessible-feature-types/list')
+  fetch('https://staging-api.qtpack.co.uk/accessible-feature-types/list')
     .then(response => response.json())
     .then(data => {
       setFeatures(data.data);
@@ -59,7 +59,7 @@ useEffect(() => {
     });
 
   // Fetch business list
-  fetch('http://51.75.68.69:3006/business/list')
+  fetch('https://staging-api.qtpack.co.uk/business/list')
     .then(response => response.json())
     .then(data => {
       setBusinesses(data.data); // Set the businesses data

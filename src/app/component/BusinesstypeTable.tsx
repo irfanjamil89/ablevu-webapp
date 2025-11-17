@@ -12,7 +12,7 @@ export default function BusinessTypeTable() {
   const fetchBusinessTypes = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("http://51.75.68.69:3006/business-type/list");
+      const response = await axios.get("https://staging-api.qtpack.co.uk/business-type/list");
       setData(response.data.data || []);
     } catch (err: any) {
       console.error("❌ Error fetching business types:", err);
@@ -32,7 +32,7 @@ export default function BusinessTypeTable() {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`http://51.75.68.69:3006/business-type/delete/${id}/${userId}`, {
+      await axios.delete(`https://staging-api.qtpack.co.uk/business-type/delete/${id}/${userId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -52,7 +52,7 @@ export default function BusinessTypeTable() {
 
     try {
       await axios.put(
-        `http://51.75.68.69:3006/business-type/update/${id}/${userId}`,
+        `https://staging-api.qtpack.co.uk/business-type/update/${id}/${userId}`,
         { name: newName },
         {
           headers: {
