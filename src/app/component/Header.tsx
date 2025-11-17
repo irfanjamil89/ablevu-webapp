@@ -170,7 +170,6 @@ export default function Header() {
             setOpenLoginModal={setOpenLoginModal}
             setOpenSignupModal={setOpenSignupModal}
             setOpenForgotPasswordModal={setOpenForgotPasswordModal}
-            setOpenSuccessModal={setOpenSuccessModal}
           />
         )}
         {openSignupModal && (

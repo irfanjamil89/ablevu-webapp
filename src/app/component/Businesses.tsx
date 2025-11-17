@@ -4,10 +4,38 @@ import React, { useState, useEffect } from 'react';
 
 export default function Business() {
 
-const [businesses, setBusinesses] = useState([]);
-const [businessTypes, setBusinessTypes] = useState([]);
-const [features, setFeatures] = useState([]);
+const [businesses, setBusinesses] = useState<Business[]>([]);
+const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+const [features, setFeatures] = useState<FeatureType[]>([]);
 const [loading, setLoading] = useState(true);
+type LinkedType = {
+  id: string;
+  business_type_id: string;
+};
+
+type AccessibilityFeature = {
+  id: string;
+  accessible_feature_id: string;
+};
+
+type Business = {
+  id: string;
+  name: string;
+  address: string;
+  logo_url?: string;
+  linkedTypes: LinkedType[];
+  accessibilityFeatures: AccessibilityFeature[];
+};
+
+type BusinessType = {
+  id: string;
+  name: string;
+};
+
+type FeatureType = {
+  id: string;
+  name: string;
+};
 
 useEffect(() => {
   // Fetch business types

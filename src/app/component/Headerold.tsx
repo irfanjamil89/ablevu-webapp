@@ -13,6 +13,7 @@ export default function Header() {
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
+  const [OpenSuccessModal, setOpenSuccessModal] = useState(false);
   const [message, setMessage] = useState("");
 
   // Run only after client-side hydration
@@ -202,12 +203,14 @@ export default function Header() {
           <Signup
             setOpenSignupModal={setOpenSignupModal}
             setOpenLoginModal={setOpenLoginModal}
+            setOpenSuccessModal={setOpenSuccessModal}
           />
       )}
         {OpenForgotPasswordModal && (
           <ForgotPassword
             setOpenForgotPasswordModal={setOpenForgotPasswordModal}
             setOpenLoginModal={setOpenLoginModal}
+            setOpenSuccessModal={setOpenSuccessModal}
           />
       )}
 

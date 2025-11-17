@@ -6,11 +6,10 @@ interface LoginProps {
   setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenForgotPasswordModal: React.Dispatch<React.SetStateAction<boolean>>;
-  setOpenSuccessModal:React.Dispatch<React.SetStateAction<boolean>>
   
 }
 
-const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, setOpenForgotPasswordModal,setOpenSuccessModal }) => {
+const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, setOpenForgotPasswordModal }) => {
   // Local state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
