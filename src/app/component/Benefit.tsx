@@ -12,10 +12,10 @@ export default function Benefit() {
       </h2>
 
       {/* Right: 3 Boxes */}
-      <div className="flex flex-col sm:flex-row justify-center items-stretch gap-6 w-full md:w-2/3">
+      <div className="flex flex-col sm:flex-row justify-center items-stretch gap-6 w-full md:w-2/3 ">
         
         {/* Box 1 */}
-        <div className="flex flex-col items-center justify-center text-center bg-[#39B249] text-white rounded-xl p-6 w-full sm:w-1/3 shadow-md transition-transform hover:-translate-y-1 lg:min-h-[220px]">
+        <div className="flex flex-col items-center justify-center text-center bg-[#39B249] text-white rounded-xl p-6 w-full sm:w-1/3 shadow-md transition-transform hover:-translate-y-1 lg:min-h-[220px] cursor-pointer">
           <img
             src="/assets/images/Group.png"
             alt="Empower Icon"
@@ -27,7 +27,7 @@ export default function Benefit() {
         </div>
 
         {/* Box 2 */}
-        <div className="flex flex-col items-center justify-center text-center bg-[#F15730] text-white rounded-xl p-6 w-full sm:w-1/3 shadow-md transition-transform hover:-translate-y-1 lg:min-h-[220px]">
+        <div className="flex flex-col items-center justify-center text-center bg-[#F15730] text-white rounded-xl p-6 w-full sm:w-1/3 shadow-md transition-transform hover:-translate-y-1 lg:min-h-[220px] cursor-pointer">
           <img
             src="/assets/images/Group (1).png"
             alt="Support Icon"
@@ -39,7 +39,7 @@ export default function Benefit() {
         </div>
 
         {/* Box 3 */}
-        <div className="flex flex-col items-center justify-center text-center bg-[#26A8DC] text-white rounded-xl p-6 w-full sm:w-1/3 shadow-md transition-transform hover:-translate-y-1 lg:min-h-[220px]">
+        <div className="flex flex-col items-center justify-center text-center bg-[#26A8DC] text-white rounded-xl p-6 w-full sm:w-1/3 shadow-md transition-transform hover:-translate-y-1 lg:min-h-[220px] cursor-pointer">
           <img
             src="/assets/images/Icon.png"
             alt="Inclusive Icon"

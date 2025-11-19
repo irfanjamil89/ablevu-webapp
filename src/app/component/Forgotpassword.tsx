@@ -37,7 +37,6 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
       const data = await response.json();
       if (response.ok) {
         setSuccess("Password reset link sent! Please check your email.");
-        setOpenSuccessModal(true);
       } else {
         setError(data.message || "Error resetting password. Please try again.");
       }
@@ -55,7 +54,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
         {/* Close Button */}
         <button
           onClick={() => setOpenForgotPasswordModal(false)}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold cursor-pointer"
         >
           ×
         </button>
@@ -63,8 +62,8 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
         {/* Header + Icon */}
         <div className="flex flex-col items-center mb-6">
           <img
-            src="https://411bac323421e63611e34ce12875d6ae.cdn.bubble.io/cdn-cgi/image/w=128,h=128,f=auto,dpr=1,fit=contain/f1734964303683x924828582539070500/Profile.png"
-            alt="User Icon"
+            src="assets/images/pass.avif"
+            alt="Security Icon"
             className="mb-2"
           />
           <h2 className="text-2xl font-semibold text-black text-center">Forgot Password</h2>
@@ -97,7 +96,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             <button
               onClick={() => setSuccess("Resending link...")} // This can trigger a resend action if needed
               type="button"
-              className="text-blue-600 text-sm"
+              className="text-[#0519CE] text-sm underline font-bold cursor-pointer"
             >
               Resend Link
             </button>
@@ -120,7 +119,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
         <p className="text-center text-sm text-gray-700 mt-4">
           Remember Your Password?{" "}
           <button
-            className="text-[#0519CE] underline font-bold"
+            className="text-[#0519CE] underline font-bold cursor-pointer"
             onClick={() => {
               setOpenForgotPasswordModal(false);
               setOpenLoginModal(true);
