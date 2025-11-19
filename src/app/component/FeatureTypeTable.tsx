@@ -194,7 +194,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   <div className="relative inline-block text-left">
                     <button
                       type="button"
-                      className="text-gray-500 text-2xl focus:outline-none"
+                      className="text-gray-500 text-2xl focus:outline-none cursor-pointer"
                       id={`menuButton${index}`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -207,18 +207,18 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                     {/* Dropdown Menu */}
                     {openDropdown === index && (
                       <div
-                        className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col z-50"
+                        className="absolute right-0 mt-2 w-30 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col z-50"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
                           onClick={() => handleEdit(feature.id, feature.name)}
-                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm"
+                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm cursor-pointer"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(feature.id)}
-                          className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg"
+                          className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg cursor-pointer"
                         >
                           Delete
                         </button>
@@ -261,14 +261,14 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
             {/* Buttons */}
             <div className="flex justify-center gap-3 pt-2">
               <button
-                className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100"
+                className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100"
                 onClick={() => setOpenDeleteModal(false)}
                 disabled={loadingDelete}
               >
                 Cancel
               </button>
               <button
-                className="px-5 py-2 w-full text-center text-sm font-bold bg-red-600 text-white rounded-full hover:bg-red-700"
+                className="px-5 py-2 w-full text-center text-sm font-bold bg-red-600 text-white rounded-full cursor-pointer hover:bg-red-700"
                 onClick={async () => {
                   if (!featureToDelete) return;
                   setLoadingDelete(true);
@@ -320,7 +320,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
             <h2 className="text-lg font-bold mb-2">Deleted Successfully!</h2>
             <p className="mb-4">The feature has been removed.</p>
             <button
-              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg"
+              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
               onClick={() => setOpenSuccessModal(false)}
             >
               OK
@@ -335,7 +335,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
             {/* Close Button */}
             <button
               onClick={() => setOpenEditModal(false)}
-              className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 text-2xl font-bold"
+              className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer"
             >
               ×
             </button>
@@ -369,7 +369,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
               <div className="flex justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100"
+                  className="px-5 py-2 w-full text-center text-sm cursor-pointer font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100"
                   onClick={() => setOpenEditModal(false)}
                 >
                   Cancel
@@ -378,7 +378,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                 <button
                   type="submit"
                   disabled={editloading}
-                  className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
+                  className="px-5 py-2 w-full text-center cursor-pointer text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
                 >
                   {editloading ? "Saving..." : "Save"}
                 </button>

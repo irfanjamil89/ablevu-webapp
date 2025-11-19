@@ -134,7 +134,7 @@ const [editLoading, setEditLoading] = useState(false);
 
                       <label htmlFor="none" className="hidden peer-checked:block fixed inset-0 z-40"></label>
 
-                      <div className="absolute right-0 mt-2 w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
+                      <div className="cursor-pointer absolute right-0 mt-2 w-[100px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
                         <button
                           onClick={() => {
                             setEditId(item.id);
@@ -142,7 +142,7 @@ const [editLoading, setEditLoading] = useState(false);
                             setEditMessage(null); // reset message
                             setOpenEditModal(true);
                           }}
-                          className="px-4 py-2 text-sm text-gray-700 hover:bg-[#EFF0F1]"
+                          className="px-4 py-2 text-sm text-gray-700 hover:bg-[#EFF0F1] cursor-pointer"
                         >
                           Edit
                         </button>
@@ -152,7 +152,7 @@ const [editLoading, setEditLoading] = useState(false);
                             setDeleteId(item.id);
                             setOpenDeleteModal(true);
                           }}
-                          className="px-4 py-2 text-sm text-red-600 hover:bg-red-100"
+                          className="cursor-pointer px-4 py-2 text-sm text-red-600 hover:bg-red-100"
                         >
                           Delete
                         </button>
@@ -197,14 +197,14 @@ const [editLoading, setEditLoading] = useState(false);
             <div className="flex gap-3 mt-4">
               <button
                 onClick={() => setOpenDeleteModal(false)}
-                className="px-5 py-2 w-full border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100"
+                className="px-5 py-2 w-full border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100 cursor-pointer"
               >
                 Cancel
               </button>
 
               <button
                 onClick={confirmDeleteAction}
-                className="px-5 py-2 w-full bg-red-600 text-white rounded-full hover:bg-red-700"
+                className="px-5 py-2 w-full bg-red-600 text-white rounded-full hover:bg-red-700 cursor-pointer"
               >
                 Delete
               </button>
@@ -242,7 +242,7 @@ const [editLoading, setEditLoading] = useState(false);
             <p className="mb-4 text-gray-600">{successMessage || errorMessage}</p>
 
             <button
-              className="bg-[#0519CE] text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
+              className="bg-[#0519CE] text-white px-4 py-2 rounded-full hover:bg-blue-700 transition cursor-pointer"
               onClick={() => setOpenSuccessModal(false)}
             >
               OK
@@ -257,7 +257,7 @@ const [editLoading, setEditLoading] = useState(false);
           <div className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[550px] p-8 relative">
             
             <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold cursor-pointer"
               onClick={() => setOpenEditModal(false)}
             >
               ×
@@ -284,7 +284,7 @@ const [editLoading, setEditLoading] = useState(false);
             <div className="flex justify-center gap-3 pt-2">
                 <button
                   type="button"
-                  className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100"
+                  className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100 cursor-pointer"
                   onClick={() => setOpenEditModal(false)}
                 >
                   Cancel
@@ -293,7 +293,7 @@ const [editLoading, setEditLoading] = useState(false);
                 <button
                   onClick={handleEditSubmit}
               disabled={editLoading}
-                  className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
+                  className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
                 >
                   {editLoading ? "Saving..." : "Save"}
                 </button>

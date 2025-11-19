@@ -112,7 +112,7 @@ export default function FeatureTypeForm({ onSuccess }: FeatureTypeFormProps) {
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
+                className="px-5 py-2 w-full text-center cursor-pointer text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
               >
                 {loading ? "Saving..." : "Save"}
               </button>

@@ -88,14 +88,14 @@ export default function BusinessTypeForm({ onSuccess }: { onSuccess?: () => void
             <div className="flex justify-center gap-3 pt-2">
               <label
                 htmlFor="add-business-type"
-                className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100"
+                className=" px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100"
               >
                 Cancel
               </label>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
+                className="cursor-pointer px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
               >
                 {loading ? "Saving..." : "Save"}
               </button>
