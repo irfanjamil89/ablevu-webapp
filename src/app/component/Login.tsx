@@ -55,7 +55,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         {/* Close Button */}
         <button
           onClick={()=>setOpenLoginModal(false)}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold"
+          className="absolute top-3 right-3 text-gray-500 p-0 hover:text-gray-800 text-xl font-bold cursor-pointer"
         >
           ×
         </button>
@@ -128,11 +128,11 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
               <input
                 type="checkbox"
                 id="keepMeLoggedIn"
-                className="h-4 w-4 text-[#0519CE] border-gray-300 rounded"
+                className="h-4 w-4 text-[#0519CE] border-gray-300 rounded cursor-pointer"
               />
               <label
                 htmlFor="keepMeLoggedIn"
-                className="ml-2 text-sm text-gray-600"
+                className="ml-2 text-sm text-gray-600 cursor-pointer"
               >
                 Keep me logged in
               </label>
@@ -142,7 +142,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
             <div>
               <button
                 onClick={() => {setOpenForgotPasswordModal(true),setOpenLoginModal(false)} }
-                className="text-sm text-[#0519CE] hover:underline"
+                className="text-sm text-[#0519CE] hover:underline cursor-pointer"
               >
                 Forgot Password?
               </button>
@@ -153,7 +153,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-[#0519CE] hover:bg-[#0212a0] cursor-pointer text-white font-medium rounded-lg py-2 transition disabled:opacity-60"
+            className="w-full bg-[#0519CE] hover:bg-[#0212a0] text-white font-medium rounded-lg py-2 transition disabled:opacity-60 cursor-pointer"
           >
             {loading ? "Logging in..." : "Log In"}
           </button>
@@ -162,7 +162,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         {/* Footer */}
         <p className="text-center text-sm text-gray-700 mt-4">
           New to AbleVu?{" "}
-          <button className="text-[#0519CE] underline font-bold" onClick={()=>{
+          <button className="text-[#0519CE] underline font-bold cursor-pointer" onClick={()=>{
             setOpenLoginModal(false)
             setOpenSignupModal(true) 
           }}>

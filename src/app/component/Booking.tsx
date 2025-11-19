@@ -58,7 +58,7 @@ export default function Booking() {
     </div>
 
     <div className="mt-12 text-center font-['Roboto']">
-      <button className="rounded-full text-[16px] bg-gray-800 px-8 py-3 font-medium text-white transition hover:bg-gray-900">
+      <button className="rounded-full text-[16px] bg-gray-800 px-8 py-3 font-medium text-white transition hover:bg-gray-900 cursor-pointer">
         Book a Call
       </button>
     </div>

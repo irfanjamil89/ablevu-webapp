@@ -35,6 +35,7 @@ export default function AccessibilityFeatureForm() {
       })
       .catch((error) => {
         console.error('Error fetching data:', error);
+        
       })
       .finally(() => {
         setLoading(false); // Hide loading spinner when both fetches are done

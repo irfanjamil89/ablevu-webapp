@@ -25,7 +25,7 @@ const Successmodal: React.FC<SuccessmodalProps> = ({
       <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
         {/* Check Icon */}
         <div className="flex justify-center mb-4">
-          <div className="bg-green-500 rounded-full p-3">
+          <div className="bg-[#0519CE] rounded-full p-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-8 w-8 text-white"
@@ -46,7 +46,7 @@ const Successmodal: React.FC<SuccessmodalProps> = ({
         {/* OK Button */}
         <button
           onClick={onClose}
-          className="bg-green-500 hover:bg-green-600 text-white font-medium rounded-full px-6 py-2 w-full transition-all"
+          className="bg-[#0519CE] hover:bg-[#0212a0] text-white font-medium rounded-full px-6 py-2 w-full transition-all"
         >
           OK
         </button>
