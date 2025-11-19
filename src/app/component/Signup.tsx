@@ -35,10 +35,30 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
 
   const [passwordFocus, setPasswordFocus] = useState(false);
 
+  const [rules, setRules] = useState({
+    length: false,
+    lowercase: false,
+    uppercase: false,
+    number: false,
+    special: false,
+  });
+
+
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const password = e.target.value;
-    handleChange(e); // Call your handleChange to update form state
+    const value = e.target.value;
+
+    setForm({ ...form, password: value });
+
+    // validation rules
+    setRules({
+      length: value.length >= 12,
+      lowercase: /[a-z]/.test(value),
+      uppercase: /[A-Z]/.test(value),
+      number: /[0-9]/.test(value),
+      special: /[!@#$%]/.test(value),
+    });
   };
+
 
   // Submit signup form
   const handleSignup = async (e: React.FormEvent) => {
@@ -240,8 +260,8 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
                   onChange={handlePasswordChange}
                   required
                   placeholder=" "
-                  onFocus={() => setPasswordFocus(true)} // Show validation rules when focused
-                  onBlur={() => setPasswordFocus(false)} // Hide validation rules when focus is lost
+                  onFocus={() => setPasswordFocus(true)}
+                  onBlur={() => setPasswordFocus(false)}
                   className="peer block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] hover:border-[#0519CE]"
                 />
                 <label
@@ -251,24 +271,41 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
                   Password
                 </label>
 
-                {/* Toggle visibility of password validation rules */}
+                {/* Password validation rules */}
                 <div
                   style={{
-                    maxHeight: passwordFocus ? "200px" : "0", // Adjust max-height for smooth transition
-                    opacity: passwordFocus ? 1 : 0, // Fade in/out
+                    maxHeight: passwordFocus ? "200px" : "0",
+                    opacity: passwordFocus ? 1 : 0,
                   }}
-                  className="mt-2 text-xs text-gray-600 transition-all duration-500 overflow-hidden"
+                  className="mt-2 text-xs transition-all duration-500 overflow-hidden mb-2"
                 >
-                  <p><strong>Password must:</strong></p>
-                  <ul className="list-disc pl-5">
-                    <li>Be a minimum of 12 characters</li>
-                    <li>Include at least one lowercase letter (a-z)</li>
-                    <li>Include at least one uppercase letter (A-Z)</li>
-                    <li>Include at least one number (0-9)</li>
-                    <li>Include at least one special character (!@#$%)</li>
+                  <p className="text-[14px] mt-2">Password must:</p>
+                  <ul className="list-disc pl-5 space-y-1 mt-2">
+
+                    <li className={`${rules.length ? "text-green-600" : "text-red-600"}`}>
+                      Be a minimum of 12 characters
+                    </li>
+
+                    <li className={`${rules.lowercase ? "text-green-600" : "text-red-600"}`}>
+                      Include at least one lowercase letter (a-z)
+                    </li>
+
+                    <li className={`${rules.uppercase ? "text-green-600" : "text-red-600"}`}>
+                      Include at least one uppercase letter (A-Z)
+                    </li>
+
+                    <li className={`${rules.number ? "text-green-600" : "text-red-600"}`}>
+                      Include at least one number (0-9)
+                    </li>
+
+                    <li className={`${rules.special ? "text-green-600" : "text-red-600"}`}>
+                      Include at least one special character (!@#$%)
+                    </li>
+
                   </ul>
                 </div>
               </div>
+
 
 
               <div className="flex items-start gap-2 text-sm">
