@@ -19,6 +19,13 @@ type Message = {
   text: string;
 };
 
+type ProfileErrors = {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone_number?: string;
+};
+
 export default function Profile() {
   const [userId, setUserId] = useState<string>("");
 
@@ -28,7 +35,7 @@ export default function Profile() {
     email: "",
     phone_number: "",
   });
-
+  const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMessage, setProfileMessage] = useState<Message | null>(null);
 
@@ -47,7 +54,57 @@ export default function Profile() {
       ...prev,
       [name]: value,
     }));
+
+    setProfileErrors((prev) => ({
+      ...prev,
+      [name]: undefined,
+    }));
   };
+  const validateProfile = (): boolean => {
+    const errors: ProfileErrors = {};
+
+    // first name – required, max 50
+    const fn = profileForm.first_name.trim();
+    if (!fn) {
+      errors.first_name = "First name is required.";
+    } else if (fn.length > 50) {
+      errors.first_name = "First name cannot be longer than 50 characters.";
+    }
+
+    // last name – required, max 50
+    const ln = profileForm.last_name.trim();
+    if (!ln) {
+      errors.last_name = "Last name is required.";
+    } else if (ln.length > 50) {
+      errors.last_name = "Last name cannot be longer than 50 characters.";
+    }
+
+    // email – required + regex
+    const email = profileForm.email.trim();
+    if (!email) {
+      errors.email = "Email is required.";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errors.email = "Please enter a valid email address.";
+      }
+    }
+
+    // phone – optional, but if present then basic validation
+    const phone = profileForm.phone_number.trim();
+if (!phone) {
+  errors.phone_number = "Phone number is required.";
+} else {
+  const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
+  if (!phoneRegex.test(phone)) {
+    errors.phone_number = "Phone number must be in international format.";
+  }
+}
+
+    setProfileErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
 
   const updateProfileRequest = async () => {
   const token = localStorage.getItem("access_token");
@@ -94,6 +151,14 @@ export default function Profile() {
 
   const handleProfileSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!validateProfile()) {
+      setProfileMessage({
+        type: "error",
+        text: "Please fix the highlighted fields.",
+      });
+      return;
+    }
 
     if (!userId) {
       setProfileMessage({
@@ -272,6 +337,11 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
                 onChange={handleProfileChange}
                 className="border border-gray-200 rounded-lg p-3 mt-1 text-gray-700 focus:outline-[#0519CE]"
               />
+              {profileErrors.first_name && (
+                <span className="text-red-600 text-xs mt-1">
+                  {profileErrors.first_name}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col">
@@ -285,6 +355,11 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
                 onChange={handleProfileChange}
                 className="border border-gray-200 rounded-lg p-3 mt-1 text-gray-700 focus:outline-[#0519CE]"
               />
+              {profileErrors.last_name && (
+                <span className="text-red-600 text-xs mt-1">
+                  {profileErrors.last_name}
+                </span>
+              )}
             </div>
           </div>
 
@@ -297,6 +372,11 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
               onChange={handleProfileChange}
               className="border border-gray-200 rounded-lg p-3 mt-1 w-full text-gray-700 focus:outline-[#0519CE]"
             />
+            {profileErrors.email && (
+              <span className="text-red-600 text-xs mt-1">
+                {profileErrors.email}
+              </span>
+            )}
           </div>
 
           <div className="mb-4">
@@ -310,6 +390,11 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
               onChange={handleProfileChange}
               className="border border-gray-200 rounded-lg p-3 mt-1 w-full text-gray-700 focus:outline-[#0519CE]"
             />
+            {profileErrors.phone_number && (
+              <span className="text-red-600 text-xs mt-1">
+                {profileErrors.phone_number}
+              </span>
+            )}
           </div>
 
           <div className="flex justify-end space-x-4">
