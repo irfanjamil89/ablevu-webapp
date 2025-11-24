@@ -80,7 +80,7 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
 
     try {
       const response = await axios.post(
-        "https://staging-api.qtpack.co.uk/users/signup",
+        process.env.API_BASE_URL+"/users/signup",
         payload,
         { headers: { "Content-Type": "application/json" } }
       );

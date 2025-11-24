@@ -26,7 +26,7 @@ const [editLoading, setEditLoading] = useState(false);
   const fetchBusinessTypes = async () => {
     try {
       setLoading(true);
-      const response = await axios.get("https://staging-api.qtpack.co.uk/business-type/list");
+      const response = await axios.get(process.env.API_BASE_URL+"/business-type/list");
       setData(response.data.data || []);
     } catch (err: any) {
       console.error("Error fetching business types:", err);
@@ -46,7 +46,7 @@ const [editLoading, setEditLoading] = useState(false);
 
     try {
       await axios.delete(
-        `https://staging-api.qtpack.co.uk/business-type/delete/${deleteId}/${userId}`,
+        `${process.env.API_BASE_URL}/business-type/delete/${deleteId}/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,

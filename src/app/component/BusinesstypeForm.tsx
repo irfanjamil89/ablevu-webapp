@@ -16,7 +16,7 @@ export default function BusinessTypeForm({ onSuccess }: { onSuccess?: () => void
 
     try {
       const response = await axios.post(
-        `https://staging-api.qtpack.co.uk/business-type/create/${userId}`,
+        `${process.env.API_BASE_URL}/business-type/create/${userId}`,
         { name },
         {
           headers: {

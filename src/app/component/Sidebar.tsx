@@ -17,7 +17,7 @@ export default function Sidebar() {
         }
 
         // Fetch user data using the token for authentication
-        fetch('https://staging-api.qtpack.co.uk/users/1', {
+        fetch(process.env.API_BASE_URL+'/users/1', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}` // Send the token in the Authorization header

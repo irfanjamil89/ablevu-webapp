@@ -31,7 +31,7 @@ export default function FeatureTypeForm({ onSuccess }: FeatureTypeFormProps) {
 
     try {
       const response = await axios.post(
-        "https://staging-api.qtpack.co.uk/accessible-feature-types/create/80dfa7c9-f919-4ffa-b37b-ad36899ec46d",
+        process.env.API_BASE_URL+"/accessible-feature-types/create/80dfa7c9-f919-4ffa-b37b-ad36899ec46d",
         payload,
         {
           headers: {

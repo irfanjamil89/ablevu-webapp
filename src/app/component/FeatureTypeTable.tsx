@@ -35,7 +35,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        "https://staging-api.qtpack.co.uk/accessible-feature-types/list",
+        process.env.API_BASE_URL+"/accessible-feature-types/list",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -243,7 +243,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   setLoadingDelete(true);
                   try {
                     await axios.delete(
-                      `https://staging-api.qtpack.co.uk/accessible-feature-types/delete/${featureToDelete}`,
+                      `${process.env.API_BASE_URL}/accessible-feature-types/delete/${featureToDelete}`,
                       {
                         headers: {
                           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
