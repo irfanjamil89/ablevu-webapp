@@ -4,7 +4,7 @@ import FeatureTypeTable from "@/app/component/FeatureTypeTable";
 import React, { useState } from "react";
 
 
-export default function page() {
+export default function Page() {
   const [refresh, setRefresh] = useState(0);
 
   return (

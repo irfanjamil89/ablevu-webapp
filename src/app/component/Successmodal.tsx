@@ -46,7 +46,7 @@ const Successmodal: React.FC<SuccessmodalProps> = ({
         {/* OK Button */}
         <button
           onClick={onClose}
-          className="bg-[#0519CE] hover:bg-[#0212a0] text-white font-medium rounded-full px-6 py-2 w-full transition-all"
+          className="bg-[#0519CE] hover:bg-[#0212a0] text-white font-medium rounded-full px-6 py-2 w-full transition-all cursor-pointer"
         >
           OK
         </button>

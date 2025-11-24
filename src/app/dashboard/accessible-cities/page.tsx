@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function page() {
+export default function Page() {
   return (
     <div className="w-full h-screen overflow-hidden">
       <div

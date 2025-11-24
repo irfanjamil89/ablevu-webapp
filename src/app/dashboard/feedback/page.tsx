@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function page() {
+export default function Page() {
     return (
         <div className="w-full h-screen overflow-hidden">
             <div
@@ -28,10 +28,8 @@ export default function page() {
                                             <td className="px-4 py-2 flex items-center gap-2 font-medium">Any other feedback
                                             </td>
                                             <td className="px-4 py-2 text-md leading-tight w-[350px]">
-                                                <div className='space-y-2'>
-                                                    <p>Add more description as to what a virtual tour is. For example "Take a virtual walk around the space to explore and get comfortable ahead of time"</p>
+                                                <div className="space-y-2">
                                                     <p>Change the virtual tour icon (maybe a walking man)</p>
-                                                    <p>Consider changing the position of the popup so it doesn't look like a cookies popup</p>
                                                     <p>Consider modifying the words in the popup</p>
                                                 </div>
                                             </td>
