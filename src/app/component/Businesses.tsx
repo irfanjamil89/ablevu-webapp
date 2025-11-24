@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 
 
-export default function Page() {
+export default function Business() {
 
 const [businesses, setBusinesses] = useState<Business[]>([]);
 const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);

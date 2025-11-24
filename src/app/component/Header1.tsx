@@ -22,7 +22,7 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
     }
 
     // Fetch user data using the token for authentication
-    fetch(process.env.API_BASE_URL+'/users/1', {
+    fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/users/1', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`, // Make sure the token is being included in the header

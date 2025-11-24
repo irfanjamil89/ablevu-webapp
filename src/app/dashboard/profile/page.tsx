@@ -130,7 +130,7 @@ if (!phone) {
   };
 
   const response = await fetch(
-    `${process.env.API_BASE_URL}/users/${userId}`,  
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`,  
     {
       method: "PUT",
       headers: {
@@ -208,7 +208,7 @@ if (!phone) {
 
     setUserId(uid);
 
-    fetch(`${process.env.API_BASE_URL}/users/${uid}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${uid}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {
@@ -249,7 +249,7 @@ const changePasswordRequest = async () => {
   if (!userId) throw new Error("User ID not found in token");
 
   const response = await fetch(
-    `${process.env.API_BASE_URL}/users/update-password/${userId}`, 
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-password/${userId}`, 
     {
       method: "PATCH",
       headers: {

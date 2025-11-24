@@ -9,7 +9,7 @@ export default function Sidebar() {
     useEffect(() => {
         // Get token from localStorage
         const token = localStorage.getItem('access_token');
-        console.log('Token from localStorage:', token);
+        console.log('Token from localStorage:', process.env.NEXT_PUBLIC_API_BASE_URL);
 
         if (!token) {
             console.error('No token found, please log in.');
@@ -17,7 +17,7 @@ export default function Sidebar() {
         }
 
         // Fetch user data using the token for authentication
-        fetch(process.env.API_BASE_URL+'/users/1', {
+        fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/users/1', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}` // Send the token in the Authorization header

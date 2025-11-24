@@ -35,7 +35,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        process.env.API_BASE_URL+"/accessible-feature-types/list",
+        process.env.NEXT_PUBLIC_API_BASE_URL+"/accessible-feature-types/list",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -243,7 +243,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   setLoadingDelete(true);
                   try {
                     await axios.delete(
-                      `${process.env.API_BASE_URL}/accessible-feature-types/delete/${featureToDelete}`,
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/delete/${featureToDelete}`,
                       {
                         headers: {
                           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
