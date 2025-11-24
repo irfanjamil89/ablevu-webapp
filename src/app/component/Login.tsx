@@ -39,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
     setError("Invalid credentials or unexpected response.");
   }
 } catch (err: any) {
-  console.error("❌ Login failed:", err?.response?.data || err);
+  console.error("Login failed:", err?.response?.data || err);
   setError("Invalid credentials or server error.");
 } finally {
   setLoading(false);

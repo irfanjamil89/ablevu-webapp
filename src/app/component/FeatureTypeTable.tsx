@@ -122,38 +122,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setOpenDeleteModal(true); // open confirmation modal
   };
 
-  const confirmDelete = async () => {
-    if (!featureToDelete) return;
-
-    setLoadingDelete(true);
-    try {
-      await axios.delete(
-        `https://staging-api.qtpack.co.uk/accessible-feature-types/delete/${featureToDelete}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-        }
-      );
-
-      // Close delete modal
-      setOpenDeleteModal(false);
-      setFeatureToDelete(null);
-
-      // Refresh list
-      fetchFeatures();
-
-      // Show success modal
-      setOpenSuccessModal(true);
-
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("Failed to delete item."); // you can replace this with a custom error modal
-    } finally {
-      setLoadingDelete(false);
-    }
-  };
-
+  
 
   return (
     <section className="flex-1">

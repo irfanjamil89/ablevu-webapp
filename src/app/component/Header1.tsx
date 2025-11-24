@@ -41,7 +41,7 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
         setError('Failed to fetch user data.');
         setLoading(false);
       });
-  }, []); // Empty dependency array ensures this effect runs only once on component mount
+  }, []);
 
 
 
@@ -55,9 +55,6 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
     return <div>Loading...</div>; // Show loading message while the data is being fetched
   }
 
-  if (error) {
-    return <div>{error}</div>; // Show error message if something goes wrong
-  }
 
   return (
     <div className="w-full border-b border-gray-200 bg-white">
@@ -74,10 +71,21 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
           </a>
 
           {/* Welcome Message */}
+
+          
           <div className="flex items-center gap-5 text-gray-700">
             <span className="text-2xl">👋</span>
             <span className="font-medium text-xl">
-              Welcome Back! <span>{user.first_name} {user.last_name} ({user.user_role})</span>
+              {
+                error ? (
+                  <>Failed to fetch user details</>
+                ) : (
+                  <>
+                    Welcome Back! <span>{user.first_name} {user.last_name} ({user.user_role})</span>
+                  </>
+                )
+              }
+              
             </span>
           </div>
         </div>
