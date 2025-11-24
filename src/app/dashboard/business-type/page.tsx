@@ -1,18 +1,16 @@
-import Businesstype from '@/app/component/Businesstype'
-import Header1 from '@/app/component/Header1'
-import Overview from '@/app/component/Overview'
-import Sidebar from '@/app/component/Sidebar'
+import BusinessTypeForm from '@/app/component/BusinesstypeForm';
+import BusinessTypeTable from '@/app/component/BusinesstypeTable';
 import React from 'react'
 
 
-export default function page() {
+export default function Page() {
   return (
-    <div>
-      <Header1/>
-      <div className="flex">
-        <Sidebar/>
-        <Businesstype/>
+    <div className="w-full min-h-screen bg-white px-6 py-5">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900">Business Type</h1>
+        <BusinessTypeForm/>
       </div>
+      <BusinessTypeTable/>
     </div>
-  )
+  );
 }

@@ -41,7 +41,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
         setError(data.message || "Error resetting password. Please try again.");
       }
     } catch (err) {
-      console.error("❌ Error:", err);
+      console.error("Error:", err);
       setError("Server error. Please try again.");
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
           </div>
 
           {/* Resend Link */}
-          <div className="text-right">
+          {/* <div className="text-right">
             <button
               onClick={() => setSuccess("Resending link...")} // This can trigger a resend action if needed
               type="button"
@@ -100,8 +100,9 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             >
               Resend Link
             </button>
-          </div>
+          </div> */}
 
+          {success && <p className="text-green-500 text-sm">{success}</p>}
           {/* Error Message */}
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
