@@ -78,7 +78,7 @@ const [editLoading, setEditLoading] = useState(false);
   try {
     setEditLoading(true);
     await axios.patch(
-      `http://51.75.68.69:3006/business-type/update/${editId}/${userId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/update/${editId}/${userId}`,
       { name: editName.trim() },
       {
         headers: {
