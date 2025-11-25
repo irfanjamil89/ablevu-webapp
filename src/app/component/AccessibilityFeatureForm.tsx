@@ -9,7 +9,7 @@ export default function AccessibilityFeatureForm() {
 //
   useEffect(() => {
     // Fetch accessibility features
-    fetch('https://staging-api.qtpack.co.uk/accessible-feature-types/list')
+    fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/accessible-feature-types/list')
       .then((response) => response.json())
       .then((data) => {
         if (data && Array.isArray(data.data)) {
@@ -24,7 +24,7 @@ export default function AccessibilityFeatureForm() {
       });
 
     // Fetch business types
-    fetch('https://staging-api.qtpack.co.uk/business-type/list')
+    fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/business-type/list')
       .then((response) => response.json())
       .then((data) => {
         if (data && Array.isArray(data.data)) {

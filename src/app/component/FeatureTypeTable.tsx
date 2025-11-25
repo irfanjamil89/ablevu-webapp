@@ -35,7 +35,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        "https://staging-api.qtpack.co.uk/accessible-feature-types/list",
+        process.env.NEXT_PUBLIC_API_BASE_URL+"/accessible-feature-types/list",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -85,7 +85,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
 
   try {
     await axios.patch(
-      `http://51.75.68.69:3006/accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
       {
         name: form.name,
         
@@ -122,38 +122,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setOpenDeleteModal(true); // open confirmation modal
   };
 
-  const confirmDelete = async () => {
-    if (!featureToDelete) return;
-
-    setLoadingDelete(true);
-    try {
-      await axios.delete(
-        `https://staging-api.qtpack.co.uk/accessible-feature-types/delete/${featureToDelete}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-          },
-        }
-      );
-
-      // Close delete modal
-      setOpenDeleteModal(false);
-      setFeatureToDelete(null);
-
-      // Refresh list
-      fetchFeatures();
-
-      // Show success modal
-      setOpenSuccessModal(true);
-
-    } catch (error) {
-      console.error("Delete error:", error);
-      alert("Failed to delete item."); // you can replace this with a custom error modal
-    } finally {
-      setLoadingDelete(false);
-    }
-  };
-
+  
 
   return (
     <section className="flex-1">
@@ -274,7 +243,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   setLoadingDelete(true);
                   try {
                     await axios.delete(
-                      `https://staging-api.qtpack.co.uk/accessible-feature-types/delete/${featureToDelete}`,
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/delete/${featureToDelete}`,
                       {
                         headers: {
                           Authorization: `Bearer ${localStorage.getItem("access_token")}`,

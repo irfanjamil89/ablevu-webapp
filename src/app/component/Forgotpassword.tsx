@@ -26,7 +26,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
 
     try {
       // Replace with actual API call
-      const response = await fetch("https://staging-api.qtpack.co.uk/auth/forgot-password", {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL+"/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,7 +41,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
         setError(data.message || "Error resetting password. Please try again.");
       }
     } catch (err) {
-      console.error("❌ Error:", err);
+      console.error("Error:", err);
       setError("Server error. Please try again.");
     } finally {
       setLoading(false);
@@ -92,7 +92,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
           </div>
 
           {/* Resend Link */}
-          <div className="text-right">
+          {/* <div className="text-right">
             <button
               onClick={() => setSuccess("Resending link...")} // This can trigger a resend action if needed
               type="button"
@@ -100,8 +100,9 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             >
               Resend Link
             </button>
-          </div>
+          </div> */}
 
+          {success && <p className="text-green-500 text-sm">{success}</p>}
           {/* Error Message */}
           {error && <p className="text-red-500 text-sm">{error}</p>}
 

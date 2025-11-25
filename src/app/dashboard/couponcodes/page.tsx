@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function Couponcodes() {
+export default function Page() {
     return (
         <div className="w-full h-screen overflow-hidden">
             <div
@@ -80,7 +80,7 @@ export default function Couponcodes() {
                                                     <label htmlFor="validity" className="w-full text-md font-medium text-gray-700 mb-1">
                                                         Validity in Months <span className="text-red-500">*</span>
                                                     </label>
-                                                     <input type="number" placeholder="3"
+                                                    <input type="number" placeholder="3"
                                                         className="placeholder:text-gray-500 placeholder:ms-2 mt-1 p-2 w-[194px] border border-gray-300 rounded-lg focus:outline-none focus:hover:border-0 focus:ring-1 focus:ring-blue-500"
                                                     />
                                                 </div>
@@ -111,14 +111,7 @@ export default function Couponcodes() {
                         <div className="w-full bg-white">
                             <div className="overflow-x-auto">
                                 <table className="min-w-full table-auto">
-                                    <thead className="bg-gray-100 text-gray-600">
-                                        {/* <tr>
-          <th className="px-4 py-2">City</th>
-          <th className="px-4 py-2">Businesses</th>
-          <th className="px-4 py-2 text-center">Featured?</th>
-          <th className="px-4 py-2 text-center">Actions</th>
-        </tr> */}
-                                    </thead>
+                                    
                                     <tbody className='space-y-3'>
 
                                         {/* <!-- Row 1 --> */}
@@ -140,7 +133,7 @@ export default function Couponcodes() {
                                             <td className="px-4 py-2 flex gap-3">
                                                 {/* <!-- Delete Button --> */}
                                                 <button>
-                                                    <img src="assets/images/delete-svgrepo-com.svg" alt="Delete" className="w-8 h-8 cursor-pointer" />
+                                                    <img src="/assets/images/delete-svgrepo-com.svg" alt="Delete" className="w-8 h-8 cursor-pointer" />
                                                 </button>
                                             </td>
 
@@ -165,7 +158,7 @@ export default function Couponcodes() {
                                             <td className="px-4 py-2 flex gap-3">
                                                 {/* <!-- Delete Button --> */}
                                                 <button>
-                                                    <img src="assets/images/delete-svgrepo-com.svg" alt="Delete" className="w-8 h-8 cursor-pointer" />
+                                                    <img src="/assets/images/delete-svgrepo-com.svg" alt="Delete" className="w-8 h-8 cursor-pointer" />
                                                 </button>
                                             </td>
 

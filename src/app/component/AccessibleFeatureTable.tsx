@@ -61,10 +61,10 @@ export default function AccessibleFeatureTable() {
                           {/* Dropdown Menu */}
                           <div className="absolute right-0 mt-2 w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
                             <button className="flex items-center border-b border-gray-200 gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm">
-                              ✏️ Edit
+                              Edit
                             </button>
                             <button className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg">
-                              🗑️ Delete
+                              Delete
                             </button>
                           </div>
                         </td>

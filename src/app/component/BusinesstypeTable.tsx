@@ -25,8 +25,9 @@ const [editLoading, setEditLoading] = useState(false);
   // Fetch all business types
   const fetchBusinessTypes = async () => {
     try {
+      console.log("Fetching business types...",process.env.NEXT_PUBLIC_API_BASE_URL);
       setLoading(true);
-      const response = await axios.get("https://staging-api.qtpack.co.uk/business-type/list");
+      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL+"/business-type/list");
       setData(response.data.data || []);
     } catch (err: any) {
       console.error("Error fetching business types:", err);
@@ -46,7 +47,7 @@ const [editLoading, setEditLoading] = useState(false);
 
     try {
       await axios.delete(
-        `https://staging-api.qtpack.co.uk/business-type/delete/${deleteId}/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/delete/${deleteId}/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -77,7 +78,7 @@ const [editLoading, setEditLoading] = useState(false);
   try {
     setEditLoading(true);
     await axios.patch(
-      `http://51.75.68.69:3006/business-type/update/${editId}/${userId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/update/${editId}/${userId}`,
       { name: editName.trim() },
       {
         headers: {

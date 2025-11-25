@@ -143,6 +143,39 @@ export default function Business() {
     businessTypes.forEach((bt) => {
       if (!bt.name) return;
       map[bt.id] = bt.name.trim();
+=======
+useEffect(() => {
+  // Fetch business types
+  fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/business-type/list')
+    .then(response => response.json())
+    .then(data => {
+      setBusinessTypes(data.data);
+    })
+    .catch((error) => {
+      console.error('Error fetching business types:', error);
+    });
+
+  // Fetch accessibility features
+  fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/accessible-feature-types/list')
+    .then(response => response.json())
+    .then(data => {
+      setFeatures(data.data);
+    })
+    .catch((error) => {
+      console.error('Error fetching features:', error);
+    });
+
+  // Fetch business list
+  fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/business/list')
+    .then(response => response.json())
+    .then(data => {
+      setBusinesses(data.data); // Set the businesses data
+    })
+    .catch((error) => {
+      console.error('Error fetching data:', error);
+    })
+    .finally(() => {
+      setLoading(false); // Hide loading spinner
     });
     return map;
   }, [businessTypes]);

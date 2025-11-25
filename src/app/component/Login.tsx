@@ -23,7 +23,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
     setLoading(true);
 
     try {
-  const response = await axios.post("https://staging-api.qtpack.co.uk/auth/login", {
+  const response = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL+"/auth/login", {
     username: email,
     password: password,
   });
@@ -39,7 +39,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
     setError("Invalid credentials or unexpected response.");
   }
 } catch (err: any) {
-  console.error("❌ Login failed:", err?.response?.data || err);
+  console.error("Login failed:", err?.response?.data || err);
   setError("Invalid credentials or server error.");
 } finally {
   setLoading(false);
