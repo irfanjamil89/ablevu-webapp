@@ -87,7 +87,7 @@ export default function Business() {
         console.error("Error fetching business types:", error);
       });
 
-    // Fetch accessibility FEATURES (NOT types)
+    // Fetch accessibility FEATURES 
     fetch("https://staging-api.qtpack.co.uk/accessible-feature/list")
       .then((response) => response.json())
       .then((data) => {
@@ -225,10 +225,7 @@ export default function Business() {
 
   const getBusinessTypeName = (type: LinkedType) => {
     if (type.name) return type.name.trim();
-    if (type.business_type_name) return type.business_type_name.trim();
-    if (type.businessTypeName) return type.businessTypeName.trim();
-    if (type.businessType?.name) return type.businessType.name.trim();
-
+    
     const fromMap = businessTypesMap[type.business_type_id];
     if (fromMap) return fromMap;
 
@@ -267,9 +264,7 @@ export default function Business() {
       </div>
     );
   }
-
   // ---------- UI ----------
-
   return (
     <div className="w-full h-screen">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
