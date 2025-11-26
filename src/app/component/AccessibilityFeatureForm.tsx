@@ -6,21 +6,21 @@ export default function AccessibilityFeatureForm() {
   const [businessTypes, setBusinessTypes] = useState([]);
   const [loading, setLoading] = useState(true); // For loading state
   const [error, setError] = useState(null); // For error handling
-//
+  //
   useEffect(() => {
     // Fetch accessibility features
     fetch('https://staging-api.qtpack.co.uk/accessible-feature-types/list')
       .then((response) => response.json())
       .then((data) => {
         if (data && Array.isArray(data.data)) {
-          setFeatures(data.data.map((item :any) => item.name));
+          setFeatures(data.data.map((item: any) => item.name));
         } else {
           console.error('No data found in the response:', data);
         }
       })
       .catch((error) => {
         console.error('Error fetching data:', error);
-        
+
       });
 
     // Fetch business types
@@ -35,7 +35,7 @@ export default function AccessibilityFeatureForm() {
       })
       .catch((error) => {
         console.error('Error fetching data:', error);
-        
+
       })
       .finally(() => {
         setLoading(false); // Hide loading spinner when both fetches are done
@@ -111,7 +111,10 @@ export default function AccessibilityFeatureForm() {
           <form className="space-y-5">
             <div>
               <label className="block text-md font-medium text-gray-700 mb-1">Title<span className="text-red-500 font-bold">*</span></label>
-              <input type="text" placeholder="Enter Title" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200" />
+              <input type="text" maxLength={250}
+                pattern="^[A-Za-z\s]{1,50}$" 
+                placeholder="Enter Title" 
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200" />
             </div>
 
             <div className="mb-4 relative">
@@ -128,7 +131,7 @@ export default function AccessibilityFeatureForm() {
               <label htmlFor="dropdownToggle" className="hidden peer-checked:block fixed inset-0 z-10"></label>
 
               <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-md hidden peer-checked:flex flex-col">
-                
+
                 {features.map((feature, index) => (
                   <button key={index} className="text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     {feature}
@@ -155,16 +158,16 @@ export default function AccessibilityFeatureForm() {
                 ))}
               </div>
             </div>
-             <div className="flex justify-center gap-3 pt-2">
-                <label htmlFor="business-toggle"
-                  className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100">
-                  Cancel
-                </label>
-                <button type="submit"
-                  className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700">
-                  Save
-                </button>
-              </div>
+            <div className="flex justify-center gap-3 pt-2">
+              <label htmlFor="business-toggle"
+                className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100">
+                Cancel
+              </label>
+              <button type="submit"
+                className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700">
+                Save
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -175,4 +178,3 @@ export default function AccessibilityFeatureForm() {
 
 
 
-                     

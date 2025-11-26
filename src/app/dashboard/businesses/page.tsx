@@ -174,7 +174,7 @@ useEffect(() => {
 
                   {/* <!-- Dropdown --> */}
                   <div
-                    className="absolute z-20 mt-2 hidden peer-checked:block border border-gray-200 bg-white divide-y divide-gray-100 rounded-lg shadow-md w-[200px]"
+                    className="absolute z-20 mt-2 hidden peer-checked:block border border-gray-200 bg-white divide-y divide-gray-100 rounded-lg shadow-md w-auto"
                   >
                     <ul className="py-2 text-sm text-gray-700">
                       <li><a href="#" className="block px-3 py-1 hover:bg-gray-100">Archived</a></li>
