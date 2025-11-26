@@ -34,12 +34,16 @@ type Business = {
   blocked: boolean;
   business_status?: string | null;
   views: number;
-  created_at: Date;
+  created_at: Date | string;
   city: string;
   state: string;
   zipcode: string;
   country: string;
   businessRecomendations?: any[];
+
+  // backend relations (agar kabhi join karo)
+  owner?: { id: string };
+  creator?: { id: string };
 };
 
 type BusinessType = {
@@ -47,7 +51,7 @@ type BusinessType = {
   name: string;
 };
 
-// 🔹 ONE record from /accessible-feature/list
+// 🔹 record from /accessible-feature/list
 type FeatureType = {
   id: string;
   title: string;
@@ -55,8 +59,86 @@ type FeatureType = {
 };
 
 type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
-
 type StatusFilter = "" | "draft" | "pending" | "approved" | "claimed";
+
+type BusinessSchedule = {
+  id: string;
+  business: {
+    id: string;
+    name: string;
+    // zarurat ho to extra fields bhi add kar sakte ho
+  };
+  day: string; // "monday", "tuesday" ...
+  opening_time: string; // ISO string aa rahi hai
+  closing_time: string; // ISO string aa rahi hai
+  opening_time_text: string;
+  closing_time_text: string;
+  active: boolean;
+  created_at: string;
+  modified_at: string;
+};
+
+type ScheduleListResponse = {
+  data: BusinessSchedule[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+
+// 🔹 Parse "street, city, ST ZIP, country" from UI
+const parseFullAddress = (full?: string) => {
+  if (!full) {
+    return {
+      address: undefined,
+      city: undefined,
+      state: undefined,
+      zipcode: undefined,
+      country: undefined,
+    };
+  }
+
+  const parts = full.split(",").map((p) => p.trim());
+  const street = parts[0] || undefined;
+  const city = parts[1] || undefined;
+  const stateZip = parts[2] || "";
+  const country = parts[3] || undefined;
+
+  let state: string | undefined;
+  let zipcode: string | undefined;
+
+  if (stateZip) {
+    const match = stateZip.match(/^([A-Za-z]{2})\s+(\d+)/); // e.g. CA 90001
+    if (match) {
+      state = match[1];
+      zipcode = match[2];
+    } else {
+      state = stateZip;
+    }
+  }
+
+  return {
+    address: street,
+    city,
+    state,
+    zipcode,
+    country,
+  };
+};
+
+// ⭐ Validate each part of the parsed address
+function validateParsedAddress(parsed: any) {
+  if (!parsed.address) return "Please enter a complete street address.";
+  if (!parsed.city) return "Please include the city in your address.";
+  if (!parsed.state) return "State/Province is missing in the address.";
+  if (!parsed.zipcode) return "Zip/Postal code is missing.";
+  if (!parsed.country) return "Country is missing in the address.";
+
+  return null; // Everything OK
+}
+
+// ---------- Component ----------
 
 export default function Business() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -77,14 +159,9 @@ export default function Business() {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
-  // 🔹 Hard-coded IDs (given by you)
-  const ACCESSIBLE_CITY_ID = "20eac27b-63a7-4d06-bf28-100c356ddd90";
-  const DEFAULT_FEATURE_IDS = [
-    "0845b189-694b-4de1-a0c8-2333c9110734",
-    "1cff32fb-8e96-42b4-bdff-839a7b940491",
-    "2ae00270-8bb5-41a1-a702-9d6a3c38843f",
-  ];
+
 
   const statusFilterLabel =
     statusFilter === "draft"
@@ -97,12 +174,11 @@ export default function Business() {
       ? "Claimed"
       : "";
 
-  // ---------- Fetch data ----------
+  // ---------- Fetch business types & accessible features ----------
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    // Business types
     fetch(base + "/business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
@@ -113,7 +189,6 @@ export default function Business() {
         console.error("Error fetching business types:", error);
       });
 
-    // Accessible features
     fetch(base + "/accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
@@ -124,34 +199,46 @@ export default function Business() {
         console.error("Error fetching features:", error);
       });
 
-    // Initial business list
-    fetch(base + "/business/list")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Business list API:", data);
-        setBusinesses(data.data || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+      fetch(base + "/business-schedules/list?page=1&limit=1000")
+    .then((response) => response.json())
+    .then((data: ScheduleListResponse) => {
+      console.log("Business schedules API:", data);
+      setSchedules(data.data || []);
+    })
+    .catch((error) => {
+      console.error("Error fetching business schedules:", error);
+    });
   }, []);
 
+  // ---------- Fetch businesses (role-based filter backend pe) ----------
+
   useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    let url = base + "/business/list";
+
+    if (appliedSearch) {
+      url += `?search=${encodeURIComponent(appliedSearch)}`;
+    }
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
     setLoading(true);
 
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    const url = appliedSearch
-      ? base + `/business/list?search=${encodeURIComponent(appliedSearch)}`
-      : base + "/business/list";
-
-    fetch(url)
+    fetch(url, { headers })
       .then((response) => response.json())
       .then((data) => {
         console.log("Business list API:", data);
-        setBusinesses(data.data || []);
+        const list: Business[] = data.data || [];
+        // Backend already filter karega (Business / Contributor user ⇒ sirf apni)
+        setBusinesses(list);
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
@@ -163,7 +250,6 @@ export default function Business() {
 
   // ---------- Maps (ID -> Name) ----------
 
-  // BusinessType map (id -> name)
   const businessTypesMap = useMemo(() => {
     const map: Record<string, string> = {};
     (businessTypes || []).forEach((bt) => {
@@ -176,18 +262,17 @@ export default function Business() {
     return map;
   }, [businessTypes]);
 
-  // Feature map (id -> title/name/label)
   const featuresMap = useMemo(() => {
     const map: Record<string, string> = {};
     (features || []).forEach((f) => {
       if (!f) return;
 
       const label =
-        f.title?.trim() ||
+        (f as any).title?.trim() ||
         (f as any).name?.trim() ||
         (f as any).feature_name?.trim() ||
         (f as any).label?.trim() ||
-        f.slug?.trim();
+        (f as any).slug?.trim();
 
       if (f.id && label) {
         map[f.id] = label;
@@ -196,22 +281,68 @@ export default function Business() {
     return map;
   }, [features]);
 
+  const schedulesByBusinessId = useMemo(() => {
+  const map: Record<string, BusinessSchedule[]> = {};
+
+  (schedules || []).forEach((sch) => {
+    const bId = sch.business?.id;
+    if (!bId) return;
+    if (!map[bId]) map[bId] = [];
+    map[bId].push(sch);
+  });
+
+  Object.values(map).forEach((list) => {
+    list.sort((a, b) => a.day.localeCompare(b.day));
+  });
+
+  return map;
+}, [schedules]);
+
+
   const formatFullAddress = (b: Business) => {
-  const parts = [];
+    const parts: string[] = [];
 
-  if (b.address) parts.push(b.address);
-  if (b.city) parts.push(b.city);
+    if (b.address) parts.push(b.address);
+    if (b.city) parts.push(b.city);
 
-  let stateZip = "";
-  if (b.state) stateZip += b.state;
-  if (b.zipcode) stateZip += (stateZip ? " " : "") + b.zipcode;
-  if (stateZip) parts.push(stateZip);
+    let stateZip = "";
+    if (b.state) stateZip += b.state;
+    if (b.zipcode) stateZip += (stateZip ? " " : "") + b.zipcode;
+    if (stateZip) parts.push(stateZip);
 
-  if (b.country) parts.push(b.country);
+    if (b.country) parts.push(b.country);
 
-  return parts.join(", ");
-};
+    return parts.join(", ");
+  };
 
+  // ---------- Status badge (business.business_status) ----------
+
+  const getStatusInfo = (b: Business) => {
+    const raw = (b.business_status || "").toLowerCase().trim();
+    let label = "";
+    let bg = "";
+    let text = "";
+
+    if (raw === "draft") {
+      label = "Draft";
+      bg = "#FFF3CD";
+      text = "#C28A00";
+    } else if (raw === "pending" || raw === "pending_approval") {
+      label = "Pending Approval";
+      bg = "#FFEFD5";
+      text = "#B46A00";
+    } else if (raw === "claimed") {
+      label = "Claimed";
+      bg = "#E0F7FF";
+      text = "#0369A1";
+    } else if (b.active && !b.blocked) {
+      label = "Approved";
+      bg = "#D1FAE5";
+      text = "#065F46";
+    }
+
+    return { label, bg, text };
+  };
 
   // ---------- Sorting + Status filter ----------
 
@@ -225,8 +356,7 @@ export default function Business() {
 
         switch (statusFilter) {
           case "draft":
-  return status === "draft";
-
+            return status === "draft";
 
           case "approved":
             return (
@@ -279,204 +409,199 @@ export default function Business() {
     return arr;
   }, [businesses, sortOption, statusFilter]);
 
-  // ---------- Helpers ----------
+  // Schedule Helper
+  const dayOrder = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
+
+function getTodayKey(): string {
+  const todayIndex = new Date().getDay(); 
+  // 0 = Sunday ... 6 = Saturday
+
+  // hamari API mein day lowercase string hai (monday, tuesday...)
+  // isliye ek mapping bana lete hain:
+  const mapByIndex: Record<number, string> = {
+    0: "sunday",
+    1: "monday",
+    2: "tuesday",
+    3: "wednesday",
+    4: "thursday",
+    5: "friday",
+    6: "saturday",
+  };
+
+  return mapByIndex[todayIndex] || "monday";
+}
+
+function getTodayScheduleLabel(businessId: string): string | null {
+  const list = schedulesByBusinessId[businessId];
+  if (!list || list.length === 0) return null;
+
+  const todayKey = getTodayKey();
+
+  // aaj ka active schedule
+  const todaySchedule = list.find(
+    (sch) => sch.day.toLowerCase() === todayKey && sch.active,
+  );
+
+  if (!todaySchedule) {
+    return "Closed today";
+  }
+
+  const openText =
+    todaySchedule.opening_time_text ||
+    new Date(todaySchedule.opening_time).toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+  const closeText =
+    todaySchedule.closing_time_text ||
+    new Date(todaySchedule.closing_time).toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+  // Example: "Today: 9 AM – 6 PM"
+  return `Today: ${openText} – ${closeText}`;
+}
+
+  // ---------- Name helpers ----------
 
   const getBusinessTypeName = (type: LinkedType) => {
-    // 1. Direct fields coming from /business/list
     if (type.businessType?.name) return type.businessType.name.trim();
     if (type.business_type_name) return type.business_type_name.trim();
     if (type.businessTypeName) return type.businessTypeName.trim();
     if (type.name) return type.name.trim();
 
-    // 2. Try map with business_type_id OR id
     const key = type.business_type_id || type.id;
     if (key && businessTypesMap[key]) {
       return businessTypesMap[key];
     }
 
-    // 3. Last fallback – just show id so we see something
-    console.warn(
-      "Business type name not found for:",
-      type,
-      "using map:",
-      businessTypesMap
-    );
     return key || "Unknown business type";
   };
 
   const getFeatureName = (feature: AccessibilityFeature) => {
-    // 1. Direct fields from /business/list
-    if (feature.title) return feature.title.trim();
-    if (feature.name) return feature.name.trim();
-    if (feature.feature_name) return feature.feature_name.trim();
-    if (feature.label) return feature.label.trim();
-    if (feature.featureType?.name) return feature.featureType.name.trim();
+  if (feature.title) return feature.title.trim();
+  if (feature.name) return feature.name.trim();
+  if (feature.feature_name) return feature.feature_name.trim();
+  if (feature.label) return feature.label.trim();
+  if (feature.featureType?.name) return feature.featureType.name.trim();
 
-    // 2. Try map using accessible_feature_id OR id
-    const key = feature.accessible_feature_id || feature.id;
-    if (key && featuresMap[key]) {
-      return featuresMap[key];
-    }
-
-    // 3. Last fallback – show id if nothing else
-    console.warn(
-      "Accessible feature name not found for:",
-      feature,
-      "using map:",
-      featuresMap
-    );
-    return key || "Unknown feature";
-  };
-
-  // 🔹 Parse "street, city, ST ZIP, country" from UI
-  const parseFullAddress = (full?: string) => {
-    if (!full) {
-      return {
-        address: undefined,
-        city: undefined,
-        state: undefined,
-        zipcode: undefined,
-        country: undefined,
-      };
-    }
-
-    const parts = full.split(",").map((p) => p.trim());
-    // Example: "123 Main Street, Los Angeles, CA 90001, USA"
-    const street = parts[0] || undefined;
-    const city = parts[1] || undefined;
-    const stateZip = parts[2] || "";
-    const country = parts[3] || undefined;
-
-    let state: string | undefined;
-    let zipcode: string | undefined;
-
-    if (stateZip) {
-      const match = stateZip.match(/^([A-Za-z]{2})\s+(\d+)/); // CA 90001
-      if (match) {
-        state = match[1];
-        zipcode = match[2];
-      } else {
-        state = stateZip;
-      }
-    }
-
-    return {
-      address: street,
-      city,
-      state,
-      zipcode,
-      country,
-    };
-  };
-  // ⭐ Validate each part of the parsed address
-function validateParsedAddress(parsed: any) {
-  if (!parsed.address) return "Please enter a complete street address.";
-  if (!parsed.city) return "Please include the city in your address.";
-  if (!parsed.state) return "State/Province is missing in the address.";
-  if (!parsed.zipcode) return "Zip/Postal code is missing.";
-  if (!parsed.country) return "Country is missing in the address.";
-
-  return null; // Everything OK
-}
-
-  const handleCreateBusiness = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setCreateError(null);
-
-  // Basic field validations
-  if (!newBusiness.name.trim()) {
-    setCreateError("Business name is required.");
-    return;
-  }
-  if (!selectedCategoryId) {
-    setCreateError("Please select a business category.");
-    return;
+  const key = feature.accessible_feature_id || feature.id;
+  if (key && featuresMap[key]) {
+    return featuresMap[key];
   }
 
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    setCreateError("You must be logged in before creating a business.");
-    return;
-  }
-
-  // Parse full address
-  const parsed = parseFullAddress(newBusiness.fullAddress);
-
-  // ⭐ FRONTEND ADDRESS VALIDATION ⭐
-  const addrError = validateParsedAddress(parsed);
-  if (addrError) {
-    setCreateError(addrError);
-    return; // STOP – do not call API!
-  }
-
-  // Payload now guaranteed to be valid
-  const payload: any = {
-    name: newBusiness.name.trim(),
-    business_type: [selectedCategoryId],
-    accessible_feature_id: DEFAULT_FEATURE_IDS,
-    accessible_city_id: ACCESSIBLE_CITY_ID,
-
-    description: newBusiness.description || undefined,
-
-    address: parsed.address,
-    city: parsed.city,
-    state: parsed.state,
-    country: parsed.country,
-    zipcode: parsed.zipcode,
-
-    active: false,
-     business_status: "draft",
-  };
-
-
-  try {
-    setIsCreating(true);
-
-    const res = await fetch(
-      process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // ✅ proper Bearer header
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    console.log("Create business – status:", res.status);
-
-    if (!res.ok) {
-      const errorBody = await res.json().catch(() => ({}));
-      console.error("Create business error:", errorBody);
-      throw new Error(errorBody.message || "Failed to create business");
-    }
-
-    // ✅ Refresh list
-    const listRes = await fetch(
-      process.env.NEXT_PUBLIC_API_BASE_URL + "/business/list"
-    );
-    const listData = await listRes.json();
-    setBusinesses(listData.data || []);
-
-    // ✅ Reset form
-    setNewBusiness({ name: "", fullAddress: "", description: "" });
-    setSelectedCategoryId("");
-
-    // ✅ Modal close
-    const checkbox = document.getElementById(
-      "business-toggle"
-    ) as HTMLInputElement | null;
-    if (checkbox) checkbox.checked = false;
-  } catch (err: any) {
-    setCreateError(err.message || "Something went wrong");
-  } finally {
-    setIsCreating(false);
-  }
+  return key || "Unknown feature";
 };
 
+  // ---------- Create business ----------
+
+  const handleCreateBusiness = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError(null);
+
+    if (!newBusiness.name.trim()) {
+      setCreateError("Business name is required.");
+      return;
+    }
+    if (!selectedCategoryId) {
+      setCreateError("Please select a business category.");
+      return;
+    }
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+
+    if (!token) {
+      setCreateError("You must be logged in before creating a business.");
+      return;
+    }
+
+    const parsed = parseFullAddress(newBusiness.fullAddress);
+    const addrError = validateParsedAddress(parsed);
+    if (addrError) {
+      setCreateError(addrError);
+      return;
+    }
+
+    const payload: any = {
+      name: newBusiness.name.trim(),
+      business_type: [selectedCategoryId],
+      description: newBusiness.description || undefined,
+
+      address: parsed.address,
+      city: parsed.city,
+      state: parsed.state,
+      country: parsed.country,
+      zipcode: parsed.zipcode,
+
+      active: false,
+      business_status: "draft",
+    };
+
+    try {
+      setIsCreating(true);
+
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      console.log("Create business – status:", res.status);
+
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        console.error("Create business error:", errorBody);
+        throw new Error(errorBody.message || "Failed to create business");
+      }
+
+      // List refresh (same JWT header)
+      const listRes = await fetch(
+        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/list",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const listData = await listRes.json();
+      const list: Business[] = listData.data || [];
+      setBusinesses(list);
+
+      setNewBusiness({ name: "", fullAddress: "", description: "" });
+      setSelectedCategoryId("");
+
+      const checkbox = document.getElementById(
+        "business-toggle"
+      ) as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = false;
+    } catch (err: any) {
+      setCreateError(err.message || "Something went wrong");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   // ---------- Loading state ----------
+
   if (loading) {
     return (
       <div className="w-full h-screen flex items-center justify-center">
@@ -486,6 +611,7 @@ function validateParsedAddress(parsed: any) {
   }
 
   // ---------- UI ----------
+
   return (
     <div className="w-full h-screen">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
@@ -494,7 +620,7 @@ function validateParsedAddress(parsed: any) {
             {/* Header */}
             <div className="flex flex-wrap gap-y-4 items-center justify-between mb-8">
               <h1 className="text-2xl font-semibold text-gray-900">
-                All Business Profiles ({sortedBusinesses.length})
+                {`Business Profiles (${sortedBusinesses.length})`}
               </h1>
 
               {/* Controls */}
@@ -617,7 +743,7 @@ function validateParsedAddress(parsed: any) {
                     htmlFor="business-status-toggle"
                     className="flex items-center justify-between border border-gray-300 text-gray-500 text-sm px-3 py-3 rounded-md hover:border-[#0519CE] cursor-pointer w-auto lg:w-auto transition-all duration-200"
                   >
-                    <span className="flex items-center">
+                    <span className="flex items- center">
                       Business Status
                       {statusFilterLabel && (
                         <span className="ml-1 text-xs text-gray-400">
@@ -899,163 +1025,166 @@ function validateParsedAddress(parsed: any) {
             {/* Business cards */}
             <section>
               <div>
-                {sortedBusinesses.map((business) => (
-                  <div
-                    key={business.id}
-                    className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white"
-                  >
-                    {/* Left image */}
-                    <div
-                      className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
-                      style={{
-                        backgroundImage: `url(${
-                          business.logo_url || "/assets/images/b-img.png"
-                        })`,
-                      }}
-                    >
-                      <span
-  className="absolute top-3 md:right-2 right-14
-  bg-[#FFF3CD] text-[#C28A00] text-sm font-semibold px-2 py-1
-  rounded-md shadow-sm"
->
-  Draft
-</span>
-                    </div>
+                {sortedBusinesses.map((business) => {
+                  const statusInfo = getStatusInfo(business);
 
-                    {/* Right content */}
-                    <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
-                      <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
-                        <h3 className="font-semibold text-gray-800 text-2xl">
-                          {business.name}
-                        </h3>
-                        <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
-                          {/* Saved */}
-                          <label className="inline-flex items-center gap-1 cursor-pointer">
-                            <input type="checkbox" className="peer hidden" />
-                            <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
+                  return (
+                    <div
+                      key={business.id}
+                      className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
+                    >
+                      {/* Left image */}
+                      <div
+                        className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
+                        style={{
+                          backgroundImage: `url(${
+                            business.logo_url || "/assets/images/b-img.png"
+                          })`,
+                        }}
+                      >
+                        {statusInfo.label && (
+                          <span
+                            className="absolute top-3 md:right-2 right-14 text-sm font-semibold px-2 py-1 rounded-md shadow-sm"
+                            style={{
+                              backgroundColor: statusInfo.bg,
+                              color: statusInfo.text,
+                            }}
+                          >
+                            {statusInfo.label}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Right content */}
+                      <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
+                        <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
+                          <h3 className="font-semibold text-gray-800 text-2xl">
+                            {business.name}
+                          </h3>
+                          <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
+                            {/* Saved */}
+                            <label className="inline-flex items-center gap-1 cursor-pointer">
+                              <input type="checkbox" className="peer hidden" />
+                              <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="2"
+                                  stroke="black"
+                                  fill="white"
+                                  className="w-3.5 h-4 peer-checked:fill-black peer-checked:stroke-black transition-colors"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z"
+                                  />
+                                </svg>
+                                <span>0 Saved</span>
+                              </div>
+                            </label>
+
+                            {/* Views */}
+                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
+                                fill="white"
                                 viewBox="0 0 24 24"
                                 strokeWidth="2"
                                 stroke="black"
-                                fill="white"
-                                className="w-3.5 h-4 peer-checked:fill-black peer-checked:stroke-black transition-colors"
+                                className="w-4 h-4"
                               >
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                              {business.views} Views
+                            </button>
+
+                            {/* Recommendations */}
+                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="white"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="black"
+                                className="w-4 h-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
                                 />
                               </svg>
-                              <span>0 Saved</span>
-                            </div>
-                          </label>
-
-                          {/* Views */}
-                          <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="white"
-    viewBox="0 0 24 24"
-    strokeWidth="2"
-    stroke="black"
-    className="w-4 h-4"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-    />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-  {business.views} Views
-</button>
-
-
-                          {/* Recommendations */}
-                          <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="white"
-    viewBox="0 0 24 24"
-    strokeWidth="2"
-    stroke="black"
-    className="w-4 h-4"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
-    />
-  </svg>
-  {(business.businessRecomendations?.length ?? 0)} Recommendations
-</button>
-
+                              {business.businessRecomendations?.length ?? 0}{" "}
+                              Recommendations
+                            </button>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* Categories */}
-                      <div className="text-md">
-                        <div className="flex">
-                          <span className="font-medium text-gray-500 pe-2">
-                            Categories
+                        {/* Categories */}
+                        <div className="text-md">
+                          <div className="flex">
+                            <span className="font-medium text-gray-500 pe-2">
+                              Categories
+                            </span>
+                            <ul className="flex flex-wrap md:flex-nowrap space-x-2">
+                              {business.linkedTypes.map((type) => (
+                                <li
+                                  key={type.id}
+                                  className="bg-[#F7F7F7] rounded-full px-2"
+                                >
+                                  {getBusinessTypeName(type)}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Accessible Features */}
+                        <div className="text-md text-gray-500 mt-2">
+                          <div className="flex flex-wrap md:gap-0 gap-2">
+                            <span className="font-medium text-gray-500 pe-2">
+                              Accessible Features
+                            </span>
+                            <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
+                              {business.accessibilityFeatures.map((feature) => (
+                                <li
+                                  key={feature.id}
+                                  className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
+                                >
+                                  {getFeatureName(feature)}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Other info */}
+                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                          <img src="/assets/images/clock.webp" className="w-4 h-4" />
+                            <span className="text-md text-gray-700">
+                               {getTodayScheduleLabel(business.id) || "Operating hours not specified"}
+                            </span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                          <img
+                            src="/assets/images/location.png"
+                            className="w-4 h-4"
+                          />
+                          <span className="text-md text-gray-700">
+                            {formatFullAddress(business)}
                           </span>
-                          <ul className="flex flex-wrap md:flex-nowrap space-x-2">
-                            {business.linkedTypes.map((type) => (
-                              <li
-                                key={type.id}
-                                className="bg-[#F7F7F7] rounded-full px-2"
-                              >
-                                {getBusinessTypeName(type)}
-                              </li>
-                            ))}
-                          </ul>
                         </div>
-                      </div>
-
-                      {/* Accessible Features */}
-                      <div className="text-md text-gray-500 mt-2">
-                        <div className="flex flex-wrap md:gap-0 gap-2">
-                          <span className="font-medium text-gray-500 pe-2">
-                            Accessible Features
-                          </span>
-                          <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                            {business.accessibilityFeatures.map((feature) => (
-                              <li
-                                key={feature.id}
-                                className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
-                              >
-                                {getFeatureName(feature)}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      {/* Other info */}
-                      <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-                        <img
-                          src="/assets/images/clock.webp"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-md text-gray-700">
-                          Operating hours not specified
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-                        <img
-                          src="/assets/images/location.png"
-                          className="w-4 h-4"
-                        />
-                        <span className="text-md text-gray-700">
-  {formatFullAddress(business)}
-</span>
-
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           </div>
