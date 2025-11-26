@@ -12,11 +12,11 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-black/15" aria-hidden="true"></div>
 
       <div className="flex lg:justify-start md:justify-center justify-center relative z-10 w-5/6 mx-auto  lg:mx-auto px-6 md:px-12 lg:px-6 text-center md:text-left">
-        <div className="text-white max-w-[700px] mx-auto md:mx-0">
+        <div className="text-white max-w-[600px] mx-auto md:mx-0">
           {/* Accessible heading */}
           <h1
             id="hero-heading"
-            className="font-['Montserrat'] text-5xl sm:text-5xl md:text-6xl lg:text-[64px] font-semibold my-[40px]"
+            className="font-['Montserrat'] text-5xl sm:text-5xl md:text-6xl lg:text-[64px] font-semibold my-[40px] leading-18"
           >
             AbleVu is Coming to Your City
           </h1>
