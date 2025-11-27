@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import axios from "axios";
+import Link from "next/link";
+
 
 interface SignupProps {
   setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -94,7 +96,7 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
         setError(response.data?.message || "Signup failed. Please try again.");
       }
     } catch (err: any) {
-      console.error("❌ Signup error:", err.response?.data || err.message);
+      console.error("Signup error:", err.response?.data || err.message);
       setError(err.response?.data?.message || "Server error. Please try again.");
     } finally {
       setLoading(false);
@@ -317,11 +319,11 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
                   className="mt-1 h-3 w-3 rounded border-gray-300 text-[#0519CE] focus:ring-[#0519CE] cursor-pointer" />
                 <label htmlFor="agree" className="text-gray-700 text-[13px] ">
                   By creating an account, I agree to our
-                  <a href="#" className="font-normal text-[#0519CE] underline"> Terms &
-                    Conditions </a>
+                  <Link href="/terms-and-conditions" className="font-normal text-[#0519CE] underline"> Terms &
+                    Conditions </Link>
                   and
-                  <a href="#" className="font-normal text-[#0519CE] underline"> Privacy
-                    Policy</a>.
+                  <Link href="/privacy-policy" className="font-normal text-[#0519CE] underline"> Privacy
+                    Policy</Link>.
                 </label>
               </div>
               {/* Error and Success Messages */}

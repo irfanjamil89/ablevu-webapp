@@ -98,6 +98,11 @@ const [editLoading, setEditLoading] = useState(false);
   }
 };
 
+ if (loading) {
+    return <div className="flex justify-center items-center h-screen">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>; // Show loading message while the data is being fetched
+  }
 
   return (
     <section className="flex-1">
@@ -271,6 +276,8 @@ const [editLoading, setEditLoading] = useState(false);
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Enter name"
+              maxLength={250}
+              pattern="^[A-Za-z\s]{1,50}$"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200"
             />
 
