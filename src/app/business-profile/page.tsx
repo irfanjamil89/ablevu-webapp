@@ -1,7 +1,8 @@
 import React from 'react'
 import type { Metadata } from "next";
-import Maincontent from '../component/Maincontent'
-import BusinessSidebar from '../component/BusinessSidebar';
+import BusinessSidebar from '@/app/component/BusinessSidebar';
+import Maincontent from '@/app/component/Maincontent';
+
 
 export const metadata: Metadata = {
   title: "Become a Contributor | AbleVu Accessibility Platform",
@@ -17,8 +18,8 @@ export const metadata: Metadata = {
 export default function page() {
   return (
     <div className='flex'>
-        <BusinessSidebar/>   
-        <Maincontent/>   
+        <BusinessSidebar/> 
+        <Maincontent/>
     </div>
   )
 }

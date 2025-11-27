@@ -19,28 +19,28 @@ export default function page() {
                             </a>
 
                             {/* card-2 */}
-                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md  dark:border-gray-700">
+                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#fcf4e0] rounded-lg shadow-md  dark:border-gray-700">
 
                                 <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">20</h5>
                                 <p className="font-normal text-gray-700 dark:text-gray-400">Paid Contributors</p>
                             </a>
 
                             {/* card-3 */}
-                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md  dark:border-gray-700">
+                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#ffe2df] rounded-lg shadow-md  dark:border-gray-700">
 
                                 <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">25</h5>
                                 <p className="font-normal text-gray-700 dark:text-gray-400">Volunteer Contributors</p>
                             </a>
 
                             {/* card-4 */}
-                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md  dark:border-gray-700">
+                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#daf1e6] rounded-lg shadow-md  dark:border-gray-700">
 
                                 <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">383</h5>
                                 <p className="font-normal text-gray-700 dark:text-gray-400">Business Profiles</p>
                             </a>
 
                             {/* card-5 */}
-                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md  dark:border-gray-700">
+                            <a href="#" className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] items-center sm:items-start p-3 px-4 bg-[#fde8e2] rounded-lg shadow-md  dark:border-gray-700">
 
                                 <h5 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">7</h5>
                                 <p className="font-normal text-gray-700 dark:text-gray-400">Total Partners</p>
@@ -96,7 +96,7 @@ export default function page() {
                                     </svg>
                                     <input type="text"
                                         placeholder="Search by Business Name, City, Category"
-                                        className="w-full border-none focus:ring-0 text-sm text-gray-700 placeholder-gray-400 ml-2" />
+                                        className="w-full border-none focus:ring-0 focus:border-0 active:border-0 focus-visible:outline-0 text-sm text-gray-700 placeholder-gray-400 ml-2" />
                                 </div>
                             </div>
                         </div>

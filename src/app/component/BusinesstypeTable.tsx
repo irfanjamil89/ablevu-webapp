@@ -27,7 +27,7 @@ const [editLoading, setEditLoading] = useState(false);
     try {
       console.log("Fetching business types...",process.env.NEXT_PUBLIC_API_BASE_URL);
       setLoading(true);
-      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL+"/business-type/list");
+      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL+"/business-type/list?page1&limit=1000");
       setData(response.data.data || []);
     } catch (err: any) {
       console.error("Error fetching business types:", err);

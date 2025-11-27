@@ -1,4 +1,5 @@
 "use client";
+import Imgupload from "@/app/component/Imgupload";
 import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
 
 type UpdateProfile = {
@@ -39,15 +40,19 @@ export default function Page() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMessage, setProfileMessage] = useState<Message | null>(null);
 
+
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
 
+
+
+
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<Message | null>(null);
-  
+
   const handleProfileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setProfileForm((prev) => ({
@@ -92,14 +97,14 @@ export default function Page() {
 
     // phone – optional, but if present then basic validation
     const phone = profileForm.phone_number.trim();
-if (!phone) {
-  errors.phone_number = "Phone number is required.";
-} else {
-  const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
-  if (!phoneRegex.test(phone)) {
-    errors.phone_number = "Phone number must be in international format.";
-  }
-}
+    if (!phone) {
+      errors.phone_number = "Phone number is required.";
+    } else {
+      const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
+      if (!phoneRegex.test(phone)) {
+        errors.phone_number = "Phone number must be in international format.";
+      }
+    }
 
     setProfileErrors(errors);
     return Object.keys(errors).length === 0;
@@ -107,47 +112,47 @@ if (!phone) {
 
 
   const updateProfileRequest = async () => {
-  const token = localStorage.getItem("access_token");
-  if (!token) return;
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
 
-  let payload: any;
+    let payload: any;
 
-  try {
-    payload = JSON.parse(atob(token.split(".")[1]));
-  } catch (err) {
-    console.error("Invalid token:", err);
-    return;
-  }
-
-  const userId = payload.sub;
-  if (!userId) return;
-
-  const dtoBody = {
-    firstName: profileForm.first_name,
-    lastName: profileForm.last_name,
-    email: profileForm.email,
-    phoneNumber: profileForm.phone_number,
-  };
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`,  
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,  
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dtoBody),
+    try {
+      payload = JSON.parse(atob(token.split(".")[1]));
+    } catch (err) {
+      console.error("Invalid token:", err);
+      return;
     }
-  );
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => null);
-    throw new Error(err?.message || "Failed to update profile");
-  }
+    const userId = payload.sub;
+    if (!userId) return;
 
-  return response.json();
-};
+    const dtoBody = {
+      firstName: profileForm.first_name,
+      lastName: profileForm.last_name,
+      email: profileForm.email,
+      phoneNumber: profileForm.phone_number,
+    };
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dtoBody),
+      }
+    );
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(err?.message || "Failed to update profile");
+    }
+
+    return response.json();
+  };
 
   const handleProfileSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -225,103 +230,92 @@ if (!phone) {
       .catch((err) => console.error("Profile fetch error:", err));
   }, []);
 
-const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
-  const { name, value } = e.target;
-  setPasswordForm((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
+  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-const changePasswordRequest = async () => {
-  const token = localStorage.getItem("access_token");
-  if (!token) throw new Error("No access token found");
+  const changePasswordRequest = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) throw new Error("No access token found");
 
-  let payload: any;
-  try {
-    payload = JSON.parse(atob(token.split(".")[1]));
-  } catch (err) {
-    console.error("Invalid token:", err);
-    throw new Error("Invalid access token");
-  }
-
-  const userId = payload.sub;
-  if (!userId) throw new Error("User ID not found in token");
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-password/${userId}`, 
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`, 
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(passwordForm),
+    let payload: any;
+    try {
+      payload = JSON.parse(atob(token.split(".")[1]));
+    } catch (err) {
+      console.error("Invalid token:", err);
+      throw new Error("Invalid access token");
     }
-  );
-  if (!response.ok) {
-    const err = await response.json().catch(() => null);
-    throw new Error(err?.message || "Failed to update password");
-  }
 
-  return response.json();
-};
+    const userId = payload.sub;
+    if (!userId) throw new Error("User ID not found in token");
 
-const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setPasswordMessage(null);
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-password/${userId}`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(passwordForm),
+      }
+    );
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(err?.message || "Failed to update password");
+    }
 
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    setPasswordMessage({
-      type: "error",
-      text: "New password and confirm password do not match.",
-    });
-    return;
-  }
+    return response.json();
+  };
 
-  setPasswordLoading(true);
+  const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPasswordMessage(null);
 
-  try {
-    await changePasswordRequest();
-    setPasswordMessage({
-      type: "success",
-      text: "Password updated successfully.",
-    });
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage({
+        type: "error",
+        text: "New password and confirm password do not match.",
+      });
+      return;
+    }
 
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-  } catch (error: any) {
-    console.error("Password update error:", error);
-    setPasswordMessage({
-      type: "error",
-      text: error?.message || "Something went wrong.",
-    });
-  } finally {
-    setPasswordLoading(false);
-  }
-};
+    setPasswordLoading(true);
+
+    try {
+      await changePasswordRequest();
+      setPasswordMessage({
+        type: "success",
+        text: "Password updated successfully.",
+      });
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      console.error("Password update error:", error);
+      setPasswordMessage({
+        type: "error",
+        text: error?.message || "Something went wrong.",
+      });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
 
   return (
     <div className="w-full p-6 space-y-10">
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">About Me</h2>
 
       <div className="flex bg-white p-6 border border-gray-200 rounded-2xl shadow-md">
-        <div className="flex flex-col justify-baseline items-center mb-6 w-auto md:w-[170px]">
-          <img
-            src="/assets/images/Meegan.avif"
-            alt="Profile Picture"
-            className="rounded-full w-30 h-30 mr-4"
-          />
-          <button
-            type="button"
-            className="text-[#0519CE] underline font-bold cursor-pointer text-md"
-          >
-            Edit Photo
-          </button>
-        </div>
+        
+        <Imgupload/>
 
         {/* PROFILE FORM */}
         <form onSubmit={handleProfileSubmit} className="w-full">
@@ -415,11 +409,10 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
           {profileMessage && (
             <p
-              className={`mt-3 text-sm ${
-                profileMessage.type === "error"
-                  ? "text-red-600"
-                  : "text-green-600"
-              }`}
+              className={`mt-3 text-sm ${profileMessage.type === "error"
+                ? "text-red-600"
+                : "text-green-600"
+                }`}
             >
               {profileMessage.text}
             </p>
@@ -487,17 +480,21 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
           {passwordMessage && (
             <p
-              className={`mt-3 text-sm ${
-                passwordMessage.type === "error"
-                  ? "text-red-600"
-                  : "text-green-600"
-              }`}
+              className={`mt-3 text-sm ${passwordMessage.type === "error"
+                ? "text-red-600"
+                : "text-green-600"
+                }`}
             >
               {passwordMessage.text}
             </p>
           )}
         </form>
       </div>
+
+
+      
+
+
     </div>
   );
 }

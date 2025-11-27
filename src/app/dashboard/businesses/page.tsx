@@ -90,12 +90,12 @@ export default function Business() {
     statusFilter === "draft"
       ? "Draft"
       : statusFilter === "pending"
-      ? "Pending Approved"
-      : statusFilter === "approved"
-      ? "Approved"
-      : statusFilter === "claimed"
-      ? "Claimed"
-      : "";
+        ? "Pending Approved"
+        : statusFilter === "approved"
+          ? "Approved"
+          : statusFilter === "claimed"
+            ? "Claimed"
+            : "";
 
   // ---------- Fetch data ----------
 
@@ -197,20 +197,20 @@ export default function Business() {
   }, [features]);
 
   const formatFullAddress = (b: Business) => {
-  const parts = [];
+    const parts = [];
 
-  if (b.address) parts.push(b.address);
-  if (b.city) parts.push(b.city);
+    if (b.address) parts.push(b.address);
+    if (b.city) parts.push(b.city);
 
-  let stateZip = "";
-  if (b.state) stateZip += b.state;
-  if (b.zipcode) stateZip += (stateZip ? " " : "") + b.zipcode;
-  if (stateZip) parts.push(stateZip);
+    let stateZip = "";
+    if (b.state) stateZip += b.state;
+    if (b.zipcode) stateZip += (stateZip ? " " : "") + b.zipcode;
+    if (stateZip) parts.push(stateZip);
 
-  if (b.country) parts.push(b.country);
+    if (b.country) parts.push(b.country);
 
-  return parts.join(", ");
-};
+    return parts.join(", ");
+  };
 
 
   // ---------- Sorting + Status filter ----------
@@ -225,7 +225,7 @@ export default function Business() {
 
         switch (statusFilter) {
           case "draft":
-  return status === "draft";
+            return status === "draft";
 
 
           case "approved":
@@ -369,112 +369,112 @@ export default function Business() {
     };
   };
   // ⭐ Validate each part of the parsed address
-function validateParsedAddress(parsed: any) {
-  if (!parsed.address) return "Please enter a complete street address.";
-  if (!parsed.city) return "Please include the city in your address.";
-  if (!parsed.state) return "State/Province is missing in the address.";
-  if (!parsed.zipcode) return "Zip/Postal code is missing.";
-  if (!parsed.country) return "Country is missing in the address.";
+  function validateParsedAddress(parsed: any) {
+    if (!parsed.address) return "Please enter a complete street address.";
+    if (!parsed.city) return "Please include the city in your address.";
+    if (!parsed.state) return "State/Province is missing in the address.";
+    if (!parsed.zipcode) return "Zip/Postal code is missing.";
+    if (!parsed.country) return "Country is missing in the address.";
 
-  return null; // Everything OK
-}
+    return null; // Everything OK
+  }
 
   const handleCreateBusiness = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setCreateError(null);
+    e.preventDefault();
+    setCreateError(null);
 
-  // Basic field validations
-  if (!newBusiness.name.trim()) {
-    setCreateError("Business name is required.");
-    return;
-  }
-  if (!selectedCategoryId) {
-    setCreateError("Please select a business category.");
-    return;
-  }
-
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    setCreateError("You must be logged in before creating a business.");
-    return;
-  }
-
-  // Parse full address
-  const parsed = parseFullAddress(newBusiness.fullAddress);
-
-  // ⭐ FRONTEND ADDRESS VALIDATION ⭐
-  const addrError = validateParsedAddress(parsed);
-  if (addrError) {
-    setCreateError(addrError);
-    return; // STOP – do not call API!
-  }
-
-  // Payload now guaranteed to be valid
-  const payload: any = {
-    name: newBusiness.name.trim(),
-    business_type: [selectedCategoryId],
-    accessible_feature_id: DEFAULT_FEATURE_IDS,
-    accessible_city_id: ACCESSIBLE_CITY_ID,
-
-    description: newBusiness.description || undefined,
-
-    address: parsed.address,
-    city: parsed.city,
-    state: parsed.state,
-    country: parsed.country,
-    zipcode: parsed.zipcode,
-
-    active: false,
-     business_status: "draft",
-  };
-
-
-  try {
-    setIsCreating(true);
-
-    const res = await fetch(
-      process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // ✅ proper Bearer header
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    console.log("Create business – status:", res.status);
-
-    if (!res.ok) {
-      const errorBody = await res.json().catch(() => ({}));
-      console.error("Create business error:", errorBody);
-      throw new Error(errorBody.message || "Failed to create business");
+    // Basic field validations
+    if (!newBusiness.name.trim()) {
+      setCreateError("Business name is required.");
+      return;
+    }
+    if (!selectedCategoryId) {
+      setCreateError("Please select a business category.");
+      return;
     }
 
-    // ✅ Refresh list
-    const listRes = await fetch(
-      process.env.NEXT_PUBLIC_API_BASE_URL + "/business/list"
-    );
-    const listData = await listRes.json();
-    setBusinesses(listData.data || []);
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      setCreateError("You must be logged in before creating a business.");
+      return;
+    }
 
-    // ✅ Reset form
-    setNewBusiness({ name: "", fullAddress: "", description: "" });
-    setSelectedCategoryId("");
+    // Parse full address
+    const parsed = parseFullAddress(newBusiness.fullAddress);
 
-    // ✅ Modal close
-    const checkbox = document.getElementById(
-      "business-toggle"
-    ) as HTMLInputElement | null;
-    if (checkbox) checkbox.checked = false;
-  } catch (err: any) {
-    setCreateError(err.message || "Something went wrong");
-  } finally {
-    setIsCreating(false);
-  }
-};
+    // ⭐ FRONTEND ADDRESS VALIDATION ⭐
+    const addrError = validateParsedAddress(parsed);
+    if (addrError) {
+      setCreateError(addrError);
+      return; // STOP – do not call API!
+    }
+
+    // Payload now guaranteed to be valid
+    const payload: any = {
+      name: newBusiness.name.trim(),
+      business_type: [selectedCategoryId],
+      accessible_feature_id: DEFAULT_FEATURE_IDS,
+      accessible_city_id: ACCESSIBLE_CITY_ID,
+
+      description: newBusiness.description || undefined,
+
+      address: parsed.address,
+      city: parsed.city,
+      state: parsed.state,
+      country: parsed.country,
+      zipcode: parsed.zipcode,
+
+      active: false,
+      business_status: "draft",
+    };
+
+
+    try {
+      setIsCreating(true);
+
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            // ✅ proper Bearer header
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      console.log("Create business – status:", res.status);
+
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}));
+        console.error("Create business error:", errorBody);
+        throw new Error(errorBody.message || "Failed to create business");
+      }
+
+      // ✅ Refresh list
+      const listRes = await fetch(
+        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/list"
+      );
+      const listData = await listRes.json();
+      setBusinesses(listData.data || []);
+
+      // ✅ Reset form
+      setNewBusiness({ name: "", fullAddress: "", description: "" });
+      setSelectedCategoryId("");
+
+      // ✅ Modal close
+      const checkbox = document.getElementById(
+        "business-toggle"
+      ) as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = false;
+    } catch (err: any) {
+      setCreateError(err.message || "Something went wrong");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   // ---------- Loading state ----------
   if (loading) {
@@ -534,10 +534,10 @@ function validateParsedAddress(parsed: any) {
                           {sortOption === "name-asc"
                             ? "Name A–Z"
                             : sortOption === "name-desc"
-                            ? "Name Z–A"
-                            : sortOption === "created-asc"
-                            ? "Oldest First"
-                            : "Newest First"}
+                              ? "Name Z–A"
+                              : sortOption === "created-asc"
+                                ? "Oldest First"
+                                : "Newest First"}
                           )
                         </span>
                       )}
@@ -908,18 +908,17 @@ function validateParsedAddress(parsed: any) {
                     <div
                       className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                       style={{
-                        backgroundImage: `url(${
-                          business.logo_url || "/assets/images/b-img.png"
-                        })`,
+                        backgroundImage: `url(${business.logo_url || "/assets/images/b-img.png"
+                          })`,
                       }}
                     >
                       <span
-  className="absolute top-3 md:right-2 right-14
+                        className="absolute top-3 md:right-2 right-14
   bg-[#FFF3CD] text-[#C28A00] text-sm font-semibold px-2 py-1
   rounded-md shadow-sm"
->
-  Draft
-</span>
+                      >
+                        Draft
+                      </span>
                     </div>
 
                     {/* Right content */}
@@ -953,44 +952,44 @@ function validateParsedAddress(parsed: any) {
 
                           {/* Views */}
                           <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="white"
-    viewBox="0 0 24 24"
-    strokeWidth="2"
-    stroke="black"
-    className="w-4 h-4"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-    />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-  {business.views} Views
-</button>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="white"
+                              viewBox="0 0 24 24"
+                              strokeWidth="2"
+                              stroke="black"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                              />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            {business.views} Views
+                          </button>
 
 
                           {/* Recommendations */}
                           <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="white"
-    viewBox="0 0 24 24"
-    strokeWidth="2"
-    stroke="black"
-    className="w-4 h-4"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
-    />
-  </svg>
-  {(business.businessRecomendations?.length ?? 0)} Recommendations
-</button>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="white"
+                              viewBox="0 0 24 24"
+                              strokeWidth="2"
+                              stroke="black"
+                              className="w-4 h-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
+                              />
+                            </svg>
+                            {(business.businessRecomendations?.length ?? 0)} Recommendations
+                          </button>
 
                         </div>
                       </div>
@@ -1049,8 +1048,9 @@ function validateParsedAddress(parsed: any) {
                           className="w-4 h-4"
                         />
                         <span className="text-md text-gray-700">
-  {formatFullAddress(business)}
-</span>
+                          {formatFullAddress(business)}
+
+                        </span>
 
                       </div>
                     </div>
