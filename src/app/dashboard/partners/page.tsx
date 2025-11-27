@@ -7,7 +7,7 @@ interface Partner {
     image_url: string;
 }
 
-export default function usePartners() {
+export default function Page() {
     const [partners, setPartners] = useState<Partner[]>([]);
     const [loading, setLoading] = useState(true);
     const [openEditModal, setOpenEditModal] = useState(false);
@@ -32,10 +32,10 @@ export default function usePartners() {
     }, []);
 
     if (loading) {
-        return <div className="flex justify-center items-center h-screen">
+        return <div className="flex justify-center w-full items-center h-[400px]">
             <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-        </div>; // Show loading message while the data is being fetched
-    }
+        </div>; 
+      }
 
     return (
 

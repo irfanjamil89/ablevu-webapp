@@ -48,7 +48,7 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
-    window.location.href = "/"; // redirect after logout
+    window.location.href = "/"; 
   };
 
   if (loading) {

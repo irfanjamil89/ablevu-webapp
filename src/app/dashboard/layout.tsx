@@ -24,14 +24,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
 
 
+
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     console.log('Token from localStorage:', token); // Log the token value
 
     if (!token) {
-      console.error('No token found, please log in.');
       setError('Please log in to continue.');
       setLoading(false);
+      router.push('/'); 
       return;
     }
 
@@ -48,6 +49,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         setUser(data);
         saveUserToSession(data);
+
+       if (data.user_role === "Business") {
+          router.push('/dashboard/business-overview');
+          setLoading(false);
+          return;
+        } else if (data.user_role === "Contributor") {
+          router.push('/dashboard/contributor-overview');
+          setLoading(false);
+          return;
+        } else if (data.user_role === "User") {
+          router.push('/dashboard/saved');
+          setLoading(false);
+          return;
+        }
+    
         setLoading(false); // Set loading to false after fetch is done
       })
       .catch(error => {
@@ -69,11 +85,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
+    setLoading(true);
     router.push("/");
+
   };
 
 
   if (loading) {
+    return <div className="flex justify-center items-center h-screen">
+      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>;
+  }
+  if (error) {
     return <div className="flex justify-center items-center h-screen">
       <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
     </div>;
@@ -259,7 +282,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
                   <Link href="/dashboard/businesses"
+<<<<<<< Updated upstream
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+=======
+
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+
+>>>>>>> Stashed changes
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -564,8 +593,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </>
               ) : user?.user_role == "Contributor" ? (
                 <>
+<<<<<<< Updated upstream
                   <Link href="/dashboard/businesses"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+=======
+
+                  <Link href="/dashboard/contributor-overview"
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/contributor-overview")
+
+>>>>>>> Stashed changes
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -597,8 +633,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   </Link>
 
+<<<<<<< Updated upstream
                   <Link href="#"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
+=======
+                  <Link href="/dashboard/saved"
+
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/saved")
+>>>>>>> Stashed changes
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -617,8 +659,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
                     </svg>
-                    Subscriptions
+                    Saved
                   </Link>
+
+                  
 
 
 
@@ -697,6 +741,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </>
               ) : user?.user_role === "User" ? (
                 <>
+<<<<<<< Updated upstream
                   <Link href="/dashboard/businesses"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
                       ? "bg-blue-700 text-white font-semibold"
@@ -731,6 +776,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </Link>
                   <Link href="#"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
+=======
+
+                  
+                  
+                  <Link href="/dashboard/saved"
+
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/saved")
+>>>>>>> Stashed changes
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -749,7 +802,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
                     </svg>
-                    Subscriptions
+                    Saved
                   </Link>
 
 
@@ -801,6 +854,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       />
                     </svg>
                     Reviews
+                  </Link>
+
+                  <Link href="/dashboard/become-contributor"
+
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/become-contributor")
+                      ? "bg-blue-700 text-white font-semibold"
+                      : "text-gray-700 hover:bg-gray-100"
+                      }`}>
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
+                      />
+                    </svg>
+                    Become Contributor
                   </Link>
 
                   <Link href="/dashboard/profile"

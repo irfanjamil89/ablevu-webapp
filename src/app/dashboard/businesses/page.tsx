@@ -140,7 +140,7 @@ function validateParsedAddress(parsed: any) {
 
 // ---------- Component ----------
 
-export default function Business() {
+export default function Page() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [features, setFeatures] = useState<FeatureType[]>([]);
