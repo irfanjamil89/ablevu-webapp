@@ -341,6 +341,12 @@ export default function Page() {
 
         setPartners(partnersArr);
         setPartnerTotal(totalPartners);
+        const bRes = await fetch(
+          `${base}/business/list?page=1&limit=1000`,
+          { headers }
+        );
+        const bJson = await bRes.json();
+        setBusinesses(bJson.data || []);
 
         // 🔹 Business schedules
         const sRes = await fetch(
