@@ -6,7 +6,7 @@ interface LoginProps {
   setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenForgotPasswordModal: React.Dispatch<React.SetStateAction<boolean>>;
-  
+
 }
 
 const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, setOpenForgotPasswordModal }) => {
@@ -23,38 +23,41 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
     setLoading(true);
 
     try {
-  const response = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL+"/auth/login", {
-    username: email,
-    password: password,
-  });
+      const response = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + "/auth/login", {
+        username: email,
+        password: password,
+      });
 
-  
 
-  // The API returns { access_token: "..." } with status 201
-  if (response.status === 201 && response.data?.access_token) {
-    localStorage.setItem("access_token", response.data.access_token);
-    window.location.href="/dashboard";
-  } 
-  else {
-    setError("Invalid credentials or unexpected response.");
-  }
-} catch (err: any) {
-  console.error("Login failed:", err?.response?.data || err);
-  setError("Invalid credentials or server error.");
-} finally {
-  setLoading(false);
-}
+
+      // The API returns { access_token: "..." } with status 201
+      if (response.status === 201 && response.data?.access_token) {
+        localStorage.setItem("access_token", response.data.access_token);
+        if (response.data?.refresh_token) {
+          localStorage.setItem("refresh_token", response.data.refresh_token);
+        }
+        window.location.href = "/dashboard";
+      }
+      else {
+        setError("Invalid credentials or unexpected response.");
+      }
+    } catch (err: any) {
+      console.error("Login failed:", err?.response?.data || err);
+      setError("Invalid credentials or server error.");
+    } finally {
+      setLoading(false);
+    }
 
   };
 
-  
+
 
   return (
-   <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-xs">
-  <div className="relative bg-white rounded-2xl shadow-2xl w-[550px] max-w-md p-8">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-xs">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-[550px] max-w-md p-8">
         {/* Close Button */}
         <button
-          onClick={()=>setOpenLoginModal(false)}
+          onClick={() => setOpenLoginModal(false)}
           className="absolute top-3 right-3 text-gray-500 p-0 hover:text-gray-800 text-xl font-bold cursor-pointer"
         >
           ×
@@ -141,7 +144,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
             {/* Forgot Password link */}
             <div>
               <button
-                onClick={() => {setOpenForgotPasswordModal(true),setOpenLoginModal(false)} }
+                onClick={() => { setOpenForgotPasswordModal(true), setOpenLoginModal(false) }}
                 className="text-sm text-[#0519CE] hover:underline cursor-pointer"
               >
                 Forgot Password?
@@ -162,9 +165,9 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         {/* Footer */}
         <p className="text-center text-sm text-gray-700 mt-4">
           New to AbleVu?{" "}
-          <button className="text-[#0519CE] underline font-bold cursor-pointer" onClick={()=>{
+          <button className="text-[#0519CE] underline font-bold cursor-pointer" onClick={() => {
             setOpenLoginModal(false)
-            setOpenSignupModal(true) 
+            setOpenSignupModal(true)
           }}>
             Sign Up
           </button>

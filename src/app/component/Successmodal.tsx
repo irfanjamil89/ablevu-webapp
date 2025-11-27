@@ -15,9 +15,8 @@ const Successmodal: React.FC<SuccessmodalProps> = ({
   // Close modal function
   const onClose = () => {
     setOpenSignupModal(false); // Close the signup modal
-    setOpenLoginModal(false); // Close the login modal
     setOpenSuccessModal(false); // Close the forgot password modal if needed
-    window.location.reload();
+    setOpenLoginModal(true); // Close the login modal
   };
 
   return (

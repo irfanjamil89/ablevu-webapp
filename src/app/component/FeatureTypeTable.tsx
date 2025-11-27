@@ -122,7 +122,11 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setOpenDeleteModal(true); // open confirmation modal
   };
 
-  
+   if (loading) {
+    return <div className="flex justify-center items-center h-screen">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>; // Show loading message while the data is being fetched
+  }
 
   return (
     <section className="flex-1">
@@ -326,6 +330,8 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
+                  maxLength={250}
+                  pattern="^[A-Za-z\s]{1,50}$"
                   placeholder="Enter Name"
                   required
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200"
