@@ -113,11 +113,7 @@ export default function AccessibilityFeatureForm() {
           <form className="space-y-5">
             <div>
               <label className="block text-md font-medium text-gray-700 mb-1">Title<span className="text-red-500 font-bold">*</span></label>
-              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter Title" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200" />
-              <input type="text" maxLength={250}
-                pattern="^[A-Za-z\s]{1,50}$" 
-                placeholder="Enter Title" 
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200" />
+              <input type="text" maxLength={50} pattern="^[A-Za-z\s]{1,50}$" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter Title" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200" />
             </div>
 
             <div className="mb-4 relative">
