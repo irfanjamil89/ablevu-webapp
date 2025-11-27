@@ -110,18 +110,6 @@ if (!phone) {
   const token = localStorage.getItem("access_token");
   if (!token) return;
 
-  let payload: any;
-
-  try {
-    payload = JSON.parse(atob(token.split(".")[1]));
-  } catch (err) {
-    console.error("Invalid token:", err);
-    return;
-  }
-
-  const userId = payload.sub;
-  if (!userId) return;
-
   const dtoBody = {
     firstName: profileForm.first_name,
     lastName: profileForm.last_name,
@@ -130,7 +118,7 @@ if (!phone) {
   };
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}`,  
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}users/update-profile`,  
     {
       method: "PUT",
       headers: {
@@ -237,19 +225,9 @@ const changePasswordRequest = async () => {
   const token = localStorage.getItem("access_token");
   if (!token) throw new Error("No access token found");
 
-  let payload: any;
-  try {
-    payload = JSON.parse(atob(token.split(".")[1]));
-  } catch (err) {
-    console.error("Invalid token:", err);
-    throw new Error("Invalid access token");
-  }
-
-  const userId = payload.sub;
-  if (!userId) throw new Error("User ID not found in token");
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/update-password/${userId}`, 
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}users/update-password`, 
     {
       method: "PATCH",
       headers: {
