@@ -169,11 +169,7 @@ export default function Page() {
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [features, setFeatures] = useState<FeatureType[]>([]);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
-  const [accessibleCities, setAccessibleCities] = useState<AccessibleCity[]>(
-    []
-  );
   const [accessibleCityTotal, setAccessibleCityTotal] = useState(0);
-  const [partners, setPartners] = useState<Partner[]>([]); // 👈 NEW
   const [partnerTotal, setPartnerTotal] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -301,7 +297,6 @@ export default function Page() {
 
         const acJson = await acRes.json();
 
-        setAccessibleCities(acJson.items || []);
         setAccessibleCityTotal(acJson.total ?? (acJson.items?.length || 0));
 
         // 🔹 Users
@@ -339,7 +334,6 @@ export default function Page() {
         // total = active + inactive sab
         const totalPartners = pJson.total ?? partnersArr.length;
 
-        setPartners(partnersArr);
         setPartnerTotal(totalPartners);
 
         // 🔹 Business schedules
