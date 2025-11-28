@@ -341,7 +341,6 @@ export default function Page() {
       setLoading(false);
     }
   };
-
   load();
 }, []);
 
@@ -462,12 +461,10 @@ export default function Page() {
   }, [sortedBusinesses, searchTerm, businessTypesMap]);
 
   if (loading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading dashboard...</p>
-      </div>
-    );
-  }
+    return <div className="flex w-full justify-center items-center h-[400px]">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>; // Show loading message while the data is being fetched
+  }
   return (
     <div className="w-full h-screen overflow-y-auto">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
