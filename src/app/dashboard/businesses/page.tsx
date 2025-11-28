@@ -975,7 +975,7 @@ function getTodayScheduleLabel(businessId: string): string | null {
 
                     <Link 
                       key={business.id}
-                      href={`/dashboard/business-profile/${business.id}`}
+                      href={`/business-profile/${business.id}`}
                       className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
                     >
                       {/* Left image */}
