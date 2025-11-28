@@ -89,6 +89,36 @@ type ScheduleListResponse = {
   totalPages: number;
 };
 
+type AccessibleCity = {
+  id: string;
+  city_name: string;
+  featured: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  display_order: number | null;
+  picture_url: string | null;
+  slug: string;
+  businessCount: number;
+};
+
+type User = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  user_role?: string;
+  paid_contributor?: boolean;
+};
+
+type Partner = {
+  id: string;
+  name: string;
+  description: string;
+  tags: string;
+  image_url: string;
+  web_url: string;
+  active: boolean;
+};
 // ---------- Helpers ----------
 
 const formatFullAddress = (b: Business) => {
@@ -138,12 +168,28 @@ export default function Page() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [features, setFeatures] = useState<FeatureType[]>([]);
-  const [schedules, setSchedules] = useState<BusinessSchedule[]>([]); // 🔹
+  const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
+  const [accessibleCityTotal, setAccessibleCityTotal] = useState(0);
+  const [partnerTotal, setPartnerTotal] = useState(0);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("created-desc");
 
   // ---------- Maps (ID -> Name) ----------
+
+  const { paidContributorsCount, volunteerContributorsCount } = useMemo(() => {
+    const paid = users.filter((u) => u.paid_contributor === true).length;
+
+    const volunteers = users.filter(
+      (u) => (u.user_role || "").toLowerCase() === "contributor"
+    ).length;
+
+    return {
+      paidContributorsCount: paid,
+      volunteerContributorsCount: volunteers,
+    };
+  }, [users]);
 
   const businessTypesMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -206,61 +252,98 @@ export default function Page() {
   // ---------- Fetch data (admin = all businesses) ----------
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("access_token")
+      : null;
 
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
-    const load = async () => {
-      try {
-        setLoading(true);
+  const load = async () => {
+    try {
+      setLoading(true);
 
-        // Business types
-        const btRes = await fetch(
-          `${base}/business-type/list?page=1&limit=1000`,
-          { headers }
-        );
-        const btJson = await btRes.json();
-        setBusinessTypes(btJson.data || []);
+      // 🔹 Business types
+      const btRes = await fetch(
+        `${base}/business-type/list?page=1&limit=1000`,
+        { headers }
+      );
+      const btJson = await btRes.json();
+      setBusinessTypes(btJson.data || []);
 
-        // Accessible features
-        const fRes = await fetch(
-          `${base}/accessible-feature/list?page=1&limit=1000`
-        );
-        const fJson = await fRes.json();
-        setFeatures(fJson.items || []);
+      // 🔹 Accessible features
+      const fRes = await fetch(
+        `${base}/accessible-feature/list?page=1&limit=1000`
+      );
+      const fJson = await fRes.json();
+      setFeatures(fJson.items || []);
 
-        // Businesses (admin sees all – backend role-based)
-        const bRes = await fetch(
-          `${base}/business/list?page=1&limit=1000`,
-          { headers }
-        );
-        const bJson = await bRes.json();
-        setBusinesses(bJson.data || []);
+      // 🔹 Businesses (admin sees all)
+      const bRes = await fetch(`${base}/business/list?page=1&limit=1000`, {
+        headers,
+      });
+      const bJson = await bRes.json();
+      setBusinesses(bJson.data || []);
 
-        // 🔹 Business schedules
-        const sRes = await fetch(
-          `${base}/business-schedules/list?page=1&limit=1000`,
-          { headers }
-        );
-        const sJson: ScheduleListResponse = await sRes.json();
-        setSchedules(sJson.data || []);
-      } catch (e) {
-        console.error("Error loading admin dashboard data:", e);
-      } finally {
-        setLoading(false);
+      // 🔹 Accessible cities
+      const acRes = await fetch(
+        `${base}/accessible-city/list?page=1&limit=1000`,
+        { headers }
+      );
+      const acJson = await acRes.json();
+      setAccessibleCityTotal(acJson.total ?? (acJson.items?.length || 0));
+
+      // 🔹 Users
+      const uRes = await fetch(`${base}/users`, { headers });
+      if (!uRes.ok) {
+        console.error("Users fetch failed:", uRes.status, uRes.statusText);
+      } else {
+        const uJson = await uRes.json();
+        console.log("USERS RESPONSE >>>", uJson);
+
+        let usersArr: User[] = [];
+
+        if (Array.isArray(uJson)) {
+          usersArr = uJson;
+        } else if (Array.isArray(uJson.data)) {
+          usersArr = uJson.data;
+        } else if (Array.isArray(uJson.items)) {
+          usersArr = uJson.items;
+        }
+
+        setUsers(usersArr);
       }
-    };
 
-    load();
-  }, []);
+      // 🔹 Partners
+      const pRes = await fetch(`${base}/partner/list?page=1&limit=1000`, {
+        headers,
+      });
+      const pJson = await pRes.json();
+      const partnersArr: Partner[] = pJson.items || [];
+      const totalPartners = pJson.total ?? partnersArr.length;
+      setPartnerTotal(totalPartners);
+
+      // 🔹 Business schedules
+      const sRes = await fetch(
+        `${base}/business-schedules/list?page=1&limit=1000`,
+        { headers }
+      );
+      const sJson: ScheduleListResponse = await sRes.json();
+      setSchedules(sJson.data || []);
+    } catch (e) {
+      console.error("Error loading admin dashboard data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, []);
 
   // ---------- Schedules map: businessId -> schedules[] ----------
 
@@ -346,8 +429,7 @@ export default function Page() {
       case "created-asc":
         arr.sort(
           (a, b) =>
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime()
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
         break;
 
@@ -355,8 +437,7 @@ export default function Page() {
       default:
         arr.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         break;
     }
@@ -387,7 +468,6 @@ export default function Page() {
       </div>
     );
   }
-
   return (
     <div className="w-full h-screen overflow-y-auto">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
@@ -398,23 +478,23 @@ export default function Page() {
               {/* card-1 */}
               <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
-                  13
+                  {accessibleCityTotal}
                 </h5>
                 <p className="font-normal text-gray-700">Accessible Cities</p>
               </a>
 
               {/* card-2 */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
+              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#fcf4e0] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
-                  20
+                  {paidContributorsCount}
                 </h5>
                 <p className="font-normal text-gray-700">Paid Contributors</p>
               </a>
 
               {/* card-3 */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
+              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#ffe2df] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
-                  25
+                  {volunteerContributorsCount}
                 </h5>
                 <p className="font-normal text-gray-700">
                   Volunteer Contributors
@@ -422,7 +502,7 @@ export default function Page() {
               </a>
 
               {/* card-4 – dynamic count */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
+              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#daf1e6] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
                   {businesses.length}
                 </h5>
@@ -430,9 +510,9 @@ export default function Page() {
               </a>
 
               {/* card-5 */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
+              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#fde8e2] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
-                  7
+                  {partnerTotal}
                 </h5>
                 <p className="font-normal text-gray-700">Total Partners</p>
               </a>
@@ -504,8 +584,7 @@ export default function Page() {
                         className="relative flex items-center w-full h-[300px] xxl:w-[15%] xl:w-[18%] lg:w-[18%] md:w-[25%] md:h-24 shadow-sm bg-contain md:bg-cover bg-center bg-no-repeat opacity-95"
                         style={{
                           backgroundImage: `url(${
-                            business.logo_url ||
-                            "/assets/images/search-1.jpg"
+                            business.logo_url || "/assets/images/search-1.jpg"
                           })`,
                         }}
                       >
@@ -532,10 +611,7 @@ export default function Page() {
                           <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
                             {/* Saved (static) */}
                             <label className="inline-flex items-center gap-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                className="peer hidden"
-                              />
+                              <input type="checkbox" className="peer hidden" />
                               <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
