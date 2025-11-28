@@ -252,112 +252,98 @@ export default function Page() {
   // ---------- Fetch data (admin = all businesses) ----------
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("access_token")
+      : null;
 
-    const headers: Record<string, string> = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
-    const load = async () => {
-      try {
-        setLoading(true);
+  const load = async () => {
+    try {
+      setLoading(true);
 
-        // Business types
-        const btRes = await fetch(
-          `${base}/business-type/list?page=1&limit=1000`,
-          { headers }
-        );
-        const btJson = await btRes.json();
-        setBusinessTypes(btJson.data || []);
+      // 🔹 Business types
+      const btRes = await fetch(
+        `${base}/business-type/list?page=1&limit=1000`,
+        { headers }
+      );
+      const btJson = await btRes.json();
+      setBusinessTypes(btJson.data || []);
 
-        // Accessible features
-        const fRes = await fetch(
-          `${base}/accessible-feature/list?page=1&limit=1000`
-        );
-        const fJson = await fRes.json();
-        setFeatures(fJson.items || []);
+      // 🔹 Accessible features
+      const fRes = await fetch(
+        `${base}/accessible-feature/list?page=1&limit=1000`
+      );
+      const fJson = await fRes.json();
+      setFeatures(fJson.items || []);
 
-        // Businesses (admin sees all – backend role-based)
-        const bRes = await fetch(`${base}/business/list?page=1&limit=1000`, {
-          headers,
-        });
-        const bJson = await bRes.json();
-        setBusinesses(bJson.data || []);
+      // 🔹 Businesses (admin sees all)
+      const bRes = await fetch(`${base}/business/list?page=1&limit=1000`, {
+        headers,
+      });
+      const bJson = await bRes.json();
+      setBusinesses(bJson.data || []);
 
-        const acRes = await fetch(
-          `${base}/accessible-city/list?page=1&limit=1000`,
-          { headers }
-        );
+      // 🔹 Accessible cities
+      const acRes = await fetch(
+        `${base}/accessible-city/list?page=1&limit=1000`,
+        { headers }
+      );
+      const acJson = await acRes.json();
+      setAccessibleCityTotal(acJson.total ?? (acJson.items?.length || 0));
 
-        const acJson = await acRes.json();
+      // 🔹 Users
+      const uRes = await fetch(`${base}/users`, { headers });
+      if (!uRes.ok) {
+        console.error("Users fetch failed:", uRes.status, uRes.statusText);
+      } else {
+        const uJson = await uRes.json();
+        console.log("USERS RESPONSE >>>", uJson);
 
-        setAccessibleCityTotal(acJson.total ?? (acJson.items?.length || 0));
+        let usersArr: User[] = [];
 
-        // 🔹 Users
-        const uRes = await fetch(`${base}/users`, { headers });
-        if (!uRes.ok) {
-          console.error("Users fetch failed:", uRes.status, uRes.statusText);
-        } else {
-          const uJson = await uRes.json();
-          console.log("USERS RESPONSE >>>", uJson);
-
-          let usersArr: User[] = [];
-
-          if (Array.isArray(uJson)) {
-            // e.g. [ {..}, {..} ]
-            usersArr = uJson;
-          } else if (Array.isArray(uJson.data)) {
-            // e.g. { data: [..], total: 5 }
-            usersArr = uJson.data;
-          } else if (Array.isArray(uJson.items)) {
-            // e.g. { items: [..], total: 5 }
-            usersArr = uJson.items;
-          }
-
-          setUsers(usersArr);
+        if (Array.isArray(uJson)) {
+          usersArr = uJson;
+        } else if (Array.isArray(uJson.data)) {
+          usersArr = uJson.data;
+        } else if (Array.isArray(uJson.items)) {
+          usersArr = uJson.items;
         }
-        // 🔹 Partners
-        const pRes = await fetch(`${base}/partner/list?page=1&limit=1000`, {
-          headers,
-        });
-        const pJson = await pRes.json();
 
-        // items = array of partners
-        const partnersArr: Partner[] = pJson.items || [];
-
-        // total = active + inactive sab
-        const totalPartners = pJson.total ?? partnersArr.length;
-
-        setPartnerTotal(totalPartners);
-        const bRes = await fetch(
-          `${base}/business/list?page=1&limit=1000`,
-          { headers }
-        );
-        const bJson = await bRes.json();
-        setBusinesses(bJson.data || []);
-
-        // 🔹 Business schedules
-        const sRes = await fetch(
-          `${base}/business-schedules/list?page=1&limit=1000`,
-          { headers }
-        );
-        const sJson: ScheduleListResponse = await sRes.json();
-        setSchedules(sJson.data || []);
-      } catch (e) {
-        console.error("Error loading admin dashboard data:", e);
-      } finally {
-        setLoading(false);
+        setUsers(usersArr);
       }
-    };
 
-    load();
-  }, []);
+      // 🔹 Partners
+      const pRes = await fetch(`${base}/partner/list?page=1&limit=1000`, {
+        headers,
+      });
+      const pJson = await pRes.json();
+      const partnersArr: Partner[] = pJson.items || [];
+      const totalPartners = pJson.total ?? partnersArr.length;
+      setPartnerTotal(totalPartners);
+
+      // 🔹 Business schedules
+      const sRes = await fetch(
+        `${base}/business-schedules/list?page=1&limit=1000`,
+        { headers }
+      );
+      const sJson: ScheduleListResponse = await sRes.json();
+      setSchedules(sJson.data || []);
+    } catch (e) {
+      console.error("Error loading admin dashboard data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  load();
+}, []);
 
   // ---------- Schedules map: businessId -> schedules[] ----------
 
