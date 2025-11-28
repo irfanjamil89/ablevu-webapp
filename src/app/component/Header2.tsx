@@ -5,6 +5,7 @@ import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
+import Feedback from "./Feedback";
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,8 +15,9 @@ export default function Header() {
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
+  const [OpenFeedbackModal, setOpenFeedbackModal] = useState(false);
 
-  // Run only after client-side hydration
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -86,6 +88,22 @@ export default function Header() {
                         className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                       >
                         <span className="group-hover:text-black-800 relative">Access-friendly Cities</span>
+                      </Link>
+                    </li>
+                    <li
+                      
+                         onClick={() => setOpenFeedbackModal(true)}
+                        className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                      >
+                        <span className="group-hover:text-black-800 relative">Share Feedback</span>
+                      
+                    </li>
+                    <li>
+                      <Link
+                        href="#"
+                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                      >
+                        <span className="group-hover:text-black-800 relative">Add Business</span>
                       </Link>
                     </li>
                     <li>
@@ -252,6 +270,9 @@ export default function Header() {
           setOpenLoginModal={setOpenLoginModal}
           setOpenSignupModal={setOpenSignupModal}
         />
+      )}
+      {OpenFeedbackModal && (
+        <Feedback setOpenFeedbackModal={setOpenFeedbackModal} />
       )}
 
 

@@ -454,8 +454,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </>
               ) : user?.user_role === "Business" ? (
                 <>
-                  <Link href="/dashboard/businesses"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+                  <Link href="/dashboard/business-overview"
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/business-overview")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -487,7 +487,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   </Link>
 
-                  <Link href="#"
+                  <Link href="/dashboard/subscriptions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -512,7 +512,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/questions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/questions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -538,7 +538,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/reviews"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -621,7 +621,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   </Link>
 
-                  <Link href="/dashboard/saved" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/saved")
+                  <Link href="/dashboard/subscriptions" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -640,14 +640,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
                     </svg>
-                    Saved
+                    Subscriptions
                   </Link>
 
                   
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/questions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/questions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -673,7 +673,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/reviews"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -746,7 +746,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/questions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/questions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -772,7 +772,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/reviews"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"

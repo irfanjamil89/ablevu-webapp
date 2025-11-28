@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FaUserCircle } from "react-icons/fa";
 import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
