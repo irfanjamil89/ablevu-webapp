@@ -62,7 +62,7 @@ export default function Maincontent({ businessId }: MaincontentProps) {
 
       <div className="property my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
         <h3 className="text-xl font-[600] mb-4" >Property Images</h3>
-        <div className="flex flex-wrap gap-x-3 items-center">
+        <div className="flex flex-wrap gap-x-2 items-center">
             <img src="/assets/images/pool.jpg" alt="" className="w-[19%] my-1.5 rounded-2xl cursor-pointer" />
             <img src="/assets/images/pool.jpg" alt="" className="w-[19%] my-1.5 rounded-2xl cursor-pointer" />
             <img src="/assets/images/pool.jpg" alt="" className="w-[19%] my-1.5 rounded-2xl cursor-pointer" />
