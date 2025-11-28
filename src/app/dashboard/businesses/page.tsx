@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
-
+import Link from 'next/link';
 // ---------- Types ----------
 
 type LinkedType = {
@@ -972,8 +972,10 @@ function getTodayScheduleLabel(businessId: string): string | null {
                   const statusInfo = getStatusInfo(business);
 
                   return (
-                    <div
+
+                    <Link 
                       key={business.id}
+                      href={`/dashboard/business-profile/${business.id}`}
                       className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
                     >
                       {/* Left image */}
@@ -1125,7 +1127,7 @@ function getTodayScheduleLabel(businessId: string): string | null {
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
