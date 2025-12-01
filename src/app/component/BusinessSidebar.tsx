@@ -10,7 +10,12 @@ import { BsFacebook } from "react-icons/bs";
 import { BsInstagram } from "react-icons/bs";
 import { BsClock } from "react-icons/bs";
 
-export default function BusinessSidebar() {
+
+interface BusinessSidebarProps {
+  businessId: string;
+}
+
+export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
   return (
     <div className='w-3/10 h-[200vh] px-10 py-7 border-r border-solid  border-[#e5e5e7]'>
          <div className="head flex items-center justify-between">
