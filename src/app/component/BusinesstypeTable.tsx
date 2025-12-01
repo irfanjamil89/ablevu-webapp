@@ -99,7 +99,7 @@ const [editLoading, setEditLoading] = useState(false);
 };
 
  if (loading) {
-    return <div className="flex justify-center items-center h-screen">
+    return <div className="flex justify-center items-center h-[400px]">
         <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
     </div>; // Show loading message while the data is being fetched
   }

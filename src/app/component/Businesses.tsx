@@ -332,9 +332,7 @@ useEffect(() => {
                          Inactive
                       </span>
                     </div>
-<script>
-  console.log(business);
-</script>
+
                     {/* Business Card Right Side */}
                     <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
                       <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">

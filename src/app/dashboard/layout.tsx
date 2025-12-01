@@ -15,7 +15,6 @@ interface User {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
 
 
-
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,14 +23,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
 
 
+
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     console.log('Token from localStorage:', token); // Log the token value
 
     if (!token) {
-      console.error('No token found, please log in.');
       setError('Please log in to continue.');
       setLoading(false);
+      router.push('/'); 
       return;
     }
 
@@ -48,6 +48,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         setUser(data);
         saveUserToSession(data);
+
+       if (data.user_role === "Business") {
+          router.push('/dashboard/business-overview');
+          setLoading(false);
+          return;
+        } else if (data.user_role === "Contributor") {
+          router.push('/dashboard/contributor-overview');
+          setLoading(false);
+          return;
+        } else if (data.user_role === "User") {
+          router.push('/dashboard/saved');
+          setLoading(false);
+          return;
+        }
+    
         setLoading(false); // Set loading to false after fetch is done
       })
       .catch(error => {
@@ -69,11 +84,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = () => {
     localStorage.removeItem("access_token");
+    setLoading(true);
     router.push("/");
+
   };
 
 
   if (loading) {
+    return <div className="flex justify-center items-center h-screen">
+      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>;
+  }
+  if (error) {
     return <div className="flex justify-center items-center h-screen">
       <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
     </div>;
@@ -258,8 +280,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </Link>
 
 
-                  <Link href="/dashboard/businesses"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+                  <Link href="/dashboard/businesses" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -431,8 +453,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </>
               ) : user?.user_role === "Business" ? (
                 <>
-                  <Link href="/dashboard/businesses"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+                  <Link href="/dashboard/business-overview"
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/business-overview")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -464,7 +486,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   </Link>
 
-                  <Link href="#"
+                  <Link href="/dashboard/subscriptions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -489,7 +511,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/questions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/questions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -515,7 +537,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/reviews"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -564,8 +586,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </>
               ) : user?.user_role == "Contributor" ? (
                 <>
-                  <Link href="/dashboard/businesses"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
+
+                  <Link href="/dashboard/contributor-overview"
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/contributor-overview")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -597,8 +620,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   </Link>
 
-                  <Link href="#"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
+                  <Link href="/dashboard/subscriptions" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -620,9 +642,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     Subscriptions
                   </Link>
 
+                  
 
 
-                  <Link href="#"
+
+                  <Link href="/dashboard/questions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/questions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -648,7 +672,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/reviews"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -696,41 +720,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 </>
               ) : user?.user_role === "User" ? (
-                <>
-                  <Link href="/dashboard/businesses"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
-                      }`}>
-
-                    <svg
-                      version="1.1"
-                      id="icons_1_"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      x="0"
-                      y="0"
-                      viewBox="0 0 128 128"
-                      xmlSpace="preserve">
-                      <style>
-                        {`.st0 { fill: #0a0a0a; } .st1 { display: none; } .st2 { display: inline; }`}
-                      </style>
-                      <g id="row2_1_">
-                        <g id="_x36__3_">
-                          <path
-                            className="st0"
-                            d="M64 .3C28.7.3 0 28.8 0 64s28.7 63.7 64 63.7 64-28.5 64-63.7S99.3.3 64 .3zm0 121C32.2 121.3 6.4 95.7 6.4 64 6.4 32.3 32.2 6.7 64 6.7c12.1 0 23.4 3.7 32.7 10.1 13.7 9.4 23.1 24.5 24.7 41.8 0 .5.1 9.8 0 10.7-2.7 29.2-27.4 52-57.4 52zm-3.2-89.1c-14.5 0-19.1 13.3-19.2 25.5h9.6c-.2-8.8.7-15.9 9.6-15.9 6.4 0 9.6 2.7 9.6 9.6 0 4.4-3.4 6.6-6.4 9.6-6.2 6-5.7 10.4-6 18.7h8.4c.3-7.5.2-7.3 6.4-13.9 4.2-4.1 7.1-8.2 7.1-14.5.1-10.1-5.3-19.1-19.1-19.1zm3.3 54.1c-3.6 0-6.4 2.9-6.4 6.4 0 3.5 2.9 6.4 6.4 6.4 3.6 0 6.4-2.9 6.4-6.4 0-3.6-2.9-6.4-6.4-6.4z"
-                            id="transparent"
-                          />
-                        </g>
-                      </g>
-                    </svg>
-
-                    Overview
-
-                  </Link>
-                  <Link href="#"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
+                <>                 
+                  <Link href="/dashboard/saved" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/saved")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
@@ -749,12 +740,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
                     </svg>
-                    Subscriptions
+                    Saved
                   </Link>
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/questions"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/questions")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -780,7 +771,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
 
-                  <Link href="#"
+                  <Link href="/dashboard/reviews"
                     className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
                       ? "bg-blue-700 text-white font-semibold"
                       : "text-gray-700 hover:bg-gray-100"
@@ -801,6 +792,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       />
                     </svg>
                     Reviews
+                  </Link>
+
+                  <Link href="/dashboard/become-contributor"
+
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/become-contributor")
+                      ? "bg-blue-700 text-white font-semibold"
+                      : "text-gray-700 hover:bg-gray-100"
+                      }`}>
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-5 h-5 text-gray-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
+                      />
+                    </svg>
+                    Become Contributor
                   </Link>
 
                   <Link href="/dashboard/profile"
