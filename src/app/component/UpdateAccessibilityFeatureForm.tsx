@@ -20,12 +20,14 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   feature: AccessibleFeature | null;
+  onSuccess?: () => void;
 };
 
 export default function UpdateAccessibilityFeatureForm({
   isOpen,
   onClose,
   feature,
+  onSuccess,
 }: Props) {
   const [allFeatureTypes, setAllFeatureTypes] = useState<FeatureType[]>([]);
   const [allBusinessTypes, setAllBusinessTypes] = useState<BusinessType[]>([]);
@@ -33,6 +35,8 @@ export default function UpdateAccessibilityFeatureForm({
   const [selectedFeatureType, setSelectedFeatureType] = useState("");
   const [selectedBusinessTypes, setSelectedBusinessTypes] = useState<string[]>([]);
   const [selectAllCategories, setSelectAllCategories] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!feature) return;
@@ -84,15 +88,17 @@ export default function UpdateAccessibilityFeatureForm({
       const data = await res.json();
 
       if (res.ok) {
-        alert("Feature updated successfully!");
-        window.location.reload();
+        setSuccess("Feature updated successfully");
+        setError(null);
+        if (onSuccess) onSuccess();
         onClose();
       } else {
-        alert(data.message || "Failed to update feature");
+        const errorMsg = "Failed to update feature";
+        setError(errorMsg);
+        setSuccess(null);
       }
     } catch (error) {
       console.error("Update failed:", error);
-      alert("Failed to update feature");
     }
   };
 
@@ -115,6 +121,9 @@ export default function UpdateAccessibilityFeatureForm({
         </h2>
 
         <form className="space-y-5">
+          {success && <p className="text-green-500 text-md mb-2">{success}</p>}
+          {error && <p className="text-red-500 text-md mb-2">{error}</p>}
+
           {/* Title */}
           <div>
             <label className="block text-md font-medium text-gray-700 mb-1">

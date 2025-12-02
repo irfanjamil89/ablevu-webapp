@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import UpdateAccessibilityFeatureForm from "./UpdateAccessibilityFeatureForm";
 
 type LinkedType = {
@@ -23,157 +23,254 @@ type BusinessType = {
   id: string;
   name: string;
 };
+type Props = {
+  onCountChange?: (count: number) => void;
+};
 
-export default function AccessibleFeatureTable() {
-  const [features, setFeatures] = useState<AccessibleFeature[]>([]);
-  const [featureTypes, setFeatureTypes] = useState<FeatureType[]>([]);
-  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedFeature, setSelectedFeature] = useState<AccessibleFeature | null>(null);
-  const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
-  useEffect(() => {
-    const fetchFeatureTypes = fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature-types/list?limit=1000`
-    ).then((res) => res.json());
+const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
+  function AccessibleFeatureTable({ onCountChange }, ref) {
+    const [features, setFeatures] = useState<AccessibleFeature[]>([]);
+    const [featureTypes, setFeatureTypes] = useState<FeatureType[]>([]);
+    const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedFeature, setSelectedFeature] = useState<AccessibleFeature | null>(null);
+    const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
+    const [openDeleteModal, setOpenDeleteModal] = useState(false);
+    const [featureToDelete, setFeatureToDelete] = useState<AccessibleFeature | null>(null);
+    const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
-    const fetchBusinessTypes = fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}business-type/list?limit=1000`
-    ).then((res) => res.json());
-    const fetchFeatures = fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/list?limit=1000`,
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    ).then((res) => res.json());
+    const fetchFeatures = async () => {
+      setLoading(true);
+      try {
+        const [ftRes, btRes, fRes] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature-types/list?limit=1000`).then(res => res.json()),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business-type/list?limit=1000`).then(res => res.json()),
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/list?limit=1000`, {
+            headers: { "Content-Type": "application/json" },
+          }).then(res => res.json())
+        ]);
 
-    Promise.all([fetchFeatureTypes, fetchBusinessTypes, fetchFeatures])
-      .then(([ftRes, btRes, fRes]) => {
         setFeatureTypes(ftRes.data || []);
         setBusinessTypes(btRes.data || []);
-        setFeatures(fRes.items || []);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+        const items = fRes.items || [];
+        setFeatures(items);
+        if (onCountChange) onCountChange(items.length);
+      } catch (err) {
+        console.error("Error fetching features:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    useImperativeHandle(ref, () => ({
+      fetchFeatures,
+    }));
 
-  const getFeatureTypeNames = (linked: LinkedType[]) =>
-    linked
-      .map(
-        (lt) =>
-          featureTypes.find((ft) => ft.id === lt.accessible_feature_type_id)?.name
-      )
-      .filter(Boolean)
-      .join(", ");
+    useEffect(() => {
+      fetchFeatures();
+    }, []);
 
-  const getBusinessTypeNames = (linked: LinkedType[]) =>
-    linked
-      .map(
-        (lt) => businessTypes.find((bt) => bt.id === lt.business_type_id)?.name
-      )
-      .filter(Boolean)
-      .join(", ");
 
-  if (loading) {
-    return <div className="flex justify-center items-center h-[400px]">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>;
-  }
+    const getFeatureTypeNames = (linked: LinkedType[]) =>
+      linked
+        .map(
+          (lt) =>
+            featureTypes.find((ft) => ft.id === lt.accessible_feature_type_id)?.name
+        )
+        .filter(Boolean)
+        .join(", ");
 
-  const handleDelete = async (id: string) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this feature?");
-    if (!confirmDelete) return;
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/delete/${id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
+    const getBusinessTypeNames = (linked: LinkedType[]) =>
+      linked
+        .map(
+          (lt) => businessTypes.find((bt) => bt.id === lt.business_type_id)?.name
+        )
+        .filter(Boolean)
+        .join(", ");
+
+    const confirmDeleteAction = async () => {
+      if (!featureToDelete) return;
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/delete/${featureToDelete.id}`,
+          {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        if (res.ok) {
+          setOpenDeleteModal(false);
+          setFeatureToDelete(null);
+          setOpenSuccessModal(true);
+        } else {
+          console.error("Failed to delete feature");
         }
-      );
-      if (res.ok) {
-        alert("Feature deleted successfully!");
-        window.location.reload();
+      } catch (error) {
+        console.error("Error deleting feature:", error);
       }
-      else {
-        console.error('Failed to delete feature');
-      }
-    } catch (error) {
-      console.error('Error:', error);
+    };
+
+    if (loading) {
+      return <div className="flex justify-center items-center h-[400px]">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+      </div>;
     }
-  };
 
-  return (
-    <div className="rounded-lg shadow-sm border border-gray-200">
-      <div className="max-h-[500px] overflow-y-auto">
-        <table className="min-w-full text-sm text-left text-gray-700">
-          <thead className="bg-[#EFF0F1] text-gray-500 text-sm font-bold">
-            <tr>
-              <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">ID</th>
-              <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">Title</th>
-              <th scope="col" className="px-6 py-3">Feature Type</th>
-              <th scope="col" className="px-6 py-3">Business Categories</th>
-              <th scope="col" className="px-3 py-3 text-right"></th>
-            </tr>
-          </thead>
-
-          <tbody className="divide-y divide-gray-200">
-            {features.map((feature, index) => (
-              <tr key={feature.id} className="hover:bg-gray-50">
-                <td className="px-6 pr-4 pl-3">{index + 1}</td>
-                <td className="px-6 pr-4 pl-3">{feature.title}</td>
-                <td className="px-6 py-4">{getFeatureTypeNames(feature.linkedTypes)}</td>
-                <td className="px-6 py-4">{getBusinessTypeNames(feature.linkedBusinessTypes)}</td>
-                <td className="relative px-6 py-4 text-right">
-                  <input
-                    type="checkbox"
-                    id={`menuToggle${index}`}
-                    className="hidden peer"
-                  />
-                  <label
-                    htmlFor={`menuToggle${index}`}
-                    className="cursor-pointer text-gray-500 text-2xl select-none"
-                  >
-                    ⋮
-                  </label>
-
-
-                  <div className="absolute right-0 mt-2 w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
-                    <button
-                      onClick={() => {
-                        setSelectedFeature(feature);
-                        setIsUpdateFormOpen(true);
-                        const toggle = document.getElementById(`menuToggle${index}`) as HTMLInputElement;
-                        if (toggle) toggle.checked = false;
-                      }}
-                      className="flex items-center border-b border-gray-200 gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm">
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleDelete(feature.id);
-                        const toggle = document.getElementById(`menuToggle${index}`) as HTMLInputElement;
-                        if (toggle) toggle.checked = false;
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg">
-                      Delete
-                    </button>
-                  </div>
-                </td>
+    return (
+      <div className="w-full rounded-lg shadow-sm border border-gray-200">
+        <div className="w-full overflow-hidden">
+          <table className="min-w-full text-sm text-left text-gray-700">
+            <thead className="bg-[#EFF0F1] text-gray-500 text-sm font-bold">
+              <tr>
+                <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">ID</th>
+                <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">Title</th>
+                <th scope="col" className="px-6 py-3">Feature Type</th>
+                <th scope="col" className="px-6 py-3">Business Categories</th>
+                <th scope="col" className="px-3 py-3 text-right"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {isUpdateFormOpen && (
-        <UpdateAccessibilityFeatureForm
-          isOpen={isUpdateFormOpen}
-          onClose={() => setIsUpdateFormOpen(false)}
-          feature={selectedFeature}
-        />
-      )}
-    </div>
-  );
-}
+            </thead>
 
+            <tbody className="divide-y divide-gray-200">
+              {features.map((feature, index) => (
+                <tr key={feature.id} className="hover:bg-gray-50">
+                  <td className="px-6 pr-4 pl-3">{index + 1}</td>
+                  <td className="px-6 pr-4 pl-3">{feature.title}</td>
+                  <td className="px-6 py-4">{getFeatureTypeNames(feature.linkedTypes)}</td>
+                  <td className="px-6 py-4">{getBusinessTypeNames(feature.linkedBusinessTypes)}</td>
+                  <td className="relative px-6 py-4 text-right">
+                    <input
+                      type="checkbox"
+                      id={`menuToggle${index}`}
+                      className="hidden peer"
+                    />
+                    <label
+                      htmlFor={`menuToggle${index}`}
+                      className="cursor-pointer text-gray-500 text-2xl select-none"
+                    >
+                      ⋮
+                    </label>
+
+
+                    <div className="absolute right-0 mt-2 w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
+                      <button
+                        onClick={() => {
+                          setSelectedFeature(feature);
+                          setIsUpdateFormOpen(true);
+                          const toggle = document.getElementById(`menuToggle${index}`) as HTMLInputElement;
+                          if (toggle) toggle.checked = false;
+                        }}
+                        className="flex items-center border-b border-gray-200 gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm">
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFeatureToDelete(feature);
+                          setOpenDeleteModal(true);
+                          const toggle = document.getElementById(
+                            `menuToggle${index}`
+                          ) as HTMLInputElement;
+                          if (toggle) toggle.checked = false;
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {isUpdateFormOpen && (
+          <UpdateAccessibilityFeatureForm
+            isOpen={isUpdateFormOpen}
+            onClose={() => setIsUpdateFormOpen(false)}
+            feature={selectedFeature}
+            onSuccess={fetchFeatures}
+          />
+        )}
+        {openDeleteModal && featureToDelete && (
+          <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8">
+              <div className="flex justify-center mb-4">
+                <div className="bg-red-600 rounded-full p-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14"
+                    />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 className="text-lg font-bold mb-2 text-gray-800">
+                Delete Accessible Feature
+              </h2>
+              <p className="mb-4 text-gray-600">Are you sure you want to delete this Accessible Feature.</p>
+
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => setOpenDeleteModal(false)}
+                  className="px-5 py-2 w-full border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmDeleteAction}
+                  className="px-5 py-2 w-full bg-red-600 text-white rounded-full hover:bg-red-700 cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {openSuccessModal && (
+          <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+              <div className="flex justify-center mb-4">
+                <div className="bg-[#0519CE] rounded-full p-3">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+
+              <h2 className="text-lg font-bold mb-2">Deleted Successfully!</h2>
+              <p className="mb-4">The Accessible Feature has been removed.</p>
+
+              <button
+                className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
+                onClick={() => {
+                  setOpenSuccessModal(false);
+                  fetchFeatures();
+                }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  });
+export default AccessibleFeatureTable;
