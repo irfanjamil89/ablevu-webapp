@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
-import Link from 'next/link';
+import Link from "next/link";
+
 // ---------- Types ----------
 
 type LinkedType = {
@@ -52,6 +53,10 @@ type NewBusinessForm = {
   place_id?: string;
   latitude?: number;
   longitude?: number;
+  city: string;
+  state: string;
+  country: string;
+  zipcode: string;
 };
 
 type BusinessType = {
@@ -74,11 +79,10 @@ type BusinessSchedule = {
   business: {
     id: string;
     name: string;
-    // zarurat ho to extra fields bhi add kar sakte ho
   };
-  day: string; // "monday", "tuesday" ...
-  opening_time: string; // ISO string aa rahi hai
-  closing_time: string; // ISO string aa rahi hai
+  day: string;
+  opening_time: string;
+  closing_time: string;
   opening_time_text: string;
   closing_time_text: string;
   active: boolean;
@@ -94,6 +98,27 @@ type ScheduleListResponse = {
   totalPages: number;
 };
 
+// ---------- Address helper ----------
+
+function extractAddressParts(result: { address_components?: any[] }) {
+  const components = result.address_components || [];
+
+  const find = (type: string) =>
+    components.find((c: any) => c.types.includes(type))?.long_name || "";
+
+  const city =
+    find("locality") ||
+    find("postal_town") ||
+    find("sublocality") ||
+    find("administrative_area_level_2");
+
+  const state = find("administrative_area_level_1");
+  const country = find("country");
+  const zipcode = find("postal_code");
+
+  return { city, state, country, zipcode };
+}
+
 // ---------- Component ----------
 
 export default function Page() {
@@ -107,13 +132,17 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   const [newBusiness, setNewBusiness] = useState<NewBusinessForm>({
-  name: "",
-  fullAddress: "",
-  description: "",
-  place_id: undefined,
-  latitude: undefined,
-  longitude: undefined,
-});
+    name: "",
+    fullAddress: "",
+    description: "",
+    place_id: undefined,
+    latitude: undefined,
+    longitude: undefined,
+    city: "",
+    state: "",
+    country: "",
+    zipcode: "",
+  });
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
@@ -154,15 +183,15 @@ export default function Page() {
         console.error("Error fetching features:", error);
       });
 
-      fetch(base + "/business-schedules/list?page=1&limit=1000")
-    .then((response) => response.json())
-    .then((data: ScheduleListResponse) => {
-      console.log("Business schedules API:", data);
-      setSchedules(data.data || []);
-    })
-    .catch((error) => {
-      console.error("Error fetching business schedules:", error);
-    });
+    fetch(base + "/business-schedules/list?page=1&limit=1000")
+      .then((response) => response.json())
+      .then((data: ScheduleListResponse) => {
+        console.log("Business schedules API:", data);
+        setSchedules(data.data || []);
+      })
+      .catch((error) => {
+        console.error("Error fetching business schedules:", error);
+      });
   }, []);
 
   // ---------- Fetch businesses (role-based filter backend pe) ----------
@@ -192,7 +221,6 @@ export default function Page() {
       .then((data) => {
         console.log("Business list API:", data);
         const list: Business[] = data.data || [];
-        // Backend already filter karega (Business / Contributor user ⇒ sirf apni)
         setBusinesses(list);
       })
       .catch((error) => {
@@ -237,21 +265,21 @@ export default function Page() {
   }, [features]);
 
   const schedulesByBusinessId = useMemo(() => {
-  const map: Record<string, BusinessSchedule[]> = {};
+    const map: Record<string, BusinessSchedule[]> = {};
 
-  (schedules || []).forEach((sch) => {
-    const bId = sch.business?.id;
-    if (!bId) return;
-    if (!map[bId]) map[bId] = [];
-    map[bId].push(sch);
-  });
+    (schedules || []).forEach((sch) => {
+      const bId = sch.business?.id;
+      if (!bId) return;
+      if (!map[bId]) map[bId] = [];
+      map[bId].push(sch);
+    });
 
-  Object.values(map).forEach((list) => {
-    list.sort((a, b) => a.day.localeCompare(b.day));
-  });
+    Object.values(map).forEach((list) => {
+      list.sort((a, b) => a.day.localeCompare(b.day));
+    });
 
-  return map;
-}, [schedules]);
+    return map;
+  }, [schedules]);
 
   // ---------- Status badge (business.business_status) ----------
 
@@ -287,7 +315,6 @@ export default function Page() {
   const sortedBusinesses = useMemo(() => {
     let arr = [...businesses];
 
-    // 1) Status filter
     if (statusFilter) {
       arr = arr.filter((b) => {
         const status = (b.business_status || "").toLowerCase();
@@ -318,7 +345,6 @@ export default function Page() {
       });
     }
 
-    // 2) Sort
     switch (sortOption) {
       case "name-asc":
         arr.sort((a, b) => a.name.localeCompare(b.name));
@@ -349,61 +375,61 @@ export default function Page() {
 
   // Schedule Helper
   const dayOrder = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ];
 
-function getTodayKey(): string {
-  const todayIndex = new Date().getDay(); 
-  
-  const mapByIndex: Record<number, string> = {
-    0: "sunday",
-    1: "monday",
-    2: "tuesday",
-    3: "wednesday",
-    4: "thursday",
-    5: "friday",
-    6: "saturday",
-  };
+  function getTodayKey(): string {
+    const todayIndex = new Date().getDay();
 
-  return mapByIndex[todayIndex] || "monday";
-}
+    const mapByIndex: Record<number, string> = {
+      0: "sunday",
+      1: "monday",
+      2: "tuesday",
+      3: "wednesday",
+      4: "thursday",
+      5: "friday",
+      6: "saturday",
+    };
 
-function getTodayScheduleLabel(businessId: string): string | null {
-  const list = schedulesByBusinessId[businessId];
-  if (!list || list.length === 0) return null;
-
-  const todayKey = getTodayKey();
-
-  const todaySchedule = list.find(
-    (sch) => sch.day.toLowerCase() === todayKey && sch.active,
-  );
-
-  if (!todaySchedule) {
-    return "Closed today";
+    return mapByIndex[todayIndex] || "monday";
   }
 
-  const openText =
-    todaySchedule.opening_time_text ||
-    new Date(todaySchedule.opening_time).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
+  function getTodayScheduleLabel(businessId: string): string | null {
+    const list = schedulesByBusinessId[businessId];
+    if (!list || list.length === 0) return null;
 
-  const closeText =
-    todaySchedule.closing_time_text ||
-    new Date(todaySchedule.closing_time).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    const todayKey = getTodayKey();
 
-  return `Today: ${openText} – ${closeText}`;
-}
+    const todaySchedule = list.find(
+      (sch) => sch.day.toLowerCase() === todayKey && sch.active
+    );
+
+    if (!todaySchedule) {
+      return "Closed today";
+    }
+
+    const openText =
+      todaySchedule.opening_time_text ||
+      new Date(todaySchedule.opening_time).toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+
+    const closeText =
+      todaySchedule.closing_time_text ||
+      new Date(todaySchedule.closing_time).toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+
+    return `Today: ${openText} – ${closeText}`;
+  }
 
   // ---------- Name helpers ----------
 
@@ -422,70 +448,69 @@ function getTodayScheduleLabel(businessId: string): string | null {
   };
 
   const getFeatureName = (feature: AccessibilityFeature) => {
-  if (feature.title) return feature.title.trim();
-  if (feature.name) return feature.name.trim();
-  if (feature.feature_name) return feature.feature_name.trim();
-  if (feature.label) return feature.label.trim();
-  if (feature.featureType?.name) return feature.featureType.name.trim();
+    if (feature.title) return feature.title.trim();
+    if (feature.name) return feature.name.trim();
+    if (feature.feature_name) return feature.feature_name.trim();
+    if (feature.label) return feature.label.trim();
+    if (feature.featureType?.name) return feature.featureType.name.trim();
 
-  const key = feature.accessible_feature_id || feature.id;
-  if (key && featuresMap[key]) {
-    return featuresMap[key];
-  }
+    const key = feature.accessible_feature_id || feature.id;
+    if (key && featuresMap[key]) {
+      return featuresMap[key];
+    }
 
-  return key || "Unknown feature";
-};
+    return key || "Unknown feature";
+  };
 
   // ---------- Create business ----------
 
   const handleCreateBusiness = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setCreateError(null);
+    e.preventDefault();
+    setCreateError(null);
 
-  if (!newBusiness.name.trim()) {
-    setCreateError("Business name is required.");
-    return;
-  }
-  if (!selectedCategoryId) {
-    setCreateError("Please select a business category.");
-    return;
-  }
-  if (!newBusiness.fullAddress.trim()) {
-    setCreateError("Please select address using Google search.");
-    return;
-  }
+    if (!newBusiness.name.trim()) {
+      setCreateError("Business name is required.");
+      return;
+    }
+    if (!selectedCategoryId) {
+      setCreateError("Please select a business category.");
+      return;
+    }
+    if (!newBusiness.fullAddress.trim()) {
+      setCreateError("Please select address using Google search.");
+      return;
+    }
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("access_token")
-      : null;
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
 
-  if (!token) {
-    setCreateError("You must be logged in before creating a business.");
-    return;
-  }
+    if (!token) {
+      setCreateError("You must be logged in before creating a business.");
+      return;
+    }
 
-  // ⭐ Backend will geocode automatically
-  const payload = {
-    name: newBusiness.name.trim(),
-    business_type: [selectedCategoryId],
-    description: newBusiness.description || "",
+    const payload = {
+      name: newBusiness.name.trim(),
+      business_type: [selectedCategoryId],
+      description: newBusiness.description || "",
 
-    address: newBusiness.fullAddress,
-    place_id: newBusiness.place_id,
-    latitude: newBusiness.latitude,
-    longitude: newBusiness.longitude,
+      address: newBusiness.fullAddress,
+      place_id: newBusiness.place_id,
+      latitude: newBusiness.latitude,
+      longitude: newBusiness.longitude,
 
-    city: "",
-    state: "",
-    country: "",
-    zipcode: "",
+      city: newBusiness.city || "",
+      state: newBusiness.state || "",
+      country: newBusiness.country || "",
+      zipcode: newBusiness.zipcode || "",
 
-    active: false,
-    business_status: "draft",
-  };
+      active: false,
+      business_status: "draft",
+    };
 
-  try {
+    try {
       setIsCreating(true);
 
       const res = await fetch(
@@ -508,7 +533,6 @@ function getTodayScheduleLabel(businessId: string): string | null {
         throw new Error(errorBody.message || "Failed to create business");
       }
 
-      // List refresh (same JWT header)
       const listRes = await fetch(
         process.env.NEXT_PUBLIC_API_BASE_URL + "/business/list",
         {
@@ -521,7 +545,18 @@ function getTodayScheduleLabel(businessId: string): string | null {
       const list: Business[] = listData.data || [];
       setBusinesses(list);
 
-      setNewBusiness({ name: "", fullAddress: "", description: "" });
+      setNewBusiness({
+        name: "",
+        fullAddress: "",
+        description: "",
+        place_id: undefined,
+        latitude: undefined,
+        longitude: undefined,
+        city: "",
+        state: "",
+        country: "",
+        zipcode: "",
+      });
       setSelectedCategoryId("");
 
       const checkbox = document.getElementById(
@@ -839,32 +874,40 @@ function getTodayScheduleLabel(businessId: string): string | null {
                       </div>
 
                       {/* Business Address */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Business Address <span className="text-red-500">*</span>
-  </label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Business Address{" "}
+                          <span className="text-red-500">*</span>
+                        </label>
 
-  <GoogleAddressInput
-    value={newBusiness.fullAddress}
-    onChangeText={(text) =>
-      setNewBusiness((prev) => ({
-        ...prev,
-        fullAddress: text,        // user jo type karega
-      }))
-    }
-    onSelect={(result) => {
-      console.log("Selected place:", result);
+                        <GoogleAddressInput
+                          value={newBusiness.fullAddress}
+                          onChangeText={(text) =>
+                            setNewBusiness((prev) => ({
+                              ...prev,
+                              fullAddress: text,
+                            }))
+                          }
+                          onSelect={(result) => {
+                            console.log("Selected place:", result);
 
-      setNewBusiness((prev) => ({
-        ...prev,
-        fullAddress: result.formatted_address,
-        place_id: result.place_id,
-        latitude: result.lat,
-        longitude: result.lng,
-      }));
-    }}
-  />
-</div>
+                            const { city, state, country, zipcode } =
+                              extractAddressParts(result);
+
+                            setNewBusiness((prev) => ({
+                              ...prev,
+                              fullAddress: result.formatted_address,
+                              place_id: result.place_id,
+                              latitude: result.lat,
+                              longitude: result.lng,
+                              city,
+                              state,
+                              country,
+                              zipcode,
+                            }));
+                          }}
+                        />
+                      </div>
 
                       {/* Logo upload (placeholder only) */}
                       <div>
@@ -972,8 +1015,7 @@ function getTodayScheduleLabel(businessId: string): string | null {
                   const statusInfo = getStatusInfo(business);
 
                   return (
-
-                    <Link 
+                    <Link
                       key={business.id}
                       href={`/business-profile/${business.id}`}
                       className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
@@ -1112,10 +1154,14 @@ function getTodayScheduleLabel(businessId: string): string | null {
 
                         {/* Other info */}
                         <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-                          <img src="/assets/images/clock.webp" className="w-4 h-4" />
-                            <span className="text-md text-gray-700">
-                               {getTodayScheduleLabel(business.id) || "Operating hours not specified"}
-                            </span>
+                          <img
+                            src="/assets/images/clock.webp"
+                            className="w-4 h-4"
+                          />
+                          <span className="text-md text-gray-700">
+                            {getTodayScheduleLabel(business.id) ||
+                              "Operating hours not specified"}
+                          </span>
                         </div>
                         <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
                           <img
