@@ -1,6 +1,5 @@
 import React from 'react'
 
-<<<<<<< Updated upstream
 export type BusinessProfile = {
   id: string;
   name: string;
@@ -32,12 +31,6 @@ const VirtualTour: React.FC<VirtualTourProps> = ({
     return (
         <div
             className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
-=======
-export default function VirtualTour() {
-    return (
-        <div
-            className="fixed inset-0 bg-[#000000b4] hidden peer-checked:flex items-center justify-center z-50">
->>>>>>> Stashed changes
 
             {/* <!-- MODAL CARD --> */}
             <div
@@ -82,13 +75,8 @@ export default function VirtualTour() {
                 </form>
             </div>
         </div>
-<<<<<<< Updated upstream
     );
 };
 
 export default VirtualTour;
 
-=======
-    )
-}
->>>>>>> Stashed changes

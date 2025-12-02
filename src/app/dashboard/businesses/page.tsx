@@ -138,28 +138,23 @@ export default function Page() {
     place_id: undefined,
     latitude: undefined,
     longitude: undefined,
-<<<<<<< Updated upstream
     city: "",
     state: "",
     country: "",
     zipcode: "",
   });
-=======
-  });
 
   const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10;
-  
-    const totalPages = Math.ceil(features.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
+  const itemsPerPage = 10;
 
-    
 
->>>>>>> Stashed changes
+
+
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
+
+
 
   const statusFilterLabel =
     statusFilter === "draft"
@@ -421,11 +416,7 @@ export default function Page() {
     const todayKey = getTodayKey();
 
     const todaySchedule = list.find(
-<<<<<<< Updated upstream
       (sch) => sch.day.toLowerCase() === todayKey && sch.active
-=======
-      (sch) => sch.day.toLowerCase() === todayKey && sch.active,
->>>>>>> Stashed changes
     );
 
     if (!todaySchedule) {
@@ -509,10 +500,6 @@ export default function Page() {
       return;
     }
 
-<<<<<<< Updated upstream
-=======
-    // ⭐ Backend will geocode automatically
->>>>>>> Stashed changes
     const payload = {
       name: newBusiness.name.trim(),
       business_type: [selectedCategoryId],
@@ -523,17 +510,10 @@ export default function Page() {
       latitude: newBusiness.latitude,
       longitude: newBusiness.longitude,
 
-<<<<<<< Updated upstream
       city: newBusiness.city || "",
       state: newBusiness.state || "",
       country: newBusiness.country || "",
       zipcode: newBusiness.zipcode || "",
-=======
-      city: "",
-      state: "",
-      country: "",
-      zipcode: "",
->>>>>>> Stashed changes
 
       active: false,
       business_status: "draft",
@@ -602,30 +582,34 @@ export default function Page() {
   // ---------- Loading state ----------
 
   if (loading) {
-    return <div className="flex justify-center w-full items-center h-[400px]">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>;
+    return (
+      <div className="w-full h-screen flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
   }
 
 
-  
-    const currentbusiness = sortedBusinesses.slice(startIndex, endIndex);
-  
-    const goToPage = (page: number) => {
-      setCurrentPage(page);
-    };
-  
-    const goToNextPage = () => {
-      if (currentPage < totalPages) {
-        setCurrentPage(currentPage + 1);
-      }
-    };
-  
-    const goToPreviousPage = () => {
-      if (currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
-    };
+  const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentbusiness = sortedBusinesses.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
 
 
@@ -663,7 +647,6 @@ export default function Page() {
 
     return pages;
   };
-
 
 
   // ---------- UI ----------
@@ -962,12 +945,8 @@ export default function Page() {
                       {/* Business Address */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-<<<<<<< Updated upstream
                           Business Address{" "}
                           <span className="text-red-500">*</span>
-=======
-                          Business Address <span className="text-red-500">*</span>
->>>>>>> Stashed changes
                         </label>
 
                         <GoogleAddressInput
@@ -975,35 +954,25 @@ export default function Page() {
                           onChangeText={(text) =>
                             setNewBusiness((prev) => ({
                               ...prev,
-<<<<<<< Updated upstream
                               fullAddress: text,
-=======
-                              fullAddress: text,        // user jo type karega
->>>>>>> Stashed changes
                             }))
                           }
                           onSelect={(result) => {
                             console.log("Selected place:", result);
 
-<<<<<<< Updated upstream
                             const { city, state, country, zipcode } =
                               extractAddressParts(result);
 
-=======
->>>>>>> Stashed changes
                             setNewBusiness((prev) => ({
                               ...prev,
                               fullAddress: result.formatted_address,
                               place_id: result.place_id,
                               latitude: result.lat,
                               longitude: result.lng,
-<<<<<<< Updated upstream
                               city,
                               state,
                               country,
                               zipcode,
-=======
->>>>>>> Stashed changes
                             }));
                           }}
                         />
@@ -1115,10 +1084,6 @@ export default function Page() {
                   const statusInfo = getStatusInfo(business);
 
                   return (
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
                     <Link
                       key={business.id}
                       href={`/business-profile/${business.id}`}
@@ -1257,7 +1222,6 @@ export default function Page() {
 
                         {/* Other info */}
                         <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-<<<<<<< Updated upstream
                           <img
                             src="/assets/images/clock.webp"
                             className="w-4 h-4"
@@ -1265,11 +1229,6 @@ export default function Page() {
                           <span className="text-md text-gray-700">
                             {getTodayScheduleLabel(business.id) ||
                               "Operating hours not specified"}
-=======
-                          <img src="/assets/images/clock.webp" className="w-4 h-4" />
-                          <span className="text-md text-gray-700">
-                            {getTodayScheduleLabel(business.id) || "Operating hours not specified"}
->>>>>>> Stashed changes
                           </span>
                         </div>
                         <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
@@ -1287,11 +1246,11 @@ export default function Page() {
                 })}
               </div>
               {/* ===== PAGINATION CONTROLS ===== */}
-              {!loading && features.length > 0 && (
+              {!loading && sortedBusinesses.length > 0 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
                   {/* Left side: Entry counter */}
                   <div className="text-sm text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, features.length)} of {features.length} entries
+                    Showing {startIndex + 1} to {Math.min(endIndex, sortedBusinesses.length)} of {sortedBusinesses.length} entries
                   </div>
 
                   {/* Right side: Pagination buttons */}

@@ -99,7 +99,6 @@ export default function Page({ params }: { params: { id: string } }) {
 
   // 🌟 Return UI (yahan se tumhara existing JSX as-is)
   return (
-<<<<<<< Updated upstream
     <div>
       <div className="flex">
         <BusinessSidebar
@@ -174,11 +173,7 @@ export default function Page({ params }: { params: { id: string } }) {
           }}
         />
       )}
-=======
-    <div className='flex'>
-      <BusinessSidebar businessId={businessId}/>
-      <Maincontent businessId={businessId} />
->>>>>>> Stashed changes
+
     </div>
   );
 }
