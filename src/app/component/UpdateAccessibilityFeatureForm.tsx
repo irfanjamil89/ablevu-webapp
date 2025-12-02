@@ -224,7 +224,7 @@ export default function UpdateAccessibilityFeatureForm({
                       setSelectAllCategories(updatedList.length === allBusinessTypes.length);
                     }}
                   />
-                  {bt.name}
+                  <p className="w-[90%]">{bt.name}</p>
                 </label>
               ))}
             </div>

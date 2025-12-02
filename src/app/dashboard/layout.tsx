@@ -170,9 +170,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <div className="flex">
-        <div className="h-screen w-[350px] pt-5 bg-white border-r border-gray-200 flex flex-col justify-between">
+        <div className="h-screen   w-[350px] pt-5 bg-white border-r border-gray-200 flex flex-col justify-between">
           {/* Top Navigation */}
-          <div className="p-4">
+          <div className="p-4 sticky top-0">
             <ul className="space-y-4 font-medium">
               {user?.user_role === "Admin" ? (
                 <>

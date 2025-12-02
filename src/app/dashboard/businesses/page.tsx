@@ -138,11 +138,25 @@ export default function Page() {
     place_id: undefined,
     latitude: undefined,
     longitude: undefined,
+<<<<<<< Updated upstream
     city: "",
     state: "",
     country: "",
     zipcode: "",
   });
+=======
+  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+  
+    const totalPages = Math.ceil(features.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    
+
+>>>>>>> Stashed changes
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
@@ -151,12 +165,12 @@ export default function Page() {
     statusFilter === "draft"
       ? "Draft"
       : statusFilter === "pending"
-      ? "Pending Approved"
-      : statusFilter === "approved"
-      ? "Approved"
-      : statusFilter === "claimed"
-      ? "Claimed"
-      : "";
+        ? "Pending Approved"
+        : statusFilter === "approved"
+          ? "Approved"
+          : statusFilter === "claimed"
+            ? "Claimed"
+            : "";
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -407,7 +421,11 @@ export default function Page() {
     const todayKey = getTodayKey();
 
     const todaySchedule = list.find(
+<<<<<<< Updated upstream
       (sch) => sch.day.toLowerCase() === todayKey && sch.active
+=======
+      (sch) => sch.day.toLowerCase() === todayKey && sch.active,
+>>>>>>> Stashed changes
     );
 
     if (!todaySchedule) {
@@ -491,6 +509,10 @@ export default function Page() {
       return;
     }
 
+<<<<<<< Updated upstream
+=======
+    // ⭐ Backend will geocode automatically
+>>>>>>> Stashed changes
     const payload = {
       name: newBusiness.name.trim(),
       business_type: [selectedCategoryId],
@@ -501,10 +523,17 @@ export default function Page() {
       latitude: newBusiness.latitude,
       longitude: newBusiness.longitude,
 
+<<<<<<< Updated upstream
       city: newBusiness.city || "",
       state: newBusiness.state || "",
       country: newBusiness.country || "",
       zipcode: newBusiness.zipcode || "",
+=======
+      city: "",
+      state: "",
+      country: "",
+      zipcode: "",
+>>>>>>> Stashed changes
 
       active: false,
       business_status: "draft",
@@ -573,12 +602,69 @@ export default function Page() {
   // ---------- Loading state ----------
 
   if (loading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <div className="flex justify-center w-full items-center h-[400px]">
+      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>;
   }
+
+
+  
+    const currentbusiness = sortedBusinesses.slice(startIndex, endIndex);
+  
+    const goToPage = (page: number) => {
+      setCurrentPage(page);
+    };
+  
+    const goToNextPage = () => {
+      if (currentPage < totalPages) {
+        setCurrentPage(currentPage + 1);
+      }
+    };
+  
+    const goToPreviousPage = () => {
+      if (currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    };
+
+
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+
 
   // ---------- UI ----------
 
@@ -630,10 +716,10 @@ export default function Page() {
                           {sortOption === "name-asc"
                             ? "Name A–Z"
                             : sortOption === "name-desc"
-                            ? "Name Z–A"
-                            : sortOption === "created-asc"
-                            ? "Oldest First"
-                            : "Newest First"}
+                              ? "Name Z–A"
+                              : sortOption === "created-asc"
+                                ? "Oldest First"
+                                : "Newest First"}
                           )
                         </span>
                       )}
@@ -876,8 +962,12 @@ export default function Page() {
                       {/* Business Address */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
+<<<<<<< Updated upstream
                           Business Address{" "}
                           <span className="text-red-500">*</span>
+=======
+                          Business Address <span className="text-red-500">*</span>
+>>>>>>> Stashed changes
                         </label>
 
                         <GoogleAddressInput
@@ -885,25 +975,35 @@ export default function Page() {
                           onChangeText={(text) =>
                             setNewBusiness((prev) => ({
                               ...prev,
+<<<<<<< Updated upstream
                               fullAddress: text,
+=======
+                              fullAddress: text,        // user jo type karega
+>>>>>>> Stashed changes
                             }))
                           }
                           onSelect={(result) => {
                             console.log("Selected place:", result);
 
+<<<<<<< Updated upstream
                             const { city, state, country, zipcode } =
                               extractAddressParts(result);
 
+=======
+>>>>>>> Stashed changes
                             setNewBusiness((prev) => ({
                               ...prev,
                               fullAddress: result.formatted_address,
                               place_id: result.place_id,
                               latitude: result.lat,
                               longitude: result.lng,
+<<<<<<< Updated upstream
                               city,
                               state,
                               country,
                               zipcode,
+=======
+>>>>>>> Stashed changes
                             }));
                           }}
                         />
@@ -1011,10 +1111,14 @@ export default function Page() {
             {/* Business cards */}
             <section>
               <div>
-                {sortedBusinesses.map((business) => {
+                {currentbusiness.map((business) => {
                   const statusInfo = getStatusInfo(business);
 
                   return (
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
                     <Link
                       key={business.id}
                       href={`/business-profile/${business.id}`}
@@ -1024,9 +1128,8 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(${
-                            business.logo_url || "/assets/images/b-img.png"
-                          })`,
+                          backgroundImage: `url(${business.logo_url || "/assets/images/b-img.png"
+                            })`,
                         }}
                       >
                         {statusInfo.label && (
@@ -1154,6 +1257,7 @@ export default function Page() {
 
                         {/* Other info */}
                         <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+<<<<<<< Updated upstream
                           <img
                             src="/assets/images/clock.webp"
                             className="w-4 h-4"
@@ -1161,6 +1265,11 @@ export default function Page() {
                           <span className="text-md text-gray-700">
                             {getTodayScheduleLabel(business.id) ||
                               "Operating hours not specified"}
+=======
+                          <img src="/assets/images/clock.webp" className="w-4 h-4" />
+                          <span className="text-md text-gray-700">
+                            {getTodayScheduleLabel(business.id) || "Operating hours not specified"}
+>>>>>>> Stashed changes
                           </span>
                         </div>
                         <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
@@ -1177,6 +1286,63 @@ export default function Page() {
                   );
                 })}
               </div>
+              {/* ===== PAGINATION CONTROLS ===== */}
+              {!loading && features.length > 0 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+                  {/* Left side: Entry counter */}
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to {Math.min(endIndex, features.length)} of {features.length} entries
+                  </div>
+
+                  {/* Right side: Pagination buttons */}
+                  <div className="flex items-center gap-2">
+                    {/* Previous Button */}
+                    <button
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
+                    >
+                      Previous
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers().map((page, idx) => (
+                        <React.Fragment key={idx}>
+                          {page === '...' ? (
+                            <span className="px-3 py-1 text-gray-500">...</span>
+                          ) : (
+                            <button
+                              onClick={() => goToPage(page as number)}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                                ? "bg-[#0519CE] text-white"
+                                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                }`}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
           </div>
         </div>

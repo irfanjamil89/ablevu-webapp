@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import Link from 'next/link';
 
 // ---------- Types ----------
 
@@ -466,7 +467,7 @@ export default function Page() {
     </div>; // Show loading message while the data is being fetched
   }
   return (
-    <div className="w-full h-screen overflow-y-auto">
+    <div className="w-full ">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
           <div className="w-full min-h-screen bg-white px-6 py-5">
@@ -572,8 +573,9 @@ export default function Page() {
                   const statusInfo = getStatusInfo(business);
 
                   return (
-                    <div
+                    <Link
                       key={business.id}
+                      href={`/business-profile/${business.id}`}
                       className="border border-gray-200 rounded-xl flex md:items-center flex-col md:flex-row font-['Helvetica'] bg-white md:bg-[#E5E5E5]"
                     >
                       {/* left-side image */}
@@ -733,7 +735,7 @@ export default function Page() {
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
 
