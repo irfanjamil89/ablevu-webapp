@@ -85,41 +85,39 @@ export default function Maincontent({
   return (
     <div className="px-10 py-7 w-7/10">
       {/* ---------- Virtual Tours ---------- */}
-      <div className="tour border p-6 rounded-3xl border-[#e5e5e7] w-full">
-        <h3 className="text-xl font-[600] mb-2">Virtual Tours</h3>
-        <p>Explore the location virtually to make informed decisions and plan your visit</p>
-        <p className="text-xs mt-1">
-          Interested in adding an accessibility virtual tour? Email{" "}
-          <a href="mailto:info@ableeyes.org">
-            <span className="text-[#0205d3]">info@ableeyes.org</span>
-          </a>{" "}
-          for more information
-        </p>
+      <div className="tour border p-6 rounded-3xl border-[#e5e5e7] w-full ">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-[600] mb-4" >Virtual Tours</h3>
 
-        <div className="tours mt-6 flex flex-wrap justify-between gap-3">
+          <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {/* <!-- Title --> */}
+            <div className="flex items-center gap-3">
+
+
+              <button onClick={() => setOpenVirtualTour(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+                Add Virtual Tours
+              </button>
+            </div>
+          </div>
+
+        </div>
+        <p >Explore the location virtually to make informed decisions and plan your visit</p>
+        <p className='text-xs mt-1'>Interested in adding an accessibility virtual tour? Email <a href="mailto:info@ableeyes.org" ><span className="text-[#0205d3]">info@ableeyes.org</span></a> for more information</p>
+        <div className="tours mt-6 flex flex-wrap justify-between gap-5">
+
           {activeTours.length > 0 ? (
             activeTours.map((tour) => (
-              <div
-                key={tour.id}
-                className="flex justify-between items-center border p-4 rounded-xl border-[#e5e5e7] w-[49%]"
-              >
+              <div key={tour.id} className="flex justify-between items-center border p-4 rounded-xl border-[#e5e5e7] w-[49%]">
                 <div className="icon flex items-center">
-                  <img
-                    src="/assets/images/walking.svg"
-                    alt=""
-                    className="w-8 mr-4"
-                  />
+                  <img src="/assets/images/walking.svg" alt="" className="w-8 mr-4" />
                   <p>{tour.name}</p>
                 </div>
-                <div className="link">
-                  <a
-                    href={tour.link_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#0205d3] font-medium"
-                  >
-                    View
-                  </a>
+                <div className="link flex items-center space-x-2">
+                  <a href={tour.link_url}>View</a>
+                  <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
+                  <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
+                  <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
                 </div>
               </div>
             ))
@@ -128,6 +126,7 @@ export default function Maincontent({
               No virtual tours have been added yet.
             </p>
           )}
+
         </div>
       </div>
 
