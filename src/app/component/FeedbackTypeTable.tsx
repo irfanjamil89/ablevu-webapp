@@ -232,7 +232,7 @@ export default function FeedbackTypeTable({ refresh }: { refresh: number }) {
             </div>
 
             <h2 className="text-lg font-bold mb-2">Confirm Delete</h2>
-            <p className="mb-4">Are you sure you want to delete this feature?</p>
+            <p className="mb-4">Are you sure you want to delete this feedback type?</p>
 
             <div className="flex justify-center gap-3 pt-2">
               <button
@@ -300,7 +300,7 @@ export default function FeedbackTypeTable({ refresh }: { refresh: number }) {
               </div>
             </div>
             <h2 className="text-lg font-bold mb-2">Deleted Successfully!</h2>
-            <p className="mb-4">The feature has been removed.</p>
+            <p className="mb-4">The feedback has been removed.</p>
             <button
               className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
               onClick={() => setOpenSuccessModal(false)}
@@ -322,7 +322,7 @@ export default function FeedbackTypeTable({ refresh }: { refresh: number }) {
             </button>
 
             <h2 className="text-lg font-bold text-gray-700 mb-4">
-              Edit Feature Type
+              Edit Feedback Type
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-5">
