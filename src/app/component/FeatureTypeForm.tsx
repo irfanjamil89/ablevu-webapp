@@ -31,7 +31,7 @@ export default function FeatureTypeForm({ onSuccess }: FeatureTypeFormProps) {
 
     try {
       const response = await axios.post(
-        process.env.API_BASE_URL+"/accessible-feature-types/create/80dfa7c9-f919-4ffa-b37b-ad36899ec46d",
+        process.env.NEXT_PUBLIC_API_BASE_URL+"/accessible-feature-types/create/80dfa7c9-f919-4ffa-b37b-ad36899ec46d",
         payload,
         {
           headers: {
@@ -94,6 +94,8 @@ export default function FeatureTypeForm({ onSuccess }: FeatureTypeFormProps) {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="Enter Name"
+                maxLength={250}
+                pattern="^[A-Za-z\s]{1,50}$"
                 required
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200"
               />

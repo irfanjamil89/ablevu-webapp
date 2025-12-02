@@ -25,8 +25,9 @@ const [editLoading, setEditLoading] = useState(false);
   // Fetch all business types
   const fetchBusinessTypes = async () => {
     try {
+      console.log("Fetching business types...",process.env.NEXT_PUBLIC_API_BASE_URL);
       setLoading(true);
-      const response = await axios.get(process.env.API_BASE_URL+"/business-type/list");
+      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL+"/business-type/list");
       setData(response.data.data || []);
     } catch (err: any) {
       console.error("Error fetching business types:", err);
@@ -46,7 +47,7 @@ const [editLoading, setEditLoading] = useState(false);
 
     try {
       await axios.delete(
-        `${process.env.API_BASE_URL}/business-type/delete/${deleteId}/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/delete/${deleteId}/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -77,7 +78,7 @@ const [editLoading, setEditLoading] = useState(false);
   try {
     setEditLoading(true);
     await axios.patch(
-      `http://51.75.68.69:3006/business-type/update/${editId}/${userId}`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/update/${editId}/${userId}`,
       { name: editName.trim() },
       {
         headers: {
@@ -97,6 +98,11 @@ const [editLoading, setEditLoading] = useState(false);
   }
 };
 
+ if (loading) {
+    return <div className="flex justify-center items-center h-[400px]">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>; // Show loading message while the data is being fetched
+  }
 
   return (
     <section className="flex-1">
@@ -270,6 +276,8 @@ const [editLoading, setEditLoading] = useState(false);
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
               placeholder="Enter name"
+              maxLength={250}
+              pattern="^[A-Za-z\s]{1,50}$"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-2 hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200"
             />
 

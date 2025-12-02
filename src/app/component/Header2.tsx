@@ -5,6 +5,7 @@ import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
+import Feedback from "./Feedback";
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,8 +15,9 @@ export default function Header() {
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
+  const [OpenFeedbackModal, setOpenFeedbackModal] = useState(false);
 
-  // Run only after client-side hydration
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -37,12 +39,12 @@ export default function Header() {
 
   return (
     <div>
-      <header className="absolute z-50 mt-10 w-full lg:rounded-full sm:mt-10">
-        <div className="m-auto bg-white px-1 w-5/6 lg:mx-auto rounded-full lg:px-6 lg:py-4 md:px-12 md:bg-transparent">
+      <header className="relative z-50  w-full  border-b border-gray-200">
+        <div className="m-auto bg-white px-1  lg:mx-auto rounded-full lg:px-6 lg:py-4 md:px-12 md:bg-transparent">
           <div className="flex w-full items-center justify-between rounded-full bg-white px-5 md:px-4 py-2">
-            <div className="z-20">
+            <div className="w-48">
               <Link href="/" className="flex items-center gap-2" aria-label="Home">
-                <img src="/assets/images/logo.png" alt="logo-Ablevu" className="w-32" />
+                <img src="/assets/images/logo.png" alt="logo-Ablevu" className="w-48" />
               </Link>
             </div>
 
@@ -86,6 +88,22 @@ export default function Header() {
                         className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                       >
                         <span className="group-hover:text-black-800 relative">Access-friendly Cities</span>
+                      </Link>
+                    </li>
+                    <li
+                      
+                         onClick={() => setOpenFeedbackModal(true)}
+                        className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                      >
+                        <span className="group-hover:text-black-800 relative">Share Feedback</span>
+                      
+                    </li>
+                    <li>
+                      <Link
+                        href="#"
+                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                      >
+                        <span className="group-hover:text-black-800 relative">Add Business</span>
                       </Link>
                     </li>
                     <li>
@@ -252,6 +270,9 @@ export default function Header() {
           setOpenLoginModal={setOpenLoginModal}
           setOpenSignupModal={setOpenSignupModal}
         />
+      )}
+      {OpenFeedbackModal && (
+        <Feedback setOpenFeedbackModal={setOpenFeedbackModal} />
       )}
 
 

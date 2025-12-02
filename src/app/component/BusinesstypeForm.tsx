@@ -16,7 +16,7 @@ export default function BusinessTypeForm({ onSuccess }: { onSuccess?: () => void
 
     try {
       const response = await axios.post(
-        `${process.env.API_BASE_URL}/business-type/create/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/create/${userId}`,
         { name },
         {
           headers: {
@@ -72,6 +72,8 @@ export default function BusinessTypeForm({ onSuccess }: { onSuccess?: () => void
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter Title"
+                maxLength={250}
+                pattern="^[A-Za-z\s]{1,50}$"
                 required
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200"
               />

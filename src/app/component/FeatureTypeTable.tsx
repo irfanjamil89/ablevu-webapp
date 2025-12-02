@@ -35,7 +35,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        process.env.API_BASE_URL+"/accessible-feature-types/list",
+        process.env.NEXT_PUBLIC_API_BASE_URL+"/accessible-feature-types/list",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -85,7 +85,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
 
   try {
     await axios.patch(
-      `http://51.75.68.69:3006/accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
       {
         name: form.name,
         
@@ -122,7 +122,11 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setOpenDeleteModal(true); // open confirmation modal
   };
 
-  
+   if (loading) {
+    return <div className="flex justify-center items-center h-[400px]">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>; 
+  }
 
   return (
     <section className="flex-1">
@@ -243,7 +247,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   setLoadingDelete(true);
                   try {
                     await axios.delete(
-                      `${process.env.API_BASE_URL}/accessible-feature-types/delete/${featureToDelete}`,
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/delete/${featureToDelete}`,
                       {
                         headers: {
                           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -326,6 +330,8 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
+                  maxLength={250}
+                  pattern="^[A-Za-z\s]{1,50}$"
                   placeholder="Enter Name"
                   required
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200"
