@@ -28,7 +28,7 @@ type Props = {
 };
 
 const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
-  ({ onCountChange }, ref) => {
+  function AccessibleFeatureTable({ onCountChange }, ref) {
     const [features, setFeatures] = useState<AccessibleFeature[]>([]);
     const [featureTypes, setFeatureTypes] = useState<FeatureType[]>([]);
     const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
