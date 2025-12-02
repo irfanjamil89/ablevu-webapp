@@ -1,36 +1,9 @@
 import React from 'react'
 
-export type BusinessProfile = {
-  id: string;
-  name: string;
-  description: string | null;
-  address: string | null;
-  city: string | null;
-  state: string | null;
-  country: string | null;
-  zipcode: string | null;
-  email: string | null;
-  phone_number: string | null;
-  website: string | null;
-};
-
-interface VirtualTourProps {
-  businessId: string;
-  setOpenVirtualTour: React.Dispatch<React.SetStateAction<boolean>>;
-  onUpdated?: (b: BusinessProfile) => void;
-}
-
-// ---------- Component ----------
-const VirtualTour: React.FC<VirtualTourProps> = ({
-  businessId,
-  setOpenVirtualTour,
-  onUpdated,
-}) => {
-
-
+export default function AccessibilityTour() {
     return (
         <div
-            className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
+            className="fixed inset-0 bg-[#000000b4] hidden peer-checked:flex items-center justify-center z-50">
 
             {/* <!-- MODAL CARD --> */}
             <div
@@ -75,8 +48,5 @@ const VirtualTour: React.FC<VirtualTourProps> = ({
                 </form>
             </div>
         </div>
-    );
-};
-
-export default VirtualTour;
-
+    )
+}

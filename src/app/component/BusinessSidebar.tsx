@@ -1,24 +1,24 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineLike } from "react-icons/ai";
-import { BsBookmark } from "react-icons/bs";
-import { BsArrowLeft } from "react-icons/bs";
-import { BsLink } from "react-icons/bs";
-import { BsEnvelope } from "react-icons/bs";
-import { BsTelephone } from "react-icons/bs";
-import { BsPin } from "react-icons/bs";
-import { BsFacebook } from "react-icons/bs";
-import { BsInstagram } from "react-icons/bs";
-import { BsClock } from "react-icons/bs";
+import {
+  BsBookmark,
+  BsArrowLeft,
+  BsLink,
+  BsEnvelope,
+  BsTelephone,
+  BsPin,
+  BsFacebook,
+  BsInstagram,
+  BsClock,
+} from "react-icons/bs";
 
 // ---------- Types ----------
 type BusinessScheduleItem = {
   id: string;
   day: string;
-  opening_time: string;
-  closing_time: string;
   opening_time_text: string;
   closing_time_text: string;
   active: boolean;
@@ -26,9 +26,7 @@ type BusinessScheduleItem = {
 
 type LinkedTypeItem = {
   id: string;
-  business_id: string;
   business_type_id: string;
-  active: boolean;
   name?: string;
   business_type_name?: string;
   businessType?: { id: string; name: string };
@@ -37,26 +35,18 @@ type LinkedTypeItem = {
 type BusinessProfile = {
   id: string;
   name: string;
-  slug: string;
   description: string | null;
   address: string | null;
   city: string | null;
   state: string | null;
   country: string | null;
   zipcode: string | null;
-  active: boolean;
-  blocked: boolean;
-  business_status: string | null;
-  views: number;
   website: string | null;
   email: string | null;
   phone_number: string | null;
   facebook_link: string | null;
   instagram_link: string | null;
   logo_url: string | null;
-  marker_image_url: string | null;
-  latitude: number | null;
-  longitude: number | null;
   linkedTypes: LinkedTypeItem[];
   businessSchedule: BusinessScheduleItem[];
 };
@@ -64,138 +54,117 @@ type BusinessProfile = {
 type BusinessType = {
   id: string;
   name: string;
-  display_order: number;
-  picture_url: string | null;
-  active: boolean;
-  slug: string;
 };
 
 interface BusinessSidebarProps {
-  businessId: string;
+  business: BusinessProfile | null;
+  businessTypes: BusinessType[];
+  loading: boolean;
+  error: string | null;
+  setOpenDetailPopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenOperatingHours: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenSocialLinks: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenAboutModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
+export default function BusinessSidebar({
+  business,
+  businessTypes,
+  loading,
+  error,
+  setOpenDetailPopup,
+  setOpenOperatingHours,
+  setOpenSocialLinks,
+  setOpenAboutModal,
+}: BusinessSidebarProps) {
   const router = useRouter();
-
-  const [business, setBusiness] = useState<BusinessProfile | null>(null);
-  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // ---------- Fetch Business Profile ----------
-  useEffect(() => {
-    const fetchBusinessProfile = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  // 🔴 Delete & success state
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteSuccess, setDeleteSuccess] = useState("");
 
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("access_token")
-            : null;
+  // 🔥 DELETE BUSINESS HANDLER (called from popup)
+  const confirmDeleteAction = async () => {
+    if (!business) return;
 
-        if (!token) {
-          setError("Login required. No access token found.");
-          setLoading(false);
-          return;
-        }
+    try {
+      setDeleteError("");
+      setDeleteSuccess("");
 
-        const res = await fetch(
-          `${API_BASE_URL}/business/business-profile/${businessId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error(`Failed to load business profile (${res.status})`);
-        }
-
-        const data: BusinessProfile = await res.json();
-        setBusiness(data);
-      } catch (err: any) {
-        console.error("Error fetching business profile:", err);
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
+      if (!API_BASE_URL) {
+        setDeleteError("API base URL is not configured.");
+        return;
       }
-    };
 
-    if (businessId && API_BASE_URL) {
-      fetchBusinessProfile();
-    }
-  }, [API_BASE_URL, businessId]);
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("access_token")
+          : null;
 
-  // ---------- Fetch Business Types (for category names) ----------
-  useEffect(() => {
-    const fetchBusinessTypes = async () => {
-      try {
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("access_token")
-            : null;
-
-        if (!token) return;
-
-        const res = await fetch(
-          `${API_BASE_URL}/business-type/list?page=1&limit=1000`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          console.error("Failed to load business types", res.status);
-          return;
-        }
-
-        const data = await res.json();
-
-        // handle shapes: {items: []} OR {data: []} OR plain array
-        let items: any[] = [];
-        if (Array.isArray(data)) {
-          items = data;
-        } else if (Array.isArray(data.items)) {
-          items = data.items;
-        } else if (Array.isArray(data.data)) {
-          items = data.data;
-        }
-
-        setBusinessTypes(items as BusinessType[]);
-      } catch (err) {
-        console.error("Error loading business types:", err);
+      if (!token) {
+        setDeleteError("Login required. No access token found.");
+        return;
       }
-    };
 
-    if (API_BASE_URL) {
-      fetchBusinessTypes();
+      const res = await fetch(
+        `${API_BASE_URL}/business/delete/${business.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        console.error("Delete business error:", body);
+        const message =
+          (body as { message?: string })?.message ||
+          `Failed to delete business (${res.status})`;
+        throw new Error(message);
+      }
+
+      setOpenDeleteModal(false);
+      setDeleteSuccess("Business deleted successfully.");
+      setOpenSuccessModal(true); // ✅ success modal open
+    } catch (err: unknown) {
+      console.error(err);
+      const msg =
+        err instanceof Error ? err.message : "Failed to delete business";
+      setDeleteError(msg);
     }
-  }, [API_BASE_URL]);
+  };
 
-  // ---------- Maps ----------
+  // ---------- Map IDs → Names ----------
   const businessTypesMap = useMemo(() => {
     const map: Record<string, string> = {};
-    (businessTypes || []).forEach((bt) => {
-      if (!bt) return;
-      const label = bt.name?.trim();
-      if (bt.id && label) {
-        map[bt.id] = label;
-      }
+    businessTypes.forEach((bt) => {
+      if (bt?.id && bt?.name) map[bt.id] = bt.name;
     });
     return map;
   }, [businessTypes]);
 
-  // ---------- Helpers ----------
+  // ---------- Build category names ----------
+  const categoryNames = useMemo(() => {
+    if (!business?.linkedTypes) return [];
+
+    return business.linkedTypes
+      .map((lt) => {
+        return (
+          lt.businessType?.name ??
+          lt.name ??
+          lt.business_type_name ??
+          (lt.business_type_id ? businessTypesMap[lt.business_type_id] : undefined)
+        );
+      })
+      .filter((n): n is string => Boolean(n));
+  }, [business, businessTypesMap]);
+
   const displayAddress =
     business?.address ||
     [business?.city, business?.state, business?.zipcode, business?.country]
@@ -206,90 +175,48 @@ export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
   const formatDay = (day: string) =>
     day ? day.charAt(0).toUpperCase() + day.slice(1).toLowerCase() : "";
 
-  const getCategoryNames = (): string[] => {
-    if (!business || !business.linkedTypes) return [];
-
-    // 1️⃣ Try direct names from linkedTypes
-    const directNames =
-      business.linkedTypes
-        .map((lt) => {
-          return (
-            lt.businessType?.name || // relation style
-            lt.name || // simple name
-            lt.business_type_name // alternate key
-          );
-        })
-        .filter((n): n is string => Boolean(n)) || [];
-
-    if (directNames.length > 0) {
-      return directNames;
-    }
-
-    // 2️⃣ Fallback: use IDs + businessTypesMap
-    if (!businessTypes || businessTypes.length === 0) return [];
-
-    const fromIds =
-      business.linkedTypes
-        .map((lt) => {
-          const key = lt.business_type_id || lt.id;
-          if (!key) return undefined;
-          return businessTypesMap[key];
-        })
-        .filter((n): n is string => Boolean(n)) || [];
-
-    return fromIds;
-  };
-
-  // ---------- Loading / Error UI ----------
+  // ---------- Loading ----------
   if (loading) {
     return (
-      <div className="w-3/10 h-[200vh] px-10 py-7 border-r border-solid border-[#e5e5e7]">
-        <div className="animate-pulse">
-          <div className="h-8 w-40 bg-gray-200 rounded mb-4" />
-          <div className="h-48 w-full bg-gray-200 rounded-3xl mb-6" />
-          <div className="h-6 w-56 bg-gray-200 rounded mb-2" />
-          <div className="h-6 w-32 bg-gray-200 rounded mb-2" />
+      <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 w-40 bg-gray-200 rounded" />
+          <div className="h-48 bg-gray-200 rounded-3xl" />
         </div>
       </div>
     );
   }
 
+  // ---------- Error / No business ----------
   if (error || !business) {
     return (
-      <div className="w-3/10 h-[200vh] px-10 py-7 border-r border-solid border-[#e5e5e7]">
-        <div className="head flex items-center justify-between mb-6">
-          <div className="icon flex items-center text-2xl font-[600]">
-            <button className="cursor-pointer" onClick={() => router.back()}>
-              <BsArrowLeft className="w-6 h-6 mr-3" />
-            </button>
-            <h3>Business Details</h3>
-          </div>
-        </div>
-        <p className="text-red-500">
-          {error?.includes("401")
-            ? "You are not authorized to view this business profile. Please log in again."
-            : `Failed to load business profile. (${error})`}
+      <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
+        <button onClick={() => router.back()}>
+          <BsArrowLeft className="w-6 h-6 mr-3 inline-block" />
+        </button>
+        <p className="text-red-500 mt-4">
+          {error || "Failed to load business profile."}
         </p>
       </div>
     );
   }
 
-  const categoryNames = getCategoryNames();
-
+  // ---------- MAIN UI ----------
   return (
-    <div className="w-3/10 h-[200vh] px-10 py-7 border-r border-solid border-[#e5e5e7]">
+    <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
       {/* Header */}
-      <div className="head flex items-center justify-between">
-        <div className="icon flex items-center text-2xl font-[600]">
-          <button className="cursor-pointer" onClick={() => router.back()}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center text-2xl font-semibold">
+          <button onClick={() => router.back()}>
             <BsArrowLeft className="w-6 h-6 mr-3" />
           </button>
-          <h3>Business Details</h3>
+          Business Details
         </div>
-        <button className="button cursor-pointer rounded-4xl border font-[600] border-[#e5e5e7] py-3 px-4 flex items-center">
+
+        <button className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center">
           <img
             src="/assets/images/share.png"
-            alt="Share Icon"
+            alt="Share"
             className="w-5 h-5 mr-3"
           />
           Share
@@ -297,41 +224,37 @@ export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
       </div>
 
       {/* Logo */}
-      <div className="logo flex items-center justify-center border border-solid rounded-3xl border-[#e5e5e7] mt-6">
+      <div className="border rounded-3xl mt-6 flex justify-center border-[#e5e5e7]">
         <img
           src={business.logo_url || "/assets/images/businesslogo.png"}
           alt={business.name}
-          className="w-80 m-auto object-contain"
+          className="w-80 object-contain"
         />
       </div>
 
       {/* Info */}
-      <div className="info py-8">
+      <div className="py-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-[600]">
-            {business.name || "Untitled Business"}
-          </h3>
-
-          <div className="flex">
-            <button className="flex items-center gap-1 mr-3 py-1 px-3 rounded-2xl text-[#0205d3] bg-[#f0f1ff] transition-colors cursor-pointer">
+          <h3 className="text-2xl font-semibold">{business.name}</h3>
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]">
               <AiOutlineLike className="w-5 h-5" />
               <span>0</span>
             </button>
-            <button className="flex items-center gap-2 text-[#0205d3] transition-colors cursor-pointer">
-              <BsBookmark className="w-5 h-5" />
-            </button>
+            <BsBookmark className="w-5 h-5 text-[#0205d3]" />
           </div>
         </div>
 
-        {/* Categories with names */}
-        <div className="flex items-start mt-4 border-b pb-6 border-[#e5e5e7]">
+        {/* Categories */}
+        <div className="flex items-start mt-4 border-b border-[#e5e5e7] pb-6">
           <p className="mr-4 mt-1 text-gray-500">Categories</p>
+
           {categoryNames.length > 0 ? (
             <div className="flex gap-2 flex-wrap">
-              {categoryNames.map((name, index) => (
+              {categoryNames.map((name, i) => (
                 <span
-                  key={index}
-                  className="bg-[#f8f9fb] py-1 px-3 rounded-2xl text-gray-700"
+                  key={`${name}-${i}`}
+                  className="bg-[#f8f9fb] py-1 px-3 rounded-2xl"
                 >
                   {name}
                 </span>
@@ -344,17 +267,31 @@ export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
       </div>
 
       {/* Details */}
-      <div className="details">
-        <h3 className="text-xl font-[600] mb-4">Details</h3>
+      <div>
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-semibold mb-4">Details</h3>
+
+          <button
+            type="button"
+            onClick={() => setOpenDetailPopup(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+        </div>
 
         {business.website && (
           <p className="flex items-center mb-3">
-            <BsLink className="w-7 h-7 mr-3 rotate-130 text-[#0205d3]" />
+            <BsLink className="w-6 h-6 mr-3 text-[#0205d3]" />
             <a
               href={business.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="block break-all w-4/5"
+              className="break-all"
             >
               {business.website}
             </a>
@@ -364,7 +301,7 @@ export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
         {business.email && (
           <p className="flex items-center mb-3">
             <BsEnvelope className="w-5 h-5 mr-3 text-[#0205d3]" />
-            <a href={`mailto:${business.email}`} className="block break-all w-4/5">
+            <a href={`mailto:${business.email}`} className="break-all">
               {business.email}
             </a>
           </p>
@@ -373,56 +310,75 @@ export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
         {business.phone_number && (
           <p className="flex items-center mb-3">
             <BsTelephone className="w-5 h-5 mr-3 text-[#0205d3]" />
-            <a
-              href={`tel:${business.phone_number}`}
-              className="block break-all w-4/5"
-            >
-              {business.phone_number}
-            </a>
+            <a href={`tel:${business.phone_number}`}>{business.phone_number}</a>
           </p>
         )}
 
         <p className="flex">
           <BsPin className="w-5 h-5 mr-3 text-[#0205d3]" />
-          <span className="block w-4/5">{displayAddress}</span>
+          <span className="break-all">{displayAddress}</span>
         </p>
       </div>
 
       {/* Operating Hours */}
-      <div className="social border-b pb-10 border-[#e5e5e7]">
-        <h3 className="text-xl font-[600] my-6">Operating Hours</h3>
+      <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-semibold mb-6">Operating Hours</h3>
 
-        {business.businessSchedule && business.businessSchedule.length > 0 ? (
-          <div>
-            {business.businessSchedule.map((s) =>
-              !s.active ? null : (
-                <p key={s.id} className="flex items-center mb-3">
-                  <BsClock className="w-5 h-5 mr-3 text-[#0205d3]" />
-                  <span className="min-w-[90px]">
-                    {formatDay(s.day) || "Day"}
-                  </span>
-                  <span className="ml-4">
-                    {s.opening_time_text} to {s.closing_time_text}
-                  </span>
-                </p>
-              )
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setOpenOperatingHours(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+        </div>
+
+        {business.businessSchedule?.length ? (
+          business.businessSchedule
+            .filter((s) => s.active)
+            .map((s) => (
+              <p key={s.id} className="flex items-center mb-3">
+                <BsClock className="w-5 h-5 mr-3 text-[#0205d3]" />
+                <span className="min-w-[90px]">{formatDay(s.day)}</span>
+                <span className="ml-4">
+                  {s.opening_time_text} to {s.closing_time_text}
+                </span>
+              </p>
+            ))
         ) : (
           <p className="text-gray-500">No schedule added yet.</p>
         )}
       </div>
 
       {/* Social Links */}
-      <div className="social border-b pb-10 border-[#e5e5e7]">
-        <h3 className="text-xl font-[600] my-6">Social Links</h3>
+      <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-semibold mb-6">Social Links</h3>
+
+          <button
+            type="button"
+            onClick={() => setOpenSocialLinks(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+        </div>
+
         <div className="flex">
           {business.facebook_link && (
             <a
               href={business.facebook_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block"
             >
               <BsFacebook className="w-10 h-10 mr-3 text-[#139df8]" />
             </a>
@@ -432,7 +388,6 @@ export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
               href={business.instagram_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block"
             >
               <BsInstagram className="w-10 h-10 mr-3 text-[#E1306C]" />
             </a>
@@ -445,11 +400,190 @@ export default function BusinessSidebar({ businessId }: BusinessSidebarProps) {
 
       {/* About */}
       <div className="pb-10">
-        <h3 className="text-xl font-[600] my-6">About</h3>
-        <p className="mb-4">
-          {business.description || "No description added yet."}
-        </p>
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-semibold my-6">About</h3>
+
+          <button
+            type="button"
+            onClick={() => setOpenAboutModal(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+        </div>
+        <p>{business.description || "No description added yet."}</p>
       </div>
+
+      {/* Single Business dropdown */}
+      <div className="text-left">
+        <input
+          type="checkbox"
+          id="single-business-toggle"
+          className="hidden peer"
+        />
+
+        <label
+          htmlFor="single-business-toggle"
+          className="flex items-center justify-between border border-gray-300 text-gray-500 text-sm px-3 py-3 rounded-full hover:border-[#0519CE] cursor-pointer w-full transition-all duration-200"
+        >
+          Claimed
+          <svg
+            className="w-2.5 h-2.5 ms-3 transition-transform duration-200 peer-checked:rotate-180"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 10 6"
+          >
+            <path
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="m1 1 4 4 4-4"
+            />
+          </svg>
+        </label>
+
+        <label
+          htmlFor="single-business-toggle"
+          className="hidden peer-checked:block fixed inset-0 z-10"
+        ></label>
+
+        <div className="absolute z-20 mt-2 hidden peer-checked:block border border-gray-200 bg-white divide-y divide-gray-100 rounded-lg shadow-md">
+          <ul className="py-2 text-sm text-gray-700">
+            <li>
+              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
+                Archived
+              </a>
+            </li>
+            <li>
+              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
+                Pending Approved
+              </a>
+            </li>
+            <li>
+              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
+                Approved
+              </a>
+            </li>
+            <li>
+              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
+                Claimed
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* Delete Business button + inline error/success */}
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => setOpenDeleteModal(true)}
+          className="flex justify-center items-center gap-2 px-5 py-2.5 w-full text-center text-md font-bold bg-[#FFEBEB] text-[#DD3820] rounded-full cursor-pointer"
+        >
+          <img
+            src="/assets/images/red-delete.svg"
+            alt="red-delete"
+            className="w-5 h-5"
+          />
+          Delete Business
+        </button>
+
+        {deleteError && (
+          <p className="text-red-500 text-sm mt-2">{deleteError}</p>
+        )}
+        {deleteSuccess && (
+          <p className="text-green-600 text-sm mt-1">{deleteSuccess}</p>
+        )}
+      </div>
+
+      {/* 🔴 Delete Confirmation Popup */}
+      {openDeleteModal && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8">
+            <div className="flex justify-center mb-4">
+              <div className="bg-red-600 rounded-full p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <h2 className="text-lg font-bold mb-2 text-gray-800">
+              Delete Business?
+            </h2>
+            <p className="mb-4 text-gray-600">This action cannot be undone.</p>
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => setOpenDeleteModal(false)}
+                className="px-5 py-2 w-full border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={confirmDeleteAction}
+                className="px-5 py-2 w-full bg-red-600 text-white rounded-full hover:bg-red-700 cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Success Modal */}
+      {openSuccessModal && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#0519CE] rounded-full p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-bold mb-2">Deleted Successfully!</h2>
+            <p className="mb-4">The business has been removed.</p>
+            <button
+              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
+              onClick={() => {
+                setOpenSuccessModal(false);
+                router.push("/dashboard/businesses"); // ✅ redirect after OK
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
