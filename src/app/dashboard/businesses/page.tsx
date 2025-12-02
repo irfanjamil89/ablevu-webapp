@@ -582,12 +582,10 @@ export default function Page() {
   // ---------- Loading state ----------
 
   if (loading) {
-    return (
-      <div className="w-full h-screen flex items-center justify-center">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
-  }
+      return <div className=" w-full flex justify-center items-center h-[400px]">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+      </div>;
+    }
 
 
   const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);

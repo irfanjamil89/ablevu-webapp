@@ -186,7 +186,7 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
                 <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">ID</th>
                 <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">Title</th>
                 <th scope="col" className="px-6 py-3">Feature Type</th>
-                <th scope="col" className="px-6 py-3">Business Categories</th>
+                <th scope="col" className="px-6 py-3 w-2/5">Business Categories</th>
                 <th scope="col" className="px-3 py-3 text-right"></th>
               </tr>
             </thead>
@@ -197,7 +197,7 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
                   <td className="px-6 pr-4 pl-3">{index + 1}</td>
                   <td className="px-6 pr-4 pl-3">{feature.title}</td>
                   <td className="px-6 py-4">{getFeatureTypeNames(feature.linkedTypes)}</td>
-                  <td className="px-6 py-4">{getBusinessTypeNames(feature.linkedBusinessTypes)}</td>
+                  <td className="px-6 py-4 w-2/5">{getBusinessTypeNames(feature.linkedBusinessTypes)}</td>
                   <td className="relative px-6 py-4 text-right">
                     <input
                       type="checkbox"

@@ -323,7 +323,7 @@ export default function Page() {
                                 ) : coupons.length === 0 ? (
                                     <div className="text-center py-8 text-gray-500">
                                         <p className="text-lg">No coupons found</p>
-                                        <p className="text-sm mt-2">Click "Generate Code" to create your first coupon</p>
+                                        <p className="text-sm mt-2">Click &quot;Generate Code&quot; to create your first coupon</p>
                                     </div>
                                 ) : (
                                     <table className="min-w-full table-auto">

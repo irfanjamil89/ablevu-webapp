@@ -170,9 +170,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <div className="flex">
-        <div className="h-screen   w-[350px] pt-5 bg-white border-r border-gray-200 flex flex-col justify-between">
+        <div className=" w-[350px] pt-5 mb-5 bg-white border-r border-gray-200 flex flex-col justify-between">
           {/* Top Navigation */}
-          <div className="p-4 sticky top-0">
+          <div className="p-4 mb-4 sticky top-0 overflow-hidden h-screen">
             <ul className="space-y-4 font-medium">
               {user?.user_role === "Admin" ? (
                 <>
@@ -880,7 +880,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
 
           {/* <!-- Bottom Profile Section --> */}
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t mt-4 border-gray-200 p-4">
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">

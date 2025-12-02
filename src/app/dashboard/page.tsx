@@ -467,7 +467,7 @@ export default function Page() {
     </div>; // Show loading message while the data is being fetched
   }
   return (
-    <div className="w-full ">
+    <div className="w-full  overflow-y-auto">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
           <div className="w-full min-h-screen bg-white px-6 py-5">
