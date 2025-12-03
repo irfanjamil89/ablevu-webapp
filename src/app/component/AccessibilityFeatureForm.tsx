@@ -93,7 +93,7 @@ export default function AccessibilityFeatureForm({ onSuccess }: { onSuccess?: ()
         setSelectAllCategories(false);
         if (onSuccess) onSuccess();
       } else {
-        const errorMsg = data?.message || "Failed to create Accessible feature";
+        const errorMsg =  "Failed to create Accessible feature";
         setError(errorMsg);
         setSuccess(null);
       }
