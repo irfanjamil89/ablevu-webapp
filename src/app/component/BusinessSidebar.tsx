@@ -16,9 +16,18 @@ import {
 } from "react-icons/bs";
 
 // ---------- Types ----------
+type DayKey =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
 type BusinessScheduleItem = {
   id: string;
-  day: string;
+  day: string; // backend se string aa raha hai
   opening_time_text: string;
   closing_time_text: string;
   active: boolean;
@@ -66,6 +75,22 @@ interface BusinessSidebarProps {
   setOpenSocialLinks: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAboutModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
+
+// 🔁 day order map
+const DAY_ORDER: Record<DayKey, number> = {
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+  sunday: 7,
+};
+
+const getDayOrder = (day: string) => {
+  const key = day.toLowerCase() as DayKey;
+  return DAY_ORDER[key] ?? 999; // unknown day last
+};
 
 export default function BusinessSidebar({
   business,
@@ -174,6 +199,14 @@ export default function BusinessSidebar({
 
   const formatDay = (day: string) =>
     day ? day.charAt(0).toUpperCase() + day.slice(1).toLowerCase() : "";
+
+  // 🔁 Sorted & filtered schedule (Mon → Sun)
+  const sortedBusinessSchedule = useMemo(() => {
+    if (!business?.businessSchedule?.length) return [];
+    return [...business.businessSchedule]
+      .filter((s) => s.active)
+      .sort((a, b) => getDayOrder(a.day) - getDayOrder(b.day));
+  }, [business?.businessSchedule]);
 
   // ---------- Loading ----------
   if (loading) {
@@ -310,7 +343,9 @@ export default function BusinessSidebar({
         {business.phone_number && (
           <p className="flex items-center mb-3">
             <BsTelephone className="w-5 h-5 mr-3 text-[#0205d3]" />
-            <a href={`tel:${business.phone_number}`}>{business.phone_number}</a>
+            <a href={`tel:${business.phone_number}`}>
+              {business.phone_number}
+            </a>
           </p>
         )}
 
@@ -338,18 +373,16 @@ export default function BusinessSidebar({
           </button>
         </div>
 
-        {business.businessSchedule?.length ? (
-          business.businessSchedule
-            .filter((s) => s.active)
-            .map((s) => (
-              <p key={s.id} className="flex items-center mb-3">
-                <BsClock className="w-5 h-5 mr-3 text-[#0205d3]" />
-                <span className="min-w-[90px]">{formatDay(s.day)}</span>
-                <span className="ml-4">
-                  {s.opening_time_text} to {s.closing_time_text}
-                </span>
-              </p>
-            ))
+        {sortedBusinessSchedule.length ? (
+          sortedBusinessSchedule.map((s) => (
+            <p key={s.id} className="flex items-center mb-3">
+              <BsClock className="w-5 h-5 mr-3 text-[#0205d3]" />
+              <span className="min-w-[90px]">{formatDay(s.day)}</span>
+              <span className="ml-4">
+                {s.opening_time_text} to {s.closing_time_text}
+              </span>
+            </p>
+          ))
         ) : (
           <p className="text-gray-500">No schedule added yet.</p>
         )}
@@ -456,7 +489,7 @@ export default function BusinessSidebar({
           <ul className="py-2 text-sm text-gray-700">
             <li>
               <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Archived
+                Draft
               </a>
             </li>
             <li>
