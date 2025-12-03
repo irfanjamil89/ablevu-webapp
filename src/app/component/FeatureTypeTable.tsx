@@ -19,6 +19,32 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
   const [editerror, seteditError] = useState("");
   const [success, setSuccess] = useState("");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(features.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentFeatures = features.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+
+
 
 
   // Close dropdown when clicking outside
@@ -35,7 +61,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        process.env.NEXT_PUBLIC_API_BASE_URL+"/accessible-feature-types/list",
+        process.env.NEXT_PUBLIC_API_BASE_URL + "/accessible-feature-types/list?page=1&limit=1000",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -76,42 +102,42 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!editFeatureId) return;
+    e.preventDefault();
+    if (!editFeatureId) return;
 
-  setLoading(true);
-  setError("");
-  setSuccess("");
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
-  try {
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
-      {
-        name: form.name,
-        
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
+        {
+          name: form.name,
+
         },
-      }
-    );
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        }
+      );
 
-    setSuccess("Updated successfully!");
+      setSuccess("Updated successfully!");
 
-    setTimeout(() => {
-      setOpenEditModal(false);
-      fetchFeatures();
-    }, 700);
+      setTimeout(() => {
+        setOpenEditModal(false);
+        fetchFeatures();
+      }, 700);
 
-  } catch (error) {
-    console.error("Update error:", error);
-    setError("Failed to update item.");
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (error) {
+      console.error("Update error:", error);
+      setError("Failed to update item.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
@@ -122,15 +148,51 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setOpenDeleteModal(true); // open confirmation modal
   };
 
-   if (loading) {
+  if (loading) {
     return <div className="flex justify-center items-center h-[400px]">
-        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>; 
+      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>;
   }
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
 
   return (
     <section className="flex-1">
       <div className="h-auto rounded-lg shadow-sm border border-gray-200">
+
         <table className="min-w-full text-sm text-left text-gray-700">
           <thead className="bg-[#EFF0F1] text-gray-500 text-sm font-bold">
             <tr>
@@ -158,54 +220,113 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   No data found.
                 </td>
               </tr>
-            ) : (features.map((feature: any, index: number) => (
-              <tr key={feature.id || index} className="hover:bg-gray-50 relative">
-                <td className="px-6 pr-4 pl-3">{index + 1}</td>
-                <td className="px-6 py-4">{feature.name}</td>
-                <td className="relative px-6 py-4 text-right">
-                  {/* Dropdown Toggle */}
-                  <div className="relative inline-block text-left">
-                    <button
-                      type="button"
-                      className="text-gray-500 text-2xl focus:outline-none cursor-pointer"
-                      id={`menuButton${index}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setOpenDropdown(index === openDropdown ? null : index);
-                      }}
-                    >
-                      ⋮
-                    </button>
-
-                    {/* Dropdown Menu */}
-                    {openDropdown === index && (
-                      <div
-                        className="absolute right-0 mt-2 w-30 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col z-50"
-                        onClick={(e) => e.stopPropagation()}
+            ) : (
+              currentFeatures.map((feature: any, index: number) => (
+                <tr key={feature.id || index} className="hover:bg-gray-50 relative">
+                  {/* IMPORTANT: Use startIndex + index + 1 for correct numbering */}
+                  <td className="px-6 pr-4 pl-3">{startIndex + index + 1}</td>
+                  <td className="px-6 py-4">{feature.name}</td>
+                  <td className="relative px-6 py-4 text-right">
+                    {/* Dropdown Toggle */}
+                    <div className="relative inline-block text-left">
+                      <button
+                        type="button"
+                        className="text-gray-500 text-2xl focus:outline-none cursor-pointer"
+                        id={`menuButton${index}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdown(index === openDropdown ? null : index);
+                        }}
                       >
-                        <button
-                          onClick={() => handleEdit(feature.id, feature.name)}
-                          className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm cursor-pointer"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(feature.id)}
-                          className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg cursor-pointer"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))
+                        ⋮
+                      </button>
 
-
+                      {/* Dropdown Menu */}
+                      {openDropdown === index && (
+                        <div
+                          className="absolute right-0 mt-2 w-30 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col z-50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            onClick={() => handleEdit(feature.id, feature.name)}
+                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(feature.id)}
+                            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
+
+        {/* ===== PAGINATION CONTROLS ===== */}
+        {!loading && !error && features.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+            {/* Left side: Entry counter */}
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(endIndex, features.length)} of {features.length} entries
+            </div>
+
+            {/* Right side: Pagination buttons */}
+            <div className="flex items-center gap-2">
+              {/* Previous Button */}
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((page, idx) => (
+                  <React.Fragment key={idx}>
+                    {page === '...' ? (
+                      <span className="px-3 py-1 text-gray-500">...</span>
+                    ) : (
+                      <button
+                        onClick={() => goToPage(page as number)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                          ? "bg-[#0519CE] text-white"
+                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                      >
+                        {page}
+                      </button>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
 
       {openDeleteModal && (

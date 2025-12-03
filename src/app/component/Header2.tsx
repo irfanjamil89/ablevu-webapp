@@ -98,14 +98,7 @@ export default function Header() {
                         <span className="group-hover:text-black-800 relative">Share Feedback</span>
                       
                     </li>
-                    <li>
-                      <Link
-                        href="#"
-                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                      >
-                        <span className="group-hover:text-black-800 relative">Add Business</span>
-                      </Link>
-                    </li>
+                    
                     <li>
                       <Link
                         href="#"

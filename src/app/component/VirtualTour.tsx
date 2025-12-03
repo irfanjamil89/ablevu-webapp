@@ -37,7 +37,7 @@ const VirtualTour: React.FC<VirtualTourProps> = ({
                 className="bg-white rounded-3xl shadow-2xl w-11/12 h-fit sm:h-[] sm:w-[550px] p-8 relative">
 
                 {/* <!-- CLOSE BUTTON --> */}
-                <label htmlFor="virtual-tour-toggle"
+                <label onClick={()=> setOpenVirtualTour(false)}
                     className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer">
                     ×
                 </label>
@@ -63,7 +63,7 @@ const VirtualTour: React.FC<VirtualTourProps> = ({
                     </div>
                     {/* <!-- BUTTONS --> */}
                     <div className="flex justify-center gap-3 pt-2">
-                        <label htmlFor="virtual-tour-toggle"
+                        <label onClick={()=> setOpenVirtualTour(false)}
                             className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100">
                             Cancel
                         </label>
