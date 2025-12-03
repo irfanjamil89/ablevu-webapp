@@ -165,7 +165,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
       {OpenVirtualTour && business && (
         <VirtualTour
-          businessId={business.id}
+          businessId={business.id} 
           setOpenVirtualTour={setOpenVirtualTour}
           onUpdated={async (updated) => {
             setBusiness(updated);
