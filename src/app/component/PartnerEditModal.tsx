@@ -55,7 +55,7 @@ const PartnerEditModal: React.FC<PartnerEditModalProps> = ({
       };
 
       const response = await axios.put(
-        `https://staging-api.qtpack.co.uk/partner/update/${partnerId}/${organizationId}`,
+        `https://staging-api.qtpack.co.uk/partner/update/${partnerId}`,
         payload,
         {
           headers: {
@@ -143,7 +143,7 @@ const PartnerEditModal: React.FC<PartnerEditModalProps> = ({
           <div>
             <label className="block text-md font-medium text-gray-800 mb-1">Website Link *</label>
             <input 
-              type="url" 
+              type="text" 
               placeholder="https://website.com"
               id="web_url"
               value={form.web_url}

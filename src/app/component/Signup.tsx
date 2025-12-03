@@ -332,7 +332,7 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
 
 
               <div className="flex items-start gap-2 text-sm">
-                <input type="checkbox" id="consent" name="consent"
+                <input type="checkbox" id="consent" name="consent" required
                   checked={form.consent}
                   onChange={(e) =>
                     setForm({ ...form, consent: e.target.checked })
