@@ -28,9 +28,9 @@ type ProfileErrors = {
 
 export default function Page() {
   const [userId, setUserId] = useState<string>("");
-   const [showPassword, setShowPassword] = useState(false);
-    const [showPassword1, setShowPassword1] = useState(false);
-    const [showPassword2, setShowPassword2] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword1, setShowPassword1] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
 
   const [profileForm, setProfileForm] = useState<UpdateProfile>({
     first_name: "",
@@ -50,7 +50,7 @@ export default function Page() {
 
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<Message | null>(null);
-  
+
   const handleProfileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setProfileForm((prev) => ({
@@ -95,14 +95,14 @@ export default function Page() {
 
     // phone – optional, but if present then basic validation
     const phone = profileForm.phone_number.trim();
-if (!phone) {
-  errors.phone_number = "Phone number is required.";
-} else {
-  const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
-  if (!phoneRegex.test(phone)) {
-    errors.phone_number = "Phone number must be in international format.";
-  }
-}
+    if (!phone) {
+      errors.phone_number = "Phone number is required.";
+    } else {
+      const phoneRegex = /^\+[1-9][0-9]{7,14}$/;
+      if (!phoneRegex.test(phone)) {
+        errors.phone_number = "Phone number must be in international format.";
+      }
+    }
 
     setProfileErrors(errors);
     return Object.keys(errors).length === 0;
@@ -110,35 +110,35 @@ if (!phone) {
 
 
   const updateProfileRequest = async () => {
-  const token = localStorage.getItem("access_token");
-  if (!token) return;
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
 
-  const dtoBody = {
-    firstName: profileForm.first_name,
-    lastName: profileForm.last_name,
-    email: profileForm.email,
-    phoneNumber: profileForm.phone_number,
-  };
+    const dtoBody = {
+      firstName: profileForm.first_name,
+      lastName: profileForm.last_name,
+      email: profileForm.email,
+      phoneNumber: profileForm.phone_number,
+    };
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}users/update-profile`,  
-    {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,  
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dtoBody),
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}users/update-profile`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dtoBody),
+      }
+    );
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(err?.message || "Failed to update profile");
     }
-  );
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => null);
-    throw new Error(err?.message || "Failed to update profile");
-  }
-
-  return response.json();
-};
+    return response.json();
+  };
 
   const handleProfileSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -216,74 +216,80 @@ if (!phone) {
       .catch((err) => console.error("Profile fetch error:", err));
   }, []);
 
-const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
-  const { name, value } = e.target;
-  setPasswordForm((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
-};
+  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-const changePasswordRequest = async () => {
-  const token = localStorage.getItem("access_token");
-  if (!token) throw new Error("No access token found");
+  const changePasswordRequest = async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) throw new Error("No access token found");
 
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}users/update-password`, 
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`, 
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(passwordForm),
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}users/update-password`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(passwordForm),
+      }
+    );
+    if (!response.ok) {
+      const err = await response.json().catch(() => null);
+      throw new Error(err?.message || "Failed to update password");
     }
-  );
-  if (!response.ok) {
-    const err = await response.json().catch(() => null);
-    throw new Error(err?.message || "Failed to update password");
+
+    return response.json();
+  };
+
+  const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPasswordMessage(null);
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage({
+        type: "error",
+        text: "New password and confirm password do not match.",
+      });
+      return;
+    }
+
+    setPasswordLoading(true);
+
+    try {
+      await changePasswordRequest();
+      setPasswordMessage({
+        type: "success",
+        text: "Password updated successfully.",
+      });
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      console.error("Password update error:", error);
+      setPasswordMessage({
+        type: "error",
+        text: error?.message || "Something went wrong.",
+      });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  if (profileLoading) {
+    return <div className="flex justify-center w-full items-center h-[400px]">
+      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>;
   }
-
-  return response.json();
-};
-
-const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
-  e.preventDefault();
-  setPasswordMessage(null);
-
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    setPasswordMessage({
-      type: "error",
-      text: "New password and confirm password do not match.",
-    });
-    return;
-  }
-
-  setPasswordLoading(true);
-
-  try {
-    await changePasswordRequest();
-    setPasswordMessage({
-      type: "success",
-      text: "Password updated successfully.",
-    });
-
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-  } catch (error: any) {
-    console.error("Password update error:", error);
-    setPasswordMessage({
-      type: "error",
-      text: error?.message || "Something went wrong.",
-    });
-  } finally {
-    setPasswordLoading(false);
-  }
-};
 
   return (
     <div className="w-full p-6 space-y-10">
@@ -396,11 +402,10 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
           {profileMessage && (
             <p
-              className={`mt-3 text-sm ${
-                profileMessage.type === "error"
+              className={`mt-3 text-sm ${profileMessage.type === "error"
                   ? "text-red-600"
                   : "text-green-600"
-              }`}
+                }`}
             >
               {profileMessage.text}
             </p>
@@ -523,11 +528,10 @@ const handlePasswordSubmit = async (e: FormEvent<HTMLFormElement>) => {
 
           {passwordMessage && (
             <p
-              className={`mt-3 text-sm ${
-                passwordMessage.type === "error"
+              className={`mt-3 text-sm ${passwordMessage.type === "error"
                   ? "text-red-600"
                   : "text-green-600"
-              }`}
+                }`}
             >
               {passwordMessage.text}
             </p>

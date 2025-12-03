@@ -39,6 +39,31 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
     const [featureToDelete, setFeatureToDelete] = useState<AccessibleFeature | null>(null);
     const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
+    const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(features.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentFeatures = features.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+  
+
     const fetchFeatures = async () => {
       setLoading(true);
       try {
@@ -117,6 +142,41 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
       </div>;
     }
 
+    const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
     return (
       <div className="w-full rounded-lg shadow-sm border border-gray-200">
         <div className="w-full overflow-hidden">
@@ -126,18 +186,18 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
                 <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">ID</th>
                 <th scope="col" className="w-auto lg:w-[800px] py-3 pr-3 pl-3">Title</th>
                 <th scope="col" className="px-6 py-3">Feature Type</th>
-                <th scope="col" className="px-6 py-3">Business Categories</th>
+                <th scope="col" className="px-6 py-3 w-2/5">Business Categories</th>
                 <th scope="col" className="px-3 py-3 text-right"></th>
               </tr>
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {features.map((feature, index) => (
+              {currentFeatures.map((feature, index) => (
                 <tr key={feature.id} className="hover:bg-gray-50">
                   <td className="px-6 pr-4 pl-3">{index + 1}</td>
                   <td className="px-6 pr-4 pl-3">{feature.title}</td>
                   <td className="px-6 py-4">{getFeatureTypeNames(feature.linkedTypes)}</td>
-                  <td className="px-6 py-4">{getBusinessTypeNames(feature.linkedBusinessTypes)}</td>
+                  <td className="px-6 py-4 w-2/5">{getBusinessTypeNames(feature.linkedBusinessTypes)}</td>
                   <td className="relative px-6 py-4 text-right">
                     <input
                       type="checkbox"
@@ -182,6 +242,62 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
               ))}
             </tbody>
           </table>
+          {!loading && features.length > 0 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+            {/* Left side: Entry counter */}
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(endIndex, features.length)} of {features.length} entries
+            </div>
+
+            {/* Right side: Pagination buttons */}
+            <div className="flex items-center gap-2">
+              {/* Previous Button */}
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
+              >
+                Previous
+              </button>
+
+              {/* Page Numbers */}
+              <div className="flex items-center gap-1">
+                {getPageNumbers().map((page, idx) => (
+                  <React.Fragment key={idx}>
+                    {page === '...' ? (
+                      <span className="px-3 py-1 text-gray-500">...</span>
+                    ) : (
+                      <button
+                        onClick={() => goToPage(page as number)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                          ? "bg-[#0519CE] text-white"
+                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                      >
+                        {page}
+                      </button>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  }`}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
         </div>
         {isUpdateFormOpen && (
           <UpdateAccessibilityFeatureForm

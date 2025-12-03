@@ -11,24 +11,48 @@ export default function BusinessTypeTable() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
-const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editMessage, setEditMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-const [openEditModal, setOpenEditModal] = useState(false);
-const [editId, setEditId] = useState<string | null>(null);
-const [editName, setEditName] = useState("");
-const [editMessage, setEditMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
-const [editLoading, setEditLoading] = useState(false);
+  // Calculate pagination values
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = data.slice(startIndex, endIndex);
 
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
 
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   // Fetch all business types
   const fetchBusinessTypes = async () => {
     try {
-      console.log("Fetching business types...",process.env.NEXT_PUBLIC_API_BASE_URL);
+      console.log("Fetching business types...", process.env.NEXT_PUBLIC_API_BASE_URL);
       setLoading(true);
-      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL+"/business-type/list");
+      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + "/business-type/list/?page=1&limit=1000");
       setData(response.data.data || []);
+      setCurrentPage(1); // Reset to first page on fetch
     } catch (err: any) {
       console.error("Error fetching business types:", err);
       setError("Failed to load data.");
@@ -66,115 +90,212 @@ const [editLoading, setEditLoading] = useState(false);
     } catch (error) {
       console.error("Delete error:", error);
       setSuccessMessage("");
-      setErrorMessage("Failed to delete item"); // show error in modal
+      setErrorMessage("Failed to delete item");
       setOpenSuccessModal(true);
     }
   };
 
   // Edit business type
   const handleEditSubmit = async () => {
-  if (!editId || !editName.trim()) return;
+    if (!editId || !editName.trim()) return;
 
-  try {
-    setEditLoading(true);
-    await axios.patch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/update/${editId}/${userId}`,
-      { name: editName.trim() },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      }
-    );
+    try {
+      setEditLoading(true);
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/update/${editId}/${userId}`,
+        { name: editName.trim() },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        }
+      );
 
-    setEditMessage({ text: "Updated successfully!", type: "success" });
-    fetchBusinessTypes();
-  } catch (err) {
-    console.error(err);
-    setEditMessage({ text: "Failed to update item.", type: "error" });
-  } finally {
-    setEditLoading(false);
-  }
-};
+      setEditMessage({ text: "Updated successfully!", type: "success" });
+      fetchBusinessTypes();
+    } catch (err) {
+      console.error(err);
+      setEditMessage({ text: "Failed to update item.", type: "error" });
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
- if (loading) {
-    return <div className="flex justify-center items-center h-[400px]">
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[400px]">
         <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>; // Show loading message while the data is being fetched
+      </div>
+    );
   }
+
+  // Helper function to generate page numbers
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
 
   return (
     <section className="flex-1">
       <input type="radio" name="menuGroup" id="none" className="hidden" defaultChecked />
 
       <div className="h-auto rounded-lg shadow-sm border border-gray-200">
-        {loading ? (
-          <p className="text-center p-4 text-gray-500">Loading...</p>
-        ) : error ? (
+        {error ? (
           <p className="text-center text-red-500 p-4">{error}</p>
         ) : (
-          <table className="min-w-full text-sm text-left text-gray-700">
-            <thead className="bg-[#EFF0F1] text-gray-500 text-sm font-bold">
-              <tr>
-                <th className="py-3 px-6">ID</th>
-                <th className="px-6 py-3">Title</th>
-                <th className="px-3 py-3 text-right"></th>
-              </tr>
-            </thead>
+          <>
+            <table className="min-w-full text-sm text-left text-gray-700">
+              <thead className="bg-[#EFF0F1] text-gray-500 text-sm font-bold">
+                <tr>
+                  <th className="py-3 px-6">ID</th>
+                  <th className="px-6 py-3">Title</th>
+                  <th className="px-3 py-3 text-right"></th>
+                </tr>
+              </thead>
 
-            <tbody className="divide-y divide-gray-200">
-              {data.length > 0 ? (
-                data.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-6 pr-4">{index + 1}</td>
-                    <td className="px-6 py-4">{item.name}</td>
+              <tbody className="divide-y divide-gray-200">
+                {currentData.length > 0 ? (
+                  currentData.map((item, index) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 pr-4">{startIndex + index + 1}</td>
+                      <td className="px-6 py-4">{item.name}</td>
 
-                    {/* Actions */}
-                    <td className="relative px-6 py-4 text-right">
-                      <input type="radio" name="menuGroup" id={`menuToggle${index}`} className="hidden peer" />
+                      {/* Actions */}
+                      <td className="relative px-6 py-4 text-right">
+                        <input type="radio" name="menuGroup" id={`menuToggle${index}`} className="hidden peer" />
 
-                      <label htmlFor={`menuToggle${index}`} className="cursor-pointer text-gray-500 text-2xl">
-                        ⋮
-                      </label>
+                        <label htmlFor={`menuToggle${index}`} className="cursor-pointer text-gray-500 text-2xl">
+                          ⋮
+                        </label>
 
-                      <label htmlFor="none" className="hidden peer-checked:block fixed inset-0 z-40"></label>
+                        <label htmlFor="none" className="hidden peer-checked:block fixed inset-0 z-40"></label>
 
-                      <div className="cursor-pointer absolute right-0 mt-2 w-[100px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
-                        <button
-                          onClick={() => {
-                            setEditId(item.id);
-                            setEditName(item.name); // prefill current value
-                            setEditMessage(null); // reset message
-                            setOpenEditModal(true);
-                          }}
-                          className="px-4 py-2 text-sm text-gray-700 hover:bg-[#EFF0F1] cursor-pointer"
-                        >
-                          Edit
-                        </button>
+                        <div className="cursor-pointer absolute right-0 mt-2 w-[100px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
+                          <button
+                            onClick={() => {
+                              setEditId(item.id);
+                              setEditName(item.name);
+                              setEditMessage(null);
+                              setOpenEditModal(true);
+                            }}
+                            className="px-4 py-2 text-sm text-gray-700 hover:bg-[#EFF0F1] cursor-pointer"
+                          >
+                            Edit
+                          </button>
 
-                        <button
-                          onClick={() => {
-                            setDeleteId(item.id);
-                            setOpenDeleteModal(true);
-                          }}
-                          className="cursor-pointer px-4 py-2 text-sm text-red-600 hover:bg-red-100"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                          <button
+                            onClick={() => {
+                              setDeleteId(item.id);
+                              setOpenDeleteModal(true);
+                            }}
+                            className="cursor-pointer px-4 py-2 text-sm text-red-600 hover:bg-red-100"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center py-4 text-gray-500">
+                      No business types found.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="text-center py-4 text-gray-500">
-                    No business types found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+
+            {/* Pagination Controls */}
+            {data.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+                <div className="text-sm text-gray-600">
+                  Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} entries
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Previous Button */}
+                  <button
+                    onClick={goToPreviousPage}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                      currentPage === 1
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    }`}
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center gap-1">
+                    {getPageNumbers().map((page, idx) => (
+                      <React.Fragment key={idx}>
+                        {page === '...' ? (
+                          <span className="px-3 py-1 text-gray-500">...</span>
+                        ) : (
+                          <button
+                            onClick={() => goToPage(page as number)}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                              currentPage === page
+                                ? "bg-[#0519CE] text-white"
+                                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </div>
+
+                  {/* Next Button */}
+                  <button
+                    onClick={goToNextPage}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                      currentPage === totalPages
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -218,10 +339,11 @@ const [editLoading, setEditLoading] = useState(false);
           </div>
         </div>
       )}
+
+      {/* Success/Error Modal */}
       {openSuccessModal && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
-            
             <div className="flex justify-center mb-4">
               <div className={`rounded-full p-3 ${successMessage ? "bg-[#0519CE]" : "bg-red-600"}`}>
                 <svg
@@ -257,11 +379,10 @@ const [editLoading, setEditLoading] = useState(false);
         </div>
       )}
 
+      {/* Edit Modal */}
       {openEditModal && (
-        
         <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[550px] p-8 relative">
-            
             <button
               className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold cursor-pointer"
               onClick={() => setOpenEditModal(false)}
@@ -287,30 +408,26 @@ const [editLoading, setEditLoading] = useState(false);
               </p>
             )}
 
-           
-
             <div className="flex justify-center gap-3 pt-2">
-                <button
-                  type="button"
-                  className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100 cursor-pointer"
-                  onClick={() => setOpenEditModal(false)}
-                >
-                  Cancel
-                </button>
+              <button
+                type="button"
+                className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100 cursor-pointer"
+                onClick={() => setOpenEditModal(false)}
+              >
+                Cancel
+              </button>
 
-                <button
-                  onClick={handleEditSubmit}
-              disabled={editLoading}
-                  className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
-                >
-                  {editLoading ? "Saving..." : "Save"}
-                </button>
-              </div>
+              <button
+                onClick={handleEditSubmit}
+                disabled={editLoading}
+                className="px-5 py-2 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
+              >
+                {editLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
           </div>
         </div>
       )}
-
-
     </section>
   );
 }

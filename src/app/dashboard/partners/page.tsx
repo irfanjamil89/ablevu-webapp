@@ -1,10 +1,15 @@
 "use client";
+import PartnerEditModal from "@/app/component/PartnerEditModal";
+import PartnerForm from "@/app/component/PartnerForm";
 import { useEffect, useState } from "react";
+import axios from "axios";
+
 
 interface Partner {
     id: string;
     name: string;
     image_url: string;
+    web_url: string;
 }
 
 export default function Page() {
@@ -12,34 +17,43 @@ export default function Page() {
     const [loading, setLoading] = useState(true);
     const [openEditModal, setOpenEditModal] = useState(false);
     const [openFormModal, setOpenFormModal] = useState(false);
+    const [OpenDeleteModal, setOpenDeleteModal] = useState(false);
+    const [OpenSuccessModal, setOpenSuccessModal] = useState(false);
+
+    const [selectedPartnerId, setSelectedPartnerId] = useState("");
+    const [selectedPartnerName, setSelectedPartnerName] = useState("");
+    const [selectedPartnerWebsite, setSelectedPartnerWebsite] = useState("");
+
+    const [partnerToDelete, setPartnerToDelete] = useState<string | null>(null);
+    const [loadingDelete, setLoadingDelete] = useState(false);
 
 
-    useEffect(() => {
-        async function loadPartners() {
-            try {
-                const res = await fetch("https://staging-api.qtpack.co.uk/partner/list");
-                const json = await res.json();
-                setPartners(json.items || []);
-            } catch (error) {
-                console.error("API Error:", error);
-            } finally {
-                setLoading(false);
-            }
+
+    async function loadPartners() {
+        try {
+            const res = await fetch("https://staging-api.qtpack.co.uk/partner/list?page=1&limit=1000");
+            const json = await res.json();
+            setPartners(json.items || []);
+        } catch (error) {
+            console.error("API Error:", error);
+        } finally {
+            setLoading(false);
         }
+    }
 
-        loadPartners();
-        console.log(partners);
-    }, []);
+    loadPartners();
+    console.log(partners);
+
 
     if (loading) {
         return <div className="flex justify-center w-full items-center h-[400px]">
             <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-        </div>; 
-      }
+        </div>;
+    }
 
     return (
 
-        <div className="w-full h-screen overflow-hidden">
+        <div className="w-full h-screen ">
             <div
                 className="flex items-center justify-between border-b border-gray-200 bg-white">
                 <div className="w-full min-h-screen bg-white">
@@ -51,7 +65,7 @@ export default function Page() {
                         <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
                             {/* <!-- Title --> */}
 
-                            <h1 className="text-2xl font-semibold text-gray-900">All Partners (7)</h1>
+                            <h1 className="text-2xl font-semibold text-gray-900">All Partners ({partners.length})</h1>
 
                             <div className="flex items-center gap-3">
 
@@ -71,10 +85,38 @@ export default function Page() {
                                     key={partner.id} // Add unique key here
                                     className="flex border border-gray-200 rounded-xl p-6 shadow-sm w-full md:w-[48%] xl:w-[32.6%] lg:w-[32%] relative"
                                 >
-                                    
-                                    <button onClick={ ()=> setOpenEditModal(true)} className="absolute right-4 top-4 text-sm text-gray-800 underline cursor-pointer font-bold">
-                                        Edit
-                                    </button>
+                                    <div className="absolute right-4 top-4 flex items-center gap-3">
+
+                                        <button
+                                            onClick={() => {
+                                                setSelectedPartnerId(partner.id);
+                                                setSelectedPartnerName(partner.name);
+                                                setSelectedPartnerWebsite(partner.web_url);
+                                                setOpenEditModal(true);
+                                            }}
+                                            className="text-sm text-gray-800 underline cursor-pointer font-bold hover:text-blue-600">
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setPartnerToDelete(partner.id);
+                                                setOpenDeleteModal(true);
+                                            }}
+                                            className="text-red-600 hover:text-red-700 cursor-pointer"
+                                            title="Delete Partner"
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                className="h-5 w-5"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                strokeWidth={2}
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
 
                                     <div className="flex flex-col items-start">
                                         <img
@@ -97,185 +139,119 @@ export default function Page() {
 
 
             {openEditModal && (
-                <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
-
-                    <div
-                        className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[550px] p-8 relative">
-
-                        {/* <!-- CLOSE BUTTON --> */}
-                        
-                        <button onClick={ ()=> setOpenEditModal(false)}
-                            className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer">
-                            ×
-                        </button>
-
-                        {/* <!-- HEADER --> */}
-                        <h2 className="text-lg font-bold text-gray-700 mb-4">Edit Partner</h2>
-
-                        {/* <!-- FORM --> */}
-                        <form className="space-y-6">
-
-                            {/* <!-- Upload Business Logo --> */}
-                            <div>
-                                <label className="block text-md font-medium text-gray-700 mb-2">Upload Logo</label>
-                                <div className="relative">
-                                    {/* Hidden file input */}
-                                    <input
-                                        type="file"
-                                        accept=".svg,.png,.jpg,.gif"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    />
-
-                                    {/* Upload Area */}
-                                    <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
-                                        <img src="/assets/images/upload-icon.avif" alt="upload-icon" className='w-10 h-10' />
-                                        <p className="text-[#0519CE] font-semibold text-sm">Click to upload <span className='text-gray-500 text-xs'>or drag and drop</span></p>
-                                        <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
-                                    </div>
-                                    <img src="/assets/images/HDS_RGB-2048x610.png.svg" alt="upload-icon" className='mt-3' />
-                                </div>
-                            </div>
-
-
-                            {/* <!-- Partner Name --> */}
-                            <div>
-                                <label className="block text-md font-medium text-gray-800 mb-1">Partner Name</label>
-                                <input type="text" placeholder="Hidden Disabilities"
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md hover:border-[#0519CE] focus:border-[#0519CE] placeholder:text-gray-500 outline-none transition-all duration-200" />
-                            </div>
-
-                            {/* <!-- Website Link --> */}
-                            <div className="mb-4 relative">
-                                {/* Label */}
-                                <label className="block text-md font-medium text-gray-800 mb-1">
-                                    Website Link
-                                </label>
-
-                                {/* Hidden Toggle Checkbox */}
-                                <input type="checkbox" id="dropdownToggle" className="hidden peer" />
-
-                                {/* Trigger Button */}
-                                <label
-                                    htmlFor="dropdownToggle"
-                                    className="flex items-center justify-between w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md text-gray-500 hover:border-[#0519CE] peer-checked:border-[#0519CE] cursor-pointer bg-white transition-all duration-200"
-                                >
-                                    <span className="truncate">https://hdsunflower.com/</span>
-                                </label>
-
-                            </div>
-
-
-                            <div className="mt-4">
-
-
-                            </div>
-
-
-                            {/* <!-- BUTTONS --> */}
-                            <div className="flex justify-center gap-3 pt-2">
-                                <label htmlFor="Edit-pop-up-toggle"
-                                    className="px-5 py-2.5 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100">
-                                    Cancel
-                                </label>
-                                <button type="submit"
-                                    className="px-5 py-2.5 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700">
-                                    Create City
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <PartnerEditModal
+                    setOpenEditModal={setOpenEditModal}
+                    partnerId={selectedPartnerId}
+                    partnerName={selectedPartnerName}
+                    partnerWebsite={selectedPartnerWebsite}
+                />
             )}
             {openFormModal && (
 
-                <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
-
-                    <div
-                        className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[550px] p-8 relative">
-
-                        {/* <!-- CLOSE BUTTON --> */}
-                        <button onClick={ ()=> setOpenFormModal(false)}
-                            className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer">
-                            ×
-                        </button>
-
-                        {/* <!-- HEADER --> */}
-                        <h2 className="text-lg font-bold text-gray-700 mb-4">Add Partner</h2>
-
-                        {/* <!-- FORM --> */}
-                        <form className="space-y-6">
-
-                            {/* <!-- Upload Business Logo --> */}
-                            <div>
-                                <label className="block text-md font-medium text-gray-700 mb-2">Upload Logo</label>
-                                <div className="relative">
-                                    {/* Hidden file input */}
-                                    <input
-                                        type="file"
-                                        accept=".svg,.png,.jpg,.gif"
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                    />
-
-                                    {/* Upload Area */}
-                                    <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
-                                        <img src="/assets/images/upload-icon.avif" alt="upload-icon" className='w-10 h-10' />
-                                        <p className="text-[#0519CE] font-semibold text-sm">Click to upload <span className='text-gray-500 text-xs'>or drag and drop</span></p>
-                                        <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            {/* <!-- Partner Name --> */}
-                            <div>
-                                <label className="block text-md font-medium text-gray-800 mb-1">Partner Name</label>
-                                <input type="text" placeholder="AbleVu"
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md hover:border-[#0519CE] focus:border-[#0519CE] placeholder:text-gray-500 outline-none transition-all duration-200" />
-                            </div>
-
-                            {/* <!-- Website Link --> */}
-                            <div className="mb-4 relative">
-                                {/* Label */}
-                                <label className="block text-md font-medium text-gray-800 mb-1">
-                                    Website Link
-                                </label>
-
-                                {/* Hidden Toggle Checkbox */}
-                                <input type="checkbox" id="dropdownToggle" className="hidden peer" />
-
-                                {/* Trigger Button */}
-                                <label
-                                    htmlFor="dropdownToggle"
-                                    className="flex items-center justify-between w-full border border-gray-300 rounded-lg px-3 py-2.5 text-md text-gray-500 hover:border-[#0519CE] peer-checked:border-[#0519CE] cursor-pointer bg-white transition-all duration-200"
-                                >
-                                    <span className="truncate">https://website.com</span>
-                                </label>
-
-                            </div>
-
-
-                            <div className="mt-4">
-
-
-                            </div>
-
-
-                            {/* <!-- BUTTONS --> */}
-                            <div className="flex justify-center gap-3 pt-2">
-                                <label htmlFor="Partner-toggle"
-                                    className="px-5 py-2.5 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100">
-                                    Cancel
-                                </label>
-                                <button type="submit"
-                                    className="px-5 py-2.5 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700">
-                                    Create City
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <PartnerForm setOpenFormModal={setOpenFormModal} />
             )
             }
+
+            {/* Delete Confirmation Modal */}
+            {OpenDeleteModal && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+                        {/* Warning Icon */}
+                        <div className="flex justify-center mb-4">
+                            <div className="bg-red-600 rounded-full p-3">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-8 w-8 text-white"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Modal content */}
+                        <h2 className="text-lg font-bold mb-2">Confirm Delete</h2>
+                        <p className="mb-4">Are you sure you want to delete this partner?</p>
+
+                        {/* Buttons */}
+                        <div className="flex justify-center gap-3 pt-2">
+                            <button
+                                className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100"
+                                onClick={() => {
+                                    setOpenDeleteModal(false);
+                                    setPartnerToDelete(null);
+                                }}
+                                disabled={loadingDelete}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-5 py-2 w-full text-center text-sm font-bold bg-red-600 text-white rounded-full cursor-pointer hover:bg-red-700 disabled:opacity-50"
+                                onClick={async () => {
+                                    if (!partnerToDelete) return;
+                                    setLoadingDelete(true);
+                                    try {
+                                        await axios.delete(
+                                            `https://staging-api.qtpack.co.uk/partner/delete/${partnerToDelete}`,
+                                            {
+                                                headers: {
+                                                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                                                },
+                                            }
+                                        );
+                                        setOpenDeleteModal(false);
+                                        setPartnerToDelete(null);
+                                        loadPartners();
+                                        setOpenSuccessModal(true); // show success modal
+                                    } catch (error) {
+                                        console.error("Delete error:", error);
+                                        alert("Failed to delete partner.");
+                                    } finally {
+                                        setLoadingDelete(false);
+                                    }
+                                }}
+                                disabled={loadingDelete}
+                            >
+                                {loadingDelete ? "Deleting..." : "Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Success Modal */}
+            {OpenSuccessModal && (
+                <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+                        <div className="flex justify-center mb-4">
+                            <div className="bg-[#0519CE] rounded-full p-3">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-8 w-8 text-white"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        </div>
+                        <h2 className="text-lg font-bold mb-2">Deleted Successfully!</h2>
+                        <p className="mb-4">The partner has been removed.</p>
+                        <button
+                            className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-blue-700"
+                            onClick={() => setOpenSuccessModal(false)}
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            )}
+
         </div>
 
     )
