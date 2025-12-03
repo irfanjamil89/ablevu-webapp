@@ -1,4 +1,5 @@
 "use client";
+import ImageUpload from "@/app/component/ImageUpload";
 import React, { useState, useEffect, ChangeEvent, FormEvent } from "react";
 
 type UpdateProfile = {
@@ -296,19 +297,7 @@ export default function Page() {
       <h2 className="text-2xl font-semibold text-gray-800 mb-4">About Me</h2>
 
       <div className="flex bg-white p-6 border border-gray-200 rounded-2xl shadow-md">
-        <div className="flex flex-col justify-baseline items-center mb-6 w-auto md:w-[170px]">
-          <img
-            src="/assets/images/Meegan.avif"
-            alt="Profile Picture"
-            className="rounded-full w-30 h-30 mr-4"
-          />
-          <button
-            type="button"
-            className="text-[#0519CE] underline font-bold cursor-pointer text-md"
-          >
-            Edit Photo
-          </button>
-        </div>
+        <ImageUpload/>
 
         {/* PROFILE FORM */}
         <form onSubmit={handleProfileSubmit} className="w-full">
