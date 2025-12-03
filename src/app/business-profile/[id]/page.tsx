@@ -8,6 +8,14 @@ import Operatinghours from "@/app/component/Operatinghours";
 import Profilesocial from "@/app/component/Profilesocial";
 import Profileabout from "@/app/component/Profileabout";
 import VirtualTour from "@/app/component/VirtualTour";
+import AccessibilityFeaturePopup from "@/app/component/AccessibilityFeaturePopup";
+import PropertyImagePopup from "@/app/component/PropertyImagePopup";
+import CustomSectionPopup from "@/app/component/CustomSectionPopup";
+import AccessibilityMediaPopup from "@/app/component/AccessibilityMediaPopup";
+import AccessibilityResourcesPopup from "@/app/component/AccessibilityResourcesPopup";
+import QuestionPopup from "@/app/component/QuestionPopup";
+import WriteReviewsPopup from "@/app/component/WriteReviewsPopup";
+import PartnerCertificationPopup from "@/app/component/PartnerCertificationPopup";
 
 type BusinessProfile = any;
 type BusinessType = any;
@@ -26,6 +34,14 @@ export default function Page({ params }: { params: { id: string } }) {
   const [OpenSocialLinks, setOpenSocialLinks] = useState(false);
   const [OpenAboutModal, setOpenAboutModal] = useState(false);
   const [OpenVirtualTour, setOpenVirtualTour] = useState(false);
+  const [OpenAccessibilityFeaturePopup, setOpenAccessibilityFeaturePopup] = useState(false);
+  const [OpenPropertyImagePopup, setOpenPropertyImagePopup] = useState(false);
+  const [OpenCustonSectionPopup, setOpenCustonSectionPopup] = useState(false);
+  const [OpenAccessibilityMediaPopup, setOpenAccessibilityMediaPopup] = useState(false);
+  const [OpenAccessibilityResourcesPopup, setOpenAccessibilityResourcesPopup] = useState(false);
+  const [OpenQuestionPopup, setOpenQuestionPopup] = useState(false);
+  const [OpenWriteReviewsPopup, setOpenWriteReviewsPopup] = useState(false);
+  const [OpenPartnerCertificationsPopup, setOpenPartnerCertificationsPopup] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -116,8 +132,17 @@ export default function Page({ params }: { params: { id: string } }) {
           loading={loading}
           error={error}
           setOpenVirtualTour={setOpenVirtualTour}
+          setOpenAccessibilityFeaturePopup={setOpenAccessibilityFeaturePopup}
+          setOpenPropertyImagePopup={setOpenPropertyImagePopup}
+          setOpenCustonSectionPopup={setOpenCustonSectionPopup}
+          setOpenAccessibilityMediaPopup={setOpenAccessibilityMediaPopup}
+          setOpenAccessibilityResourcesPopup={setOpenAccessibilityResourcesPopup}
+          setOpenQuestionPopup={setOpenQuestionPopup}
+          setOpenWriteReviewsPopup={setOpenWriteReviewsPopup}
+          setOpenPartnerCertificationsPopup={setOpenPartnerCertificationsPopup}
         />
       </div>
+
 
       {OpenDetailPopup && business && (
         <BusinessDetail
@@ -173,6 +198,90 @@ export default function Page({ params }: { params: { id: string } }) {
           }}
         />
       )}
+
+      {OpenAccessibilityFeaturePopup && business && (
+        <AccessibilityFeaturePopup
+          businessId={business.id}
+          setOpenAccessibilityFeaturePopup={setOpenAccessibilityFeaturePopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+
+      {OpenPropertyImagePopup && business && (
+        <PropertyImagePopup
+          businessId={business.id}
+          setOpenPropertyImagePopup={setOpenPropertyImagePopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+
+      {OpenCustonSectionPopup && business && (
+        <CustomSectionPopup
+          businessId={business.id}
+          setOpenCustonSectionPopup={setOpenCustonSectionPopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+      {OpenAccessibilityMediaPopup && business && (
+        <AccessibilityMediaPopup
+          businessId={business.id}
+          setOpenAccessibilityMediaPopup={setOpenAccessibilityMediaPopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+      {OpenAccessibilityResourcesPopup && business && (
+        <AccessibilityResourcesPopup
+          businessId={business.id}
+          setOpenAccessibilityResourcesPopup={setOpenAccessibilityResourcesPopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+      {OpenQuestionPopup && business && (
+        <QuestionPopup
+          businessId={business.id}
+          setOpenQuestionPopup={setOpenQuestionPopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+      {OpenWriteReviewsPopup && business && (
+        <WriteReviewsPopup
+          businessId={business.id}
+          setOpenWriteReviewsPopup={setOpenWriteReviewsPopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+      {OpenPartnerCertificationsPopup && business && (
+        <PartnerCertificationPopup
+          businessId={business.id}
+          setOpenPartnerCertificationsPopup={setOpenPartnerCertificationsPopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+          }}
+        />
+      )}
+
 
     </div>
   );
