@@ -23,10 +23,16 @@ type UserInfo = {
   profile_picture_url: string | null;
 };
 
+type FeedbackType = {
+  id: string;
+  name: string;
+};
+
 export default function Page() {
-  const [feedbacks, setFeedbacks] = useState<(Feedback & {
-    user?: UserInfo;
-  })[]>([]);
+  const [feedbacks, setFeedbacks] = useState<
+    (Feedback & { user?: UserInfo })[]
+  >([]);
+  const [feedbackTypes, setFeedbackTypes] = useState<FeedbackType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,8 +105,34 @@ export default function Page() {
     }
   };
 
+  const fetchFeedbackTypes = async () => {
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/feedback-type/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        }
+      );
+
+      const data = res.data;
+      if (Array.isArray(data)) {
+        setFeedbackTypes(data);
+      } else if (Array.isArray(data?.data)) {
+        setFeedbackTypes(data.data);
+      } else if (Array.isArray(data?.items)) {
+        setFeedbackTypes(data.items);
+      }
+    } catch (err) {
+      console.error("Error fetching feedback types:", err);
+      // optional: setError("Failed to load feedback types.");
+    }
+  };
+
   useEffect(() => {
     fetchFeedback();
+    fetchFeedbackTypes();
   }, []);
 
   const formatDate = (iso: string | null) => {
@@ -117,6 +149,11 @@ export default function Page() {
     if (!user) return "User";
     const full = `${user.first_name || ""} ${user.last_name || ""}`.trim();
     return full || "User";
+  };
+
+  const getFeedbackTypeName = (id: string) => {
+    const ft = feedbackTypes.find((t) => t.id === id);
+    return ft?.name || "Feedback";
   };
 
   return (
@@ -161,9 +198,9 @@ export default function Page() {
                           key={fb.id}
                           className="border rounded-lg border-gray-200 justify-between flex flex-row items-center"
                         >
-                          {/* Question / type label (still static text for now) */}
+                          {/* Feedback type name */}
                           <td className="px-4 py-2 flex items-center gap-2 font-medium">
-                            Any other feedback
+                            {getFeedbackTypeName(fb.feedback_type_id)}
                           </td>
 
                           {/* Comment */}
