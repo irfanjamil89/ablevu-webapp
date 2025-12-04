@@ -1,0 +1,493 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+
+export default function ReviewTypeTable({ refresh }: { refresh: number }) {
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [openDropdown, setOpenDropdown] = useState<number | null>(null);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [reviewsToDelete, setReviewsToDelete] = useState<string | null>(null);
+  const [loadingDelete, setLoadingDelete] = useState(false);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
+
+  const [openEditModal, setOpenEditModal] = useState(false);
+  const [editReviewsId, setEditReviewsId] = useState<string | null>(null);
+  const [form, setForm] = useState({ title: "" });
+  const [editloading, seteditLoading] = useState(false);
+  const [editerror, seteditError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+  
+    const totalPages = Math.ceil(reviews.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentReviews = reviews.slice(startIndex, endIndex);
+  
+    const goToPage = (page: number) => {
+      setCurrentPage(page);
+    };
+  
+    const goToNextPage = () => {
+      if (currentPage < totalPages) {
+        setCurrentPage(currentPage + 1);
+      }
+    };
+  
+    const goToPreviousPage = () => {
+      if (currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setOpenDropdown(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  const fetchReviews = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/review-type/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        }
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        setReviews(response.data);
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        setReviews(response.data.data);
+      } else if (response.data?.items && Array.isArray(response.data.items)) {
+        // in case paginated response aati ho
+        setReviews(response.data.items);
+      } else {
+        setError("Unexpected response format.");
+      }
+    } catch (err: any) {
+      setError("Failed to fetch data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, [refresh]);
+
+  // Handle Edit reviews type
+  const handleEdit = (id: string, title: string) => {
+    setEditReviewsId(id);
+    setForm({ title: title });
+    seteditError("");
+    setSuccess("");
+    setOpenEditModal(true);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editReviewsId) return;
+
+    seteditLoading(true);
+    seteditError("");
+    setSuccess("");
+
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/review-type/update/${editReviewsId}`,
+        {
+          title: form.title,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        }
+      );
+
+      setSuccess("Updated successfully!");
+
+      setTimeout(() => {
+        setOpenEditModal(false);
+        fetchReviews();
+      }, 700);
+    } catch (error) {
+      seteditError("Failed to update item.");
+    } finally {
+      seteditLoading(false);
+    }
+  };
+
+  // Handle Delete reviews type
+  const handleDelete = (id: string) => {
+    setReviewsToDelete(id);
+    setOpenDeleteModal(true);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[400px]">
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
+      </div>
+    );
+  }
+
+   const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+  return (
+    <section className="flex-1">
+      <div className="h-auto rounded-lg shadow-sm border border-gray-200">
+        <table className="min-w-full text-sm text-left text-gray-700">
+          <thead className="bg-[#EFF0F1] text-gray-500 text-sm font-bold">
+            <tr>
+              <th className="py-3 px-6">ID</th>
+              <th className="px-6 py-3">Name</th>
+              <th className="px-3 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="py-6 text-center text-gray-500">
+                  Loading...
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={3} className="py-6 text-center text-red-500">
+                  {error}
+                </td>
+              </tr>
+            ) : reviews.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="py-6 text-center text-gray-500">
+                  No data found.
+                </td>
+              </tr>
+            ) : (
+              reviews.map((reviews: any, index: number) => (
+                <tr key={reviews.id || index} className="hover:bg-gray-50 relative">
+                  <td className="px-6 pr-4 pl-3">{index + 1}</td>
+                  <td className="px-6 py-4">{reviews.title}</td>
+                  <td className="relative px-6 py-4 text-right">
+                    <div className="relative inline-block text-left">
+                      <button
+                        type="button"
+                        className="text-gray-500 text-2xl focus:outline-none cursor-pointer"
+                        id={`menuButton${index}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenDropdown(
+                            index === openDropdown ? null : index
+                          );
+                        }}
+                      >
+                        ⋮
+                      </button>
+
+                      {openDropdown === index && (
+                        <div
+                          className="absolute right-0 mt-2 w-30 bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col z-50"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <button
+                            onClick={() => handleEdit(reviews.id, reviews.title)}
+                            className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-[#EFF0F1] text-sm cursor-pointer"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(reviews.id)}
+                            className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-100 text-sm rounded-b-lg cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+        {!loading && !error && reviews.length > 0 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+                    {/* Left side: Entry counter */}
+                    <div className="text-sm text-gray-600">
+                      Showing {startIndex + 1} to {Math.min(endIndex, reviews.length)} of {reviews.length} entries
+                    </div>
+        
+                    {/* Right side: Pagination buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
+                      >
+                        Previous
+                      </button>
+        
+                      {/* Page Numbers */}
+                      <div className="flex items-center gap-1">
+                        {getPageNumbers().map((page, idx) => (
+                          <React.Fragment key={idx}>
+                            {page === '...' ? (
+                              <span className="px-3 py-1 text-gray-500">...</span>
+                            ) : (
+                              <button
+                                onClick={() => goToPage(page as number)}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                                  ? "bg-[#0519CE] text-white"
+                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                  }`}
+                              >
+                                {page}
+                              </button>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </div>
+        
+                      {/* Next Button */}
+                      <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
+      </div>
+
+      {openDeleteModal && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div className="bg-red-600 rounded-full p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            <h2 className="text-lg font-bold mb-2">Confirm Delete</h2>
+            <p className="mb-4">Are you sure you want to delete this review type?</p>
+
+            <div className="flex justify-center gap-3 pt-2">
+              <button
+                className="px-5 py-2 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100"
+                onClick={() => setOpenDeleteModal(false)}
+                disabled={loadingDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-5 py-2 w-full text-center text-sm font-bold bg-red-600 text-white rounded-full cursor-pointer hover:bg-red-700"
+                onClick={async () => {
+                  if (!reviewsToDelete) return;
+                  setLoadingDelete(true);
+                  try {
+                    await axios.delete(
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL}/review-type/delete/${reviewsToDelete}`,
+                      {
+                        headers: {
+                          Authorization: `Bearer ${localStorage.getItem(
+                            "access_token"
+                          )}`,
+                        },
+                      }
+                    );
+                    setOpenDeleteModal(false);
+                    setReviewsToDelete(null);
+                    fetchReviews();
+                    setOpenSuccessModal(true);
+                  } catch (error) {
+                    console.log("Delete error:", error);
+                    
+                  } finally {
+                    setLoadingDelete(false);
+                  }
+                }}
+                disabled={loadingDelete}
+              >
+                {loadingDelete ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {openSuccessModal && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#0519CE] rounded-full p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-bold mb-2">Deleted Successfully!</h2>
+            <p className="mb-4">The Review Type has been removed.</p>
+            <button
+              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
+              onClick={() => setOpenSuccessModal(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
+      {openEditModal && (
+        <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
+          <div className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[550px] p-8 relative">
+            <button
+              onClick={() => setOpenEditModal(false)}
+              className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer"
+            >
+              ×
+            </button>
+
+            <h2 className="text-lg font-bold text-gray-700 mb-4">
+              Edit Review Type
+            </h2>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-md font-medium text-gray-700 mb-1"
+                >
+                  Name <span className="text-red-500 font-bold">*</span>
+                </label>
+
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={form.title}
+                  onChange={handleChange}
+                  maxLength={250}
+                  pattern="^[A-Za-z\\s]{1,50}$"
+                  placeholder="Enter Title"
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200"
+                />
+              </div>
+
+              {editerror && (
+                <p className="text-red-500 text-sm">{editerror}</p>
+              )}
+              {success && (
+                <p className="text-green-600 text-sm">{success}</p>
+              )}
+
+              <div className="flex justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  className="px-5 py-2 w-full text-center text-sm cursor-pointer font-bold border border-gray-300 text-gray-600 rounded-full hover:bg-gray-100"
+                  onClick={() => setOpenEditModal(false)}
+                >
+                  Cancel
+                </button>
+
+                  <button
+                  type="submit"
+                  disabled={editloading}
+                  className="px-5 py-2 w-full text-center cursor-pointer text-sm font-bold bg-[#0519CE] text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {editloading ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

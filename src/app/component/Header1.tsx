@@ -51,8 +51,16 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
     window.location.href = "/"; 
   };
 
-  if (loading) {
-    return <div>Loading...</div>; // Show loading message while the data is being fetched
+ if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[400px]">
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
+      </div>
+    );
   }
 
 

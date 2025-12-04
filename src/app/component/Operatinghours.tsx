@@ -32,12 +32,12 @@ type DayKey =
   | "sunday";
 
 type ScheduleRow = {
-  id?: string;          // 🔴 existing schedule row id (for update)
+  id?: string; // existing schedule row id (for update)
   day: DayKey;
   label: string;
   active: boolean;
-  openingTime: string;  // "HH:MM"
-  closingTime: string;  // "HH:MM"
+  openingTime: string; // "HH:MM"
+  closingTime: string; // "HH:MM"
 };
 
 const DAYS: { key: DayKey; label: string }[] = [
@@ -49,6 +49,21 @@ const DAYS: { key: DayKey; label: string }[] = [
   { key: "saturday", label: "Saturday" },
   { key: "sunday", label: "Sunday" },
 ];
+
+// 🔁 Day order map for always-sorted rows
+const DAY_ORDER: Record<DayKey, number> = {
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+  sunday: 7,
+};
+
+const sortRowsByDay = (rows: ScheduleRow[]): ScheduleRow[] => {
+  return [...rows].sort((a, b) => DAY_ORDER[a.day] - DAY_ORDER[b.day]);
+};
 
 // "HH:MM" -> "9 AM"
 const timeToText = (time: string): string => {
@@ -84,21 +99,23 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const [rows, setRows] = useState<ScheduleRow[]>(
-    DAYS.map((d) => ({
-      id: undefined,
-      day: d.key,
-      label: d.label,
-      active: false,
-      openingTime: "09:00",
-      closingTime: "17:00",
-    }))
+    sortRowsByDay(
+      DAYS.map((d) => ({
+        id: undefined,
+        day: d.key,
+        label: d.label,
+        active: false,
+        openingTime: "09:00",
+        closingTime: "17:00",
+      }))
+    )
   );
 
   const [saving, setSaving] = useState(false);
   const [loadingExisting, setLoadingExisting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 🔁 Existing schedule load karo (profile se)
+  // Existing schedule load karo (profile se)
   useEffect(() => {
     const fetchExisting = async () => {
       if (!API_BASE_URL || !businessId) return;
@@ -163,29 +180,31 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
             .padStart(2, "0")}`;
         };
 
-        // rows ko backend data se merge
+        // rows ko backend data se merge + sort
         setRows((prev) =>
-          prev.map((row) => {
-            const match = schedule.find((s) => s.day === row.day);
-            if (!match) return row;
+          sortRowsByDay(
+            prev.map((row) => {
+              const match = schedule.find((s) => s.day === row.day);
+              if (!match) return row;
 
-            const openingTime = parseTextToTime(
-              match.opening_time_text,
-              row.openingTime
-            );
-            const closingTime = parseTextToTime(
-              match.closing_time_text,
-              row.closingTime
-            );
+              const openingTime = parseTextToTime(
+                match.opening_time_text,
+                row.openingTime
+              );
+              const closingTime = parseTextToTime(
+                match.closing_time_text,
+                row.closingTime
+              );
 
-            return {
-              ...row,
-              id: match.id,          // 🔴 store schedule id for updates
-              active: match.active,
-              openingTime,
-              closingTime,
-            };
-          })
+              return {
+                ...row,
+                id: match.id, // store schedule id for updates
+                active: match.active,
+                openingTime,
+                closingTime,
+              };
+            })
+          )
         );
 
         setLoadingExisting(false);
@@ -267,7 +286,7 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
 
       setSaving(true);
 
-      // 🔁 Prepare full payload per row
+      // Prepare full payload per row
       const fullPayload = rows.map((row) => ({
         id: row.id,
         day: row.day,
@@ -278,8 +297,8 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
         active: row.active,
       }));
 
-      const toUpdate = fullPayload.filter((s) => s.id);                // existing rows
-      const toCreate = fullPayload.filter((s) => !s.id && s.active);   // new rows only
+      const toUpdate = fullPayload.filter((s) => s.id); // existing rows
+      const toCreate = fullPayload.filter((s) => !s.id && s.active); // new rows only
 
       // 1️⃣ Create new schedules (bulk)
       if (toCreate.length > 0) {
