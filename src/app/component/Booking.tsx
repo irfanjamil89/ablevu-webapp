@@ -12,7 +12,7 @@ export default function Booking() {
   ></div>
 
   {/* Content Wrapper */}
-  <div className="relative mx-auto max-w-6xl px-4 lg:py-20 md:py-32 font-['Montserrat']">
+  <div className="relative mx-auto custom-container max-w-6xl px-4 lg:py-20 md:py-32 font-['Montserrat']">
     <h2 className="mb-16 text-center font-bold sm:mt-0 md:text-4xl lg:text-[48px] text-4xl">
       How to Get Started
     </h2>

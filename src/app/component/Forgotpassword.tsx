@@ -4,8 +4,8 @@ import React, { useState } from "react";
 interface ForgotPasswordProps {
   setOpenForgotPasswordModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
-  setOpenSuccessModal:React.Dispatch<React.SetStateAction<boolean>>;
-  
+  setOpenSuccessModal: React.Dispatch<React.SetStateAction<boolean>>;
+
 }
 
 const ForgotPassword: React.FC<ForgotPasswordProps> = ({
@@ -26,7 +26,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
 
     try {
       // Replace with actual API call
-      const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL+"/auth/forgot-password", {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + "/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -102,11 +102,38 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({
             </button>
           </div> */}
 
-          {success && <p className="text-green-500 text-sm">{success}</p>}
-          {/* Error Message */}
+          {success &&
+            <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+                <div className="flex justify-center mb-4">
+                  <div className="bg-[#0519CE] rounded-full p-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-8 w-8 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+                <h2 className="text-lg font-bold mb-2">Success</h2>
+                <p className="mb-4">{success}</p>
+                <button
+                  className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
+                  onClick={() => {setSuccess(""), setOpenForgotPasswordModal(false)}}
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          }
+          
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          {/* Send Link Button */}
+          
           <button
             type="submit"
             disabled={loading}

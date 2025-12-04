@@ -8,6 +8,15 @@ import Successmodal from "./Successmodal";
 import Feedback from "./Feedback";
 import AddBusinessModal from "./AddBusinessModal";
 
+interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  user_role: string;
+  paid_contributor: boolean;
+  email: string;
+}
+
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // Ensure client-side render
@@ -18,6 +27,22 @@ export default function Header() {
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
   const [OpenFeedbackModal, setOpenFeedbackModal] = useState(false);
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
+    const [user, setUser] = useState<User | null>(null);
+  
+    const getUserFromSession = (): User | null => {
+    const userData = sessionStorage.getItem('user');
+    return userData ? JSON.parse(userData) : null;
+  };
+
+
+useEffect(() => {
+  const storedUser = getUserFromSession();
+  if (storedUser) {
+    setUser(storedUser);
+  }
+}, []);
+
+
 
   // Run only after client-side hydration
   useEffect(() => {
@@ -50,11 +75,13 @@ export default function Header() {
   //   );
   // }
 
+  
+
 
   return (
     <div>
-      <header className="absolute z-50 mt-10 w-full lg:rounded-full sm:mt-10">
-        <div className="m-auto bg-white px-1 w-5/6 lg:mx-auto rounded-full lg:px-6 lg:py-4 md:px-12 md:bg-transparent">
+      <header className="absolute z-50 mt-4 lg:mt-5 w-full lg:rounded-full sm:mt-10">
+        <div className="m-auto bg-white px-1 w-5/6 custom-container lg:mx-auto rounded-full lg:px-0 lg:py-4 md:px-12 md:bg-transparent">
           <div className="flex w-full items-center justify-between rounded-full bg-white px-5 md:px-4 py-2">
             <div className="z-20">
               <Link href="/" className="flex items-center gap-2" aria-label="Home">
@@ -122,14 +149,14 @@ export default function Header() {
                       </>
                     )}
 
-                    <li>
+                    {/* <li>
                       <Link
                         href="/search"
                         className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                       >
                         <span className="group-hover:text-black-800 relative">Search</span>
                       </Link>
-                    </li>
+                    </li> */}
                   </ul>
 
                   {/* Auth Buttons / Logged-in Dropdown */}
@@ -189,6 +216,8 @@ export default function Header() {
                             className="cursor-pointer h-10 w-10 mr-1"
 
                           />
+
+                        
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"

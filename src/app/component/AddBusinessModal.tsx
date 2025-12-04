@@ -213,7 +213,7 @@ export default function AddBusinessModal({ onBusinessCreated, setOpenAddBusiness
   return (
     <>
       
-      <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50 ">
+      <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-10000 ">
         <div className="bg-white rounded-2xl shadow-2xl w-11/12 sm:w-[600px] p-6 relative overflow-y-auto">
           <label
             onClick={()=> setOpenAddBusinessModal(false)}
