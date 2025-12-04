@@ -6,38 +6,226 @@ import React from "react";
 type VirtualTour = {
   id: string;
   name: string;
-  display_order: number;
+  display_order: number | null;
   link_url: string;
   active: boolean;
+  created_at: string;
+  modified_at: string;
+};
+
+type AccessibilityFeature = {
+  id: string;
+  business_id: string;
+  accessible_feature_id: string;
+  optional_answer: string | null;
+  active: boolean;
+  created_at: string;
+  modified_at: string;
+
+  // if later you join master
+  title?: string;
+  name?: string;
+  feature_name?: string;
+  featureType?: { id: string; name: string };
+  accessible_feature?: { id: string; title: string };
+};
+
+type AccessibilityFeatureGroup = {
+  typeId: string;
+  typeName: string;
+  items: AccessibilityFeature[];
+};
+
+type BusinessReview = {
+  id: string;
+  business_id: string;
+  review_type_id: string;
+  description: string;
+  approved: boolean;
+  approvedAt: string | null;
+  active: boolean;
+  created_at: string;
+  modified_at: string;
+  reviewer_name?: string;
+  user?: { id: string; name: string };
+};
+
+type BusinessQuestion = {
+  id: string;
+  business_id: string;
+  question: string;
+  answer: string | null;
+  active: boolean;
+  show_name: boolean;
+  created_at: string;
+  modified_at: string;
+  user?: { id: string; name: string };
+};
+
+type BusinessPartnerItem = {
+  id: string; // join row id
+  business_id: string;
+  partner_id: string;
+  active: boolean;
+  created_at: string;
+  modified_at: string;
+
+  // if backend later populates partner details:
+  partner?: {
+    id: string;
+    name: string;
+    image_url?: string | null;
+    logo_url?: string | null;
+    web_url?: string | null;
+    link?: string | null;
+  };
+};
+
+type BusinessCustomSection = {
+  id: string;
+  business_id: string;
+  label?: string;
+  heading?: string;
+  title?: string;
+  description?: string;
+  content?: string;
+  active: boolean;
+  created_at?: string;
+  modified_at?: string;
+};
+
+type BusinessMedia = {
+  id: string;
+  business_id: string;
+  label?: string;
+  title?: string;
+  link?: string;
+  link_url?: string;
+  url?: string;
+  image_url?: string;
+  media_url?: string;
+  description?: string;
+  summary?: string;
+  active: boolean;
+  created_at?: string;
+  modified_at?: string;
+};
+
+type AdditionalAccessibilityResource = {
+  id: string;
+  business_id: string;
+  label: string;
+  link: string;
+  active: boolean;
+  created_at: string;
+  modified_at: string;
+};
+
+type BusinessScheduleItem = {
+  id: string;
+  day: string;
+  opening_time: string;
+  closing_time: string;
+  opening_time_text: string;
+  closing_time_text: string;
+  active: boolean;
+  created_at: string;
+  modified_at: string;
 };
 
 type BusinessProfile = {
   id: string;
   name: string;
+  slug: string;
   description: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  zipcode: string | null;
+  website: string | null;
+  email: string | null;
+  phone_number: string | null;
+
+  active: boolean;
+  blocked: boolean;
+  business_status: string | null;
+  views: number;
+
+  facebook_link?: string | null;
+  instagram_link?: string | null;
+  logo_url?: string | null;
+  marker_image_url?: string | null;
+  place_id?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+
+  created_at: string;
+  modified_at: string;
+
   virtualTours?: VirtualTour[];
-  accessibilityFeatures?: any[];
-  businessreviews?: any[];
-  businessQuestions?: any[];
-  businessPartners?: any[];
-  businessCustomSections?: any[];
-  businessMedia?: any[];
-  // you can add more fields if needed
+  accessibilityFeatures?: AccessibilityFeature[];
+  businessreviews?: BusinessReview[];
+  businessQuestions?: BusinessQuestion[];
+  businessPartners?: BusinessPartnerItem[];
+  businessCustomSections?: BusinessCustomSection[];
+  businessMedia?: BusinessMedia[];
+  businessSchedule?: BusinessScheduleItem[];
+  businessRecomendations?: any[];
+  additionalaccessibilityresources?: AdditionalAccessibilityResource[];
 };
 
 interface MaincontentProps {
   business: BusinessProfile | null;
   loading: boolean;
   error: string | null;
-  setOpenVirtualTour: React.Dispatch<React.SetStateAction<boolean>>;
-  setOpenAccessibilityFeaturePopup: React.Dispatch<React.SetStateAction<boolean>>;
+
+  // 🔹 now simple function, matches Page.tsx
+  setOpenVirtualTour: (open: boolean) => void;
+
+  setOpenAccessibilityFeaturePopup: React.Dispatch<
+    React.SetStateAction<boolean>
+  >;
+  onEditAccessibilityFeature?: (feature: AccessibilityFeature) => void;
+  onDeleteAccessibilityFeature?: (feature: AccessibilityFeature) => void;
+  onEditAccessibilityFeatureGroup?: (
+    group: AccessibilityFeatureGroup
+  ) => void;
+  onDeleteAccessibilityFeatureGroup?: (
+    group: AccessibilityFeatureGroup
+  ) => void;
   setOpenPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenCustonSectionPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAccessibilityMediaPopup: React.Dispatch<React.SetStateAction<boolean>>;
-  setOpenAccessibilityResourcesPopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenAccessibilityResourcesPopup: React.Dispatch<
+    React.SetStateAction<boolean>
+  >;
   setOpenQuestionPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenWriteReviewsPopup: React.Dispatch<React.SetStateAction<boolean>>;
-  setOpenPartnerCertificationsPopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenPartnerCertificationsPopup: React.Dispatch<
+    React.SetStateAction<boolean>
+  >;
+
+  // handlers for virtual tour icons
+  onEditVirtualTour?: (tour: VirtualTour) => void;
+  onDeleteVirtualTour?: (tour: VirtualTour) => void;
+  onToggleVirtualTourActive?: (tour: VirtualTour) => void;
+
+  // ⭐ handler for review delete icon
+  onDeleteReview?: (review: BusinessReview) => void;
+
+  // ⭐ NEW: handler for question delete icon
+  onDeleteQuestion?: (question: BusinessQuestion) => void;
+
+  onDeletePartner?: (partner: any) => void;
+  onDeleteAdditionalResource?: (
+    resource: AdditionalAccessibilityResource
+  ) => void;
+  onEditAdditionalResource?: (
+    resource: AdditionalAccessibilityResource
+  ) => void;
+  onDeleteBusinessMedia?: (media: any) => void;
+  onEditBusinessMedia?: (media: any) => void;
 }
 
 export default function Maincontent({
@@ -46,6 +234,10 @@ export default function Maincontent({
   error,
   setOpenVirtualTour,
   setOpenAccessibilityFeaturePopup,
+  onEditAccessibilityFeature,
+  onDeleteAccessibilityFeature,
+  onEditAccessibilityFeatureGroup,
+  onDeleteAccessibilityFeatureGroup,
   setOpenPropertyImagePopup,
   setOpenCustonSectionPopup,
   setOpenAccessibilityMediaPopup,
@@ -53,7 +245,15 @@ export default function Maincontent({
   setOpenQuestionPopup,
   setOpenWriteReviewsPopup,
   setOpenPartnerCertificationsPopup,
-
+  onEditVirtualTour,
+  onDeleteVirtualTour,
+  onDeleteReview,
+  onDeleteQuestion,
+  onDeletePartner,
+  onDeleteAdditionalResource,
+  onEditAdditionalResource,
+  onDeleteBusinessMedia,
+  onEditBusinessMedia,
 }: MaincontentProps) {
   // small helper to get a label from unknown objects
   const getLabel = (item: any): string =>
@@ -62,12 +262,22 @@ export default function Maincontent({
     item?.question ||
     item?.heading ||
     item?.label ||
+    item?.description ||
     "Item";
+
+  // specific helper for accessibility features
+  const getAccessibilityLabel = (f: AccessibilityFeature): string =>
+    f.title ||
+    f.name ||
+    f.feature_name ||
+    f.featureType?.name ||
+    f.accessible_feature?.title ||
+    f.optional_answer ||
+    f.accessible_feature_id;
 
   const activeTours: VirtualTour[] =
     business?.virtualTours?.filter((t) => t.active) || [];
 
-  // if in future you store real images in businessMedia:
   const propertyImages: string[] =
     business?.businessMedia
       ?.map((m: any) => m.image_url || m.media_url || m.url)
@@ -103,37 +313,75 @@ export default function Maincontent({
       {/* ---------- Virtual Tours ---------- */}
       <div className="tour border p-6 rounded-3xl border-[#e5e5e7] w-full ">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-[600] mb-4" >Virtual Tours</h3>
+          <h3 className="text-xl font-[600] mb-4">Virtual Tours</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenVirtualTour(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenVirtualTour(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Add Virtual Tours
               </button>
             </div>
           </div>
-
         </div>
-        <p >Explore the location virtually to make informed decisions and plan your visit</p>
-        <p className='text-xs mt-1'>Interested in adding an accessibility virtual tour? Email <a href="mailto:info@ableeyes.org" ><span className="text-[#0205d3]">info@ableeyes.org</span></a> for more information</p>
-        <div className="tours mt-6 flex flex-wrap justify-between gap-5">
+        <p>
+          Explore the location virtually to make informed decisions and plan
+          your visit
+        </p>
+        <p className="text-xs mt-1">
+          Interested in adding an accessibility virtual tour? Email{" "}
+          <a href="mailto:info@ableeyes.org">
+            <span className="text-[#0205d3]">info@ableeyes.org</span>
+          </a>{" "}
+          for more information
+        </p>
 
+        <div className="tours mt-6 flex flex-wrap justify-between gap-3">
           {activeTours.length > 0 ? (
             activeTours.map((tour) => (
-              <div key={tour.id} className="flex justify-between items-center border p-4 rounded-xl border-[#e5e5e7] w-[49%]">
+              <div
+                key={tour.id}
+                className="flex justify-between items-center border p-4 rounded-xl border-[#e5e5e7] w-[49%]"
+              >
                 <div className="icon flex items-center">
-                  <img src="/assets/images/walking.svg" alt="" className="w-8 mr-4" />
+                  <img
+                    src="/assets/images/walking.svg"
+                    alt=""
+                    className="w-8 mr-4"
+                  />
                   <p>{tour.name}</p>
                 </div>
                 <div className="link flex items-center space-x-2">
-                  <a href={tour.link_url}>View</a>
-                  <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                  <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                  <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
+                  <a
+                    href={tour.link_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0519CE] underline text-sm"
+                  >
+                    View
+                  </a>
+                  {/* GREEN TICK → active toggle */}
+                  <img
+                    src="/assets/images/green-tick.svg"
+                    alt="green-tick"
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  {/* YELLOW PENCIL → edit popup */}
+                  <img
+                    src="/assets/images/yellow-pencil.svg"
+                    alt="yellow-pencil"
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() => onEditVirtualTour?.(tour)}
+                  />
+                  {/* RED DELETE → delete API */}
+                  <img
+                    src="/assets/images/red-delete.svg"
+                    alt="red-delete"
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() => onDeleteVirtualTour?.(tour)}
+                  />
                 </div>
               </div>
             ))
@@ -142,7 +390,6 @@ export default function Maincontent({
               No virtual tours have been added yet.
             </p>
           )}
-
         </div>
       </div>
 
@@ -163,207 +410,245 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Property Images</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenPropertyImagePopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenPropertyImagePopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Add Property Images
               </button>
             </div>
           </div>
-
-
-
         </div>
+
         {propertyImages.length > 0 ? (
-          // <div className="flex flex-wrap gap-x-2 items-center">
-          //   {propertyImages.map((src, index) => (
-          //     <img
-          //       key={index}
-          //       src={src}
-          //       alt={`Property image ${index + 1}`}
-          //       className="w-[19%] my-1.5 rounded-2xl cursor-pointer"
-          //     />
-          //   ))}
-          // </div>
-          <div className="flex flex-wrap gap-x-3 items-center">
-            <div className='relative box-content overflow-hidden w-1/4'>
-              <img src="/assets/images/book-img.png" alt="" className="w-full my-1.5 rounded-2xl cursor-pointer" />
-              <div className="absolute top-4 right-0 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
+          <div className="flex flex-wrap gap-3 items-center">
+            {propertyImages.map((src, index) => (
+              <div
+                key={index}
+                className="relative box-content overflow-hidden w-1/4"
+              >
+                <img
+                  src={src}
+                  alt={`Property image ${index + 1}`}
+                  className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
+                />
+                <div className="absolute top-2 right-2 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
+                  <img
+                    src="/assets/images/green-tick.svg"
+                    alt="green-tick"
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <img
+                    src="/assets/images/yellow-pencil.svg"
+                    alt="yellow-pencil"
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <img
+                    src="/assets/images/red-delete.svg"
+                    alt="red-delete"
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                </div>
               </div>
-            </div>
-
+            ))}
           </div>
-
-        ) : (
-          // <div className="flex flex-wrap gap-x-2 items-center">
-
-          //   {Array.from({ length: 8 }).map((_, i) => (
-          //     <img
-          //       key={i}
-          //       src="/assets/images/pool.jpg"
-          //       alt=""
-          //       className="w-[19%] my-1.5 rounded-2xl cursor-pointer"
-          //     />
-          //   ))}
-          // </div>
-          <div className="flex flex-wrap gap-x-3 items-center">
-            <div className='relative box-content overflow-hidden w-1/4'>
-              <img src="/assets/images/book-img.png" alt="" className="w-full my-1.5 rounded-2xl cursor-pointer" />
-              <div className="absolute top-4 right-0 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-              </div>
-            </div>
-
-
-          </div>
-        )}
-      </div>
-
-      {/* ---------- Accessibility Features ---------- */}
-      <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-[600] mb-4">Accessibility Features</h3>
-
-          <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
-            <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenAccessibilityFeaturePopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
-                Add Accessibility Features
-              </button>
-            </div>
-          </div>
-
-        </div>
-
-
-        {business.accessibilityFeatures &&
-          business.accessibilityFeatures.length > 0 ? (
-          <div className="audios py-10 rounded-xl space-y-2">
-            <div className='box flex items-center gap-3'>
-              <div className='w-[120px]'>
-                <div className="icon-box flex items-center gap-2 box-content w-full">
-                  <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                  <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                  <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-                </div>
-              </div>
-              <div className="heading box-content w-[100px]">
-                <h3 className='text-md text-gray-500'>Physical</h3>
-              </div>
-
-              <div className="content flex flex-wrap items-start gap-2">
-                <div className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto">
-                  <img src="/assets/images/tick.svg" alt="tick" className='w-5 h-5' />
-                  <h3 className='text-sm'>Accessible entrance available</h3>
-                </div>
-
-                <div className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto">
-                  <img src="/assets/images/tick.svg" alt="tick" className='w-5 h-5' />
-                  <h3 className='text-sm'>Accessible entrance available</h3>
-                </div>
-
-                <div className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto">
-                  <img src="/assets/images/tick.svg" alt="tick" className='w-5 h-5' />
-                  <h3 className='text-sm'>Accessible entrance available </h3>
-                </div>
-
-                <div className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto">
-                  <img src="/assets/images/tick.svg" alt="tick" className='w-5 h-5' />
-                  <h3 className='text-sm'>Accessible entrance available</h3>
-                </div>
-
-                <div className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto">
-                  <img src="/assets/images/tick.svg" alt="tick" className='w-5 h-5' />
-                  <h3 className='text-sm'>Accessible entrance available</h3>
-                </div>
-              </div>
-            </div>
-
-          </div>
-          // <ul className="list-disc pl-6 text-sm text-gray-700 space-y-1">
-          //   {business.accessibilityFeatures.map((f: any) => (
-          //     <li key={f.id}>{getLabel(f)}</li>
-          //   ))}
-          // </ul>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
             <img src="/assets/images/blank.avif" alt="" />
             <p className="mt-4 font-medium text-[#6d6d6d]">
-              No Features to show
+              No property images to show
             </p>
           </div>
         )}
       </div>
 
+      {/* ---------- Accessibility Features ---------- */}
+<div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
+  <div className="flex justify-between items-center">
+    <h3 className="text-xl font-[600] mb-4">Accessibility Features</h3>
+
+    <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setOpenAccessibilityFeaturePopup(true)}
+          className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+        >
+          Add Accessibility Features
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {business.accessibilityFeatures && business.accessibilityFeatures.length > 0 ? (
+    <div className="audios py-6 rounded-xl space-y-4">
+      {Object.values(
+        (business.accessibilityFeatures || []).reduce(
+          (acc: Record<string, AccessibilityFeatureGroup>, f: AccessibilityFeature) => {
+            const typeId = f.featureType?.id || "other";
+            const typeName = f.featureType?.name || "Other";
+            if (!acc[typeId]) {
+              acc[typeId] = { typeId, typeName, items: [] };
+            }
+            acc[typeId].items.push(f);
+            return acc;
+          },
+          {}
+        )
+      ).map((group) => (
+        <div key={group.typeId} className="box flex items-start gap-3">
+          {/* left icons */}
+          <div className="w-[120px]">
+            <div className="icon-box flex items-center gap-2 box-content w-full">
+              <img
+                src="/assets/images/green-tick.svg"
+                alt="green-tick"
+                className="w-5 h-5 cursor-pointer"
+              />
+              <img
+                src="/assets/images/yellow-pencil.svg"
+                alt="yellow-pencil"
+                className="w-5 h-5 cursor-pointer"
+                onClick={() => onEditAccessibilityFeatureGroup?.(group)}
+              />
+              <img
+                src="/assets/images/red-delete.svg"
+                alt="red-delete"
+                className="w-5 h-5 cursor-pointer"
+                onClick={() => onDeleteAccessibilityFeatureGroup?.(group)}
+              />
+            </div>
+          </div>
+
+          {/* type name: Physical, Sensory, ... */}
+          <div className="heading box-content w-[120px]">
+            <h3 className="text-md text-gray-700 font-semibold">
+              {group.typeName}
+            </h3>
+          </div>
+
+          {/* selected features as pills */}
+          <div className="content flex flex-wrap items-start gap-2">
+            {group.items.map((f) => (
+              <div
+                key={f.id}
+                className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto"
+              >
+                <img
+                  src="/assets/images/tick.svg"
+                  alt="tick"
+                  className="w-5 h-5"
+                />
+                <h3 className="text-sm">
+                  {getAccessibilityLabel(f)}
+                </h3>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
+      <img src="/assets/images/blank.avif" alt="" />
+      <p className="mt-4 font-medium text-[#6d6d6d]">
+        No Features to show
+      </p>
+    </div>
+  )}
+</div>
+
+
+
       {/* ---------- Partner Certifications / Programs ---------- */}
       <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-[600] mb-4">Partner Certifications/Programs</h3>
+          <h3 className="text-xl font-[600] mb-4">
+            Partner Certifications/Programs
+          </h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenPartnerCertificationsPopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenPartnerCertificationsPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Add Partner Certifications/Programs
               </button>
             </div>
           </div>
-
         </div>
 
-
         {business.businessPartners && business.businessPartners.length > 0 ? (
-          // <ul className="list-disc pl-6 text-sm text-gray-700 space-y-1">
-          //   {business.businessPartners.map((p: any) => (
-          //     <li key={p.id}>{getLabel(p)}</li>
-          //   ))}
-          // </ul>
-          <div className='flex flex-wrap space-x-3 space-y-3'>
-            <section className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm w-[22%]">
+          <div className="flex flex-wrap gap-3">
+            {business.businessPartners.map((p: any) => {
+              // ⭐ support both shapes: direct fields or nested partner
+              const partner = p.partner || p;
 
-              {/* <!-- Top Row --> */}
-              <div className="flex items-center text-start justify-between mb-2">
+              const partnerName = partner.name || getLabel(partner);
+              const partnerImage = partner.image_url || partner.logo_url;
+              const partnerUrl = partner.web_url || partner.link;
 
-                {/* <!-- Left: Anonymous + time --> */}
-                <div className="flex items-center gap-3 pr-2">
-                  <div className="detail flex flex-col">
-                    <div className="text-gray-700 font-semibold text-md">Hidden Disabilities</div>
+              return (
+                <section
+                  key={p.id}
+                  className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm w-[22%] min-w-[220px]"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3 pr-2">
+                      <div className="detail flex flex-col">
+                        <div className="text-gray-700 font-semibold text-md">
+                          {partnerName}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer">
+                      <img
+                        src="/assets/images/green-tick.svg"
+                        alt="green-tick"
+                        className="w-5 h-5 cursor-pointer"
+                      />
+                      <img
+                        src="/assets/images/red-delete.svg"
+                        alt="red-delete"
+                        className="w-5 h-5 cursor-pointer"
+                        onClick={() => onDeletePartner?.(p)}
+                      />
+                    </div>
                   </div>
 
-                </div>
+                  <div className="w-full flex justify-center py-5">
+                    {partnerImage ? (
+                      <img
+                        src={partnerImage}
+                        alt={partnerName}
+                        className="max-h-20 object-contain"
+                      />
+                    ) : (
+                      <img
+                        src="/assets/images/brand-1.png"
+                        alt=""
+                        className="max-h-20 object-contain"
+                      />
+                    )}
+                  </div>
 
-                {/* <!-- Right: Location --> */}
-                <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer">
-                  <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                  <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-                </div>
-
-              </div>
-
-              <div className='w-full flex justify-center py-5'>
-                <img src="/assets/images/brand-1.png" alt="" className='w-lg' />
-              </div>
-
-              <div className="link w-full flex justify-center py-1">
-                <a href="#" className='hover:underline text-sm text-[#0519CE]'>Visit Website</a>
-              </div>
-
-            </section>
-
+                  {partnerUrl && (
+                    <div className="link w-full flex justify-center py-1">
+                      <a
+                        href={partnerUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline text-sm text-[#0519CE]"
+                      >
+                        Visit Website
+                      </a>
+                    </div>
+                  )}
+                </section>
+              );
+            })}
           </div>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
@@ -377,63 +662,79 @@ export default function Maincontent({
 
       {/* ---------- Reviews ---------- */}
       <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
-
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-[600] mb-4">Reviews</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenWriteReviewsPopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenWriteReviewsPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Write Reviews
               </button>
             </div>
           </div>
-
         </div>
 
         {business.businessreviews && business.businessreviews.length > 0 ? (
-          // <ul className="space-y-3 text-sm text-gray-700">
-          //   {business.businessreviews.map((r: any) => (
-          //     <li key={r.id} className="border-b pb-2">
-          //       {getLabel(r)}
-          //     </li>
-          //   ))}
-          // </ul>
-          <section className="w-full mx-auto bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+          <div className="space-y-4">
+            {business.businessreviews.map((r) => {
+              const reviewer = r.reviewer_name || "Anonymous user";
+              const dateSource = r.approvedAt || r.created_at;
+              const dateText = dateSource
+                ? new Date(dateSource).toLocaleDateString()
+                : "";
+              const text = r.description;
 
-            {/* <!-- Top Row --> */}
-            <div className="flex items-center justify-between mb-2">
+              return (
+                <section
+                  key={r.id}
+                  className="w-full mx-auto bg-white rounded-lg border border-gray-200 p-4 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-full bg-gray-200 flex items-center justify-center">
+                        <img
+                          src="/assets/images/Profile.avif"
+                          className="w-10 h-10"
+                          alt="profile"
+                        />
+                      </div>
+                      <div className="detail flex flex-col">
+                        <div className="text-gray-700 font-semibold text-md">
+                          {reviewer}
+                        </div>
+                        {dateText && (
+                          <div className="text-gray-700 text-md">
+                            {dateText}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-              {/* <!-- Left: Anonymous + time --> */}
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-gray-200 flex items-center justify-center">
-                  <img src="/assets/images/Profile.avif"
-                    className="w-10 h-10" alt="profile" />
-                </div>
-                <div className="detail flex flex-col">
-                  <div className="text-gray-700 font-semibold text-md">Demo Admin</div>
-                  <div className="text-gray-700 text-md">Dec 2, 2025</div>
-                </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer pr-5">
+                      {r.approved && (
+                        <img
+                          src="/assets/images/green-tick.svg"
+                          alt="green-tick"
+                          className="w-5 h-5 cursor-pointer"
+                        />
+                      )}
+                      <img
+                        src="/assets/images/red-delete.svg"
+                        alt="red-delete"
+                        className="w-5 h-5 cursor-pointer"
+                        onClick={() => onDeleteReview?.(r)}
+                      />
+                    </div>
+                  </div>
 
-              </div>
-
-              {/* <!-- Right: Location --> */}
-              <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer pr-5">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-              </div>
-
-            </div>
-
-            {/* <!-- Question --> */}
-            <p className="text-md text-gray-900 mb-2">
-              Do you have accessible restrooms?
-            </p>
-          </section>
+                  <p className="text-md text-gray-900 mb-2">{text}</p>
+                </section>
+              );
+            })}
+          </div>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
             <img src="/assets/images/link.avif" alt="" />
@@ -450,62 +751,78 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Accessibility Questions</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenQuestionPopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenQuestionPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Add Questions
               </button>
             </div>
           </div>
-
-
         </div>
+
         {business.businessQuestions && business.businessQuestions.length > 0 ? (
-          // <ul className="space-y-2 text-sm text-gray-700">
-          //   {business.businessQuestions.map((q: any) => (
-          //     <li key={q.id}>• {getLabel(q)}</li>
-          //   ))}
-          // </ul>
-          <section className="w-full mx-auto bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+          <div className="space-y-4">
+            {business.businessQuestions.map((q) => {
+              const shouldShowName = q.show_name && q.user?.name;
+              const displayName = shouldShowName ? q.user!.name : "Anonymous";
 
-            {/* <!-- Top Row --> */}
-            <div className="flex items-center justify-between mb-2">
+              return (
+                <section
+                  key={q.id}
+                  className="w-full mx-auto bg-white rounded-lg border border-gray-200 p-4 shadow-sm"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
+                        <img
+                          src="/assets/images/Profile.avif"
+                          className="w-6 h-6"
+                          alt="profile"
+                        />
+                      </div>
 
-              {/* <!-- Left: Anonymous + time --> */}
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
-                  <img src="/assets/images/Profile.avif"
-                    className="w-6 h-6" alt="profile" />
-                </div>
+                      <div className="text-gray-700 font-semibold">
+                        {displayName}
+                      </div>
+                    </div>
 
-                <div className="text-gray-700 font-semibold">Anonymous</div>
-              </div>
+                    <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer pr-5">
+                      <img
+                        src="/assets/images/green-tick.svg"
+                        alt="green-tick"
+                        className="w-5 h-5 cursor-pointer"
+                      />
+                      <img
+                        src="/assets/images/red-delete.svg"
+                        alt="red-delete"
+                        className="w-5 h-5 cursor-pointer"
+                        onClick={() => onDeleteQuestion?.(q)}
+                      />
+                    </div>
+                  </div>
 
-              {/* <!-- Right: Location --> */}
-              <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer pr-5">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-              </div>
+                  <h2 className="text-md font-semibold text-gray-900 mb-2">
+                    {q.question}
+                  </h2>
 
-            </div>
-
-            {/* <!-- Question --> */}
-            <h2 className="text-md font-semibold text-gray-900 mb-2">
-              Do you have accessible restrooms?
-            </h2>
-
-            {/* <!-- Textarea --> */}
-            <textarea
-              rows={4}
-              cols={4}
-              placeholder="Write your answer here..."
-              className="w-full border placeholder:text-gray-600 border-gray-300 rounded-lg p-4 text-sm hover:border-[#0519CE] focus:border-0 focus:ring-1 focus:ring-[#0519CE] outline-none"
-            ></textarea>
-
-          </section>
+                  {q.answer ? (
+                    <div className="mt-2 border border-gray-200 bg-gray-50 rounded-lg p-3">
+                      <p className="text-sm text-gray-800">{q.answer}</p>
+                    </div>
+                  ) : (
+                    <textarea
+                      rows={4}
+                      cols={4}
+                      placeholder="Write your answer here..."
+                      className="w-full border placeholder:text-gray-600 border-gray-300 rounded-lg p-4 text-sm hover:border-[#0519CE] focus:border-0 focus:ring-1 focus:ring-[#0519CE] outline-none mt-2"
+                    ></textarea>
+                  )}
+                </section>
+              );
+            })}
+          </div>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
             <img src="/assets/images/blank.avif" alt="" />
@@ -519,78 +836,71 @@ export default function Maincontent({
       {/* ---------- Additional Accessibility Resources ---------- */}
       <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-[600] mb-4">Additional Accessibility Resources</h3>
-
+          <h3 className="text-xl font-[600] mb-4">
+            Additional Accessibility Resources
+          </h3>
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenAccessibilityResourcesPopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenAccessibilityResourcesPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Add Accessibility Resources
               </button>
             </div>
           </div>
-
-
-
         </div>
-        {/* for now, using custom sections as resources if present */}
-        {business.businessCustomSections &&
-          business.businessCustomSections.length > 0 ? (
-          // <ul className="space-y-2 text-sm text-gray-700">
-          //   {business.businessCustomSections.map((s: any) => (
-          //     <li key={s.id}>{getLabel(s)}</li>
-          //   ))}
-          // </ul>
-          <div className="pr-2 flex flex-wrap justify-between text-center space-y-3">
 
-            <div className="box border border-dotted p-4 rounded-xl border-[#d7d7da] space-y-2 w-[49.5%]">
-              <div className="icon-box flex items-center justify-end gap-2 box-content w-full">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
+        {business.additionalaccessibilityresources &&
+        business.additionalaccessibilityresources.length > 0 ? (
+          <div className="pr-2 flex flex-wrap justify-between gap-3">
+            {business.additionalaccessibilityresources.map((r) => (
+              <div
+                key={r.id}
+                className="box border border-dotted p-4 rounded-xl border-[#d7d7da] space-y-2 w-[49.5%]"
+              >
+                <div className="icon-box flex items-center justify-end gap-2 box-content w-full">
+                  <img
+                    src="/assets/images/green-tick.svg"
+                    alt="green-tick"
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <img
+                    src="/assets/images/yellow-pencil.svg"
+                    alt="yellow-pencil"
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() => onEditAdditionalResource?.(r)}
+                  />
+                  <img
+                    src="/assets/images/red-delete.svg"
+                    alt="red-delete"
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() => onDeleteAdditionalResource?.(r)}
+                  />
+                </div>
+
+                <div className="paragraph text-start items-center flex gap-5">
+                  <img
+                    src="/assets/images/file.avif"
+                    alt="file"
+                    className="w-8 h-8"
+                  />
+                  <div>
+                    <p className="text-gray-800 text-sm font-semibold">
+                      {r.label}
+                    </p>
+                    <a
+                      href={r.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-[#0519CE] underline break-all"
+                    >
+                      {r.link}
+                    </a>
+                  </div>
+                </div>
               </div>
-
-              <div className="paragraph text-start items-center flex gap-5">
-                <img src="/assets/images/file.avif" alt="file" className='w-8 h-8' />
-                <p className='text-gray-700 text-sm'>
-                  this section
-                </p>
-              </div>
-            </div>
-
-            <div className="box border border-dotted p-4 rounded-xl border-[#d7d7da] space-y-2 w-[49.5%]">
-              <div className="icon-box flex items-center justify-end gap-2 box-content w-full">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-              </div>
-
-              <div className="paragraph text-start items-center flex gap-5">
-                <img src="/assets/images/file.avif" alt="file" className='w-8 h-8' />
-                <p className='text-gray-700 text-sm'>
-                  this section
-                </p>
-              </div>
-            </div>
-
-            <div className="box border border-dotted p-4 rounded-xl border-[#d7d7da] space-y-2 w-[49.5%]">
-              <div className="icon-box flex items-center justify-end gap-2 box-content w-full">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-              </div>
-
-              <div className="paragraph text-start items-center flex gap-5">
-                <img src="/assets/images/file.avif" alt="file" className='w-8 h-8' />
-                <p className='text-gray-700 text-sm'>
-                  this section
-                </p>
-              </div>
-            </div>
-
+            ))}
           </div>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
@@ -608,77 +918,74 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Accessibility Media</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenAccessibilityMediaPopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenAccessibilityMediaPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Add Accessibility Media
               </button>
             </div>
           </div>
-
         </div>
+
         {business.businessMedia && business.businessMedia.length > 0 ? (
-          // <ul className="space-y-2 text-sm text-gray-700">
-          //   {business.businessMedia.map((m: any) => (
-          //     <li key={m.id}>{getLabel(m)}</li>
-          //   ))}
-          // </ul>
-          <div className="audios pr-2 flex flex-wrap justify-between text-center space-y-3">
+          <div className="audios pr-2 flex flex-wrap justify-between text-center gap-3">
+            {business.businessMedia.map((m: any) => (
+              <div
+                key={m.id}
+                className="box border border-dotted p-4 rounded-xl border-[#d7d7da] space-y-2 w-[48%]"
+              >
+                <div className="icon-box flex items-center justify-end gap-2 box-content w-full">
+                  <img
+                    src="/assets/images/green-tick.svg"
+                    alt="green-tick"
+                    className="w-5 h-5 cursor-pointer"
+                  />
+                  <img
+                    src="/assets/images/yellow-pencil.svg"
+                    alt="yellow-pencil"
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() => onEditBusinessMedia?.(m)}
+                  />
+                  <img
+                    src="/assets/images/red-delete.svg"
+                    alt="red-delete"
+                    className="w-5 h-5 cursor-pointer"
+                    onClick={() => onDeleteBusinessMedia?.(m)}
+                  />
+                </div>
 
-            <div className="box border border-dotted p-4 rounded-xl border-[#d7d7da] space-y-2 w-[49.5%]">
-              <div className="icon-box flex items-center justify-end gap-2 box-content w-full">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-              </div>
+                <div className="heading flex justify-between items-start">
+                  <h3 className="text-xl text-gray-800 text-start font-semibold mb-4 pr-2">
+                    {/* label ko priority di hai */}
+                    {m.label || m.title || getLabel(m)}
+                  </h3>
 
-              <div className="heading flex justify-between items-start">
-                <h3 className="text-xl text-gray-800 text-start font-semibold mb-4 pr-2">Beer to raise money for autism awareness in Mesa</h3>
-                <div
-                  className="py-1 text-sm text-[#0519CE] rounded-full cursor-pointer underline transition">
-                  View
+                  {m.link || m.link_url || m.url ? (
+                    <a
+                      href={m.link || m.link_url || m.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-1 text-sm text-[#0519CE] rounded-full cursor-pointer underline transition"
+                    >
+                      View
+                    </a>
+                  ) : null}
+                </div>
+
+                <div className="paragraph text-start">
+                  <p className="text-gray-700 text-sm">
+                    {m.description || m.summary || ""}
+                  </p>
                 </div>
               </div>
-
-              <div className="paragraph text-start">
-                <p className='text-gray-700 text-sm'>
-                  Article about Visit Mesa, 12 West Brewing Co., and Chupacabra Taproom launching Spectrum IPA during Autism Acceptance Month to raise funds and awareness.
-                </p>
-              </div>
-            </div>
-
-            <div className="box border border-dotted p-4 rounded-xl border-[#d7d7da] space-y-2 w-[49.5%]">
-              <div className="icon-box flex items-center justify-end gap-2 box-content w-full">
-                <img src="/assets/images/green-tick.svg" alt="green-tick" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className='w-5 h-5 cursor-pointer' />
-                <img src="/assets/images/red-delete.svg" alt="red-delete" className='w-5 h-5 cursor-pointer' />
-              </div>
-
-              <div className="heading flex justify-between items-start">
-                <h3 className="text-xl text-gray-800 text-start font-semibold mb-4 pr-2">Beer to raise money for autism awareness in Mesa Beer to raise money for autism awareness in Mesa</h3>
-                <div
-                  className="py-1 text-sm text-[#0519CE] rounded-full cursor-pointer underline transition">
-                  View
-                </div>
-              </div>
-
-              <div className="paragraph text-start">
-                <p className='text-gray-700 text-sm'>
-                  Article about Visit Mesa, 12 West Brewing Co., and Chupacabra Taproom launching Spectrum IPA during Autism Acceptance Month to raise funds and awareness.
-                </p>
-              </div>
-            </div>
-
+            ))}
           </div>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
             <img src="/assets/images/blank.avif" alt="" />
-            <p className="mt-4 font-medium text-[#6d6d6d]">
-              No Media to show
-            </p>
+            <p className="mt-4 font-medium text-[#6d6d6d]">No Media to show</p>
           </div>
         )}
       </div>
@@ -689,23 +996,34 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Custom Sections</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {/* <!-- Title --> */}
             <div className="flex items-center gap-3">
-
-
-              <button onClick={() => setOpenCustonSectionPopup(true)}
-                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition">
+              <button
+                onClick={() => setOpenCustonSectionPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
                 Add Custom Sections
               </button>
             </div>
           </div>
-
         </div>
+
         {business.businessCustomSections &&
-          business.businessCustomSections.length > 0 ? (
+        business.businessCustomSections.length > 0 ? (
           <ul className="space-y-2 text-sm text-gray-700">
             {business.businessCustomSections.map((s: any) => (
-              <li key={s.id}>{getLabel(s)}</li>
+              <li key={s.id} className="border-b pb-2">
+                {/* Title or label support */}
+                <div className="font-semibold">
+                  {s.heading || s.title || s.label || getLabel(s)}
+                </div>
+
+                {/* Description support if later added */}
+                {(s.description || s.content) && (
+                  <p className="text-gray-600 mt-1">
+                    {s.description || s.content}
+                  </p>
+                )}
+              </li>
             ))}
           </ul>
         ) : (
