@@ -11,7 +11,7 @@ export default function HeroSection() {
       {/* Background overlay to ensure text contrast */}
       <div className="absolute inset-0 bg-black/15" aria-hidden="true"></div>
 
-      <div className="flex lg:justify-start md:justify-center justify-center relative z-10 w-5/6 mx-auto  lg:mx-auto px-6 md:px-12 lg:px-6 text-center md:text-left">
+      <div className="flex lg:justify-start md:justify-center justify-center relative z-10 w-5/6 custom-container mx-auto  lg:mx-auto px-6 md:px-12 lg:px-6 text-center md:text-left">
         <div className="text-white max-w-[600px] mx-auto md:mx-0">
           {/* Accessible heading */}
           <h1

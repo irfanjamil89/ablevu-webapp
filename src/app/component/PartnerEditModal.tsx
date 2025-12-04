@@ -47,14 +47,14 @@ const PartnerEditModal: React.FC<PartnerEditModalProps> = ({
     setSuccess("");
 
     try {
-      const organizationId = "80dfa7c9-f919-4ffa-b37b-ad36899ec46d"; 
+
 
       const payload = {
         name: form.name,
         web_url: form.web_url,
       };
 
-      const response = await axios.put(
+      const response = await axios.patch(
         `https://staging-api.qtpack.co.uk/partner/update/${partnerId}`,
         payload,
         {

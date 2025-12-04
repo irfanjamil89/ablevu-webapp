@@ -9,6 +9,7 @@ interface User {
   first_name: string;
   last_name: string;
   user_role: string;
+  paid_contributor: boolean;
   email: string;
 }
 
@@ -31,7 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (!token) {
       setError('Please log in to continue.');
       setLoading(false);
-      router.push('/'); 
+      router.push('/');
       return;
     }
 
@@ -49,7 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setUser(data);
         saveUserToSession(data);
 
-       if (data.user_role === "Business") {
+        if (data.user_role === "Business") {
           router.push('/dashboard/business-overview');
           setLoading(false);
           return;
@@ -62,7 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           setLoading(false);
           return;
         }
-    
+
         setLoading(false); // Set loading to false after fetch is done
       })
       .catch(error => {
@@ -77,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     sessionStorage.setItem('user', JSON.stringify(user));
   };
 
-  
+
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -111,13 +112,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex items-center justify-between px-4 lg:px-6 py-1">
             <div className="flex items-center gap-[85px]">
               {/* Logo */}
-              <a href="/dashboard" className="w-[180px]">
+              <Link href="/" className="w-[180px]">
                 <img
                   src="/assets/images/logo.png"
                   alt="AbleVu Logo"
                   className="w-[180px]"
                 />
-              </a>
+              </Link>
 
               {/* Welcome Message */}
 
@@ -170,7 +171,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <div className="flex">
-        <div className=" w-[350px] pt-5 mb-5 bg-white border-r border-gray-200 flex flex-col justify-between">
+        <div className=" w-[350px] pt-5  bg-white border-r border-gray-200 flex flex-col justify-between">
           {/* Top Navigation */}
           <div className="p-4 mb-15 sticky top-0 ">
             <ul className="space-y-4 font-medium">
@@ -212,28 +213,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   >
 
-                    <svg
-                      version="1.1"
-                      id="icons_1_"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      x="0"
-                      y="0"
-                      viewBox="0 0 128 128"
-                      xmlSpace="preserve">
-                      <style>
-                        {`.st0 { fill: #0a0a0a; } .st1 { display: none; } .st2 { display: inline; }`}
-                      </style>
-                      <g id="row2_1_">
-                        <g id="_x36__3_">
-                          <path
-                            className="st0"
-                            d="M64 .3C28.7.3 0 28.8 0 64s28.7 63.7 64 63.7 64-28.5 64-63.7S99.3.3 64 .3zm0 121C32.2 121.3 6.4 95.7 6.4 64 6.4 32.3 32.2 6.7 64 6.7c12.1 0 23.4 3.7 32.7 10.1 13.7 9.4 23.1 24.5 24.7 41.8 0 .5.1 9.8 0 10.7-2.7 29.2-27.4 52-57.4 52zm-3.2-89.1c-14.5 0-19.1 13.3-19.2 25.5h9.6c-.2-8.8.7-15.9 9.6-15.9 6.4 0 9.6 2.7 9.6 9.6 0 4.4-3.4 6.6-6.4 9.6-6.2 6-5.7 10.4-6 18.7h8.4c.3-7.5.2-7.3 6.4-13.9 4.2-4.1 7.1-8.2 7.1-14.5.1-10.1-5.3-19.1-19.1-19.1zm3.3 54.1c-3.6 0-6.4 2.9-6.4 6.4 0 3.5 2.9 6.4 6.4 6.4 3.6 0 6.4-2.9 6.4-6.4 0-3.6-2.9-6.4-6.4-6.4z"
-                            id="transparent"
-                          />
-                        </g>
-                      </g>
-                    </svg>
+                    <img src="/assets/images/overview.svg" className='w-5 h-5' alt="" />
 
                     Business Type
 
@@ -262,18 +242,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
 
                     Accessibility Features
 
@@ -282,32 +268,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                   <Link href="/dashboard/businesses" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
 
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
-                      }`}>
+                    ? "bg-blue-700 text-white font-semibold"
+                    : "text-gray-700 hover:bg-gray-100"
+                    }`}>
 
-                    <svg
-                      version="1.1"
-                      id="icons_1_"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      x="0"
-                      y="0"
-                      viewBox="0 0 128 128"
-                      xmlSpace="preserve">
-                      <style>
-                        {`.st0 { fill: #0a0a0a; } .st1 { display: none; } .st2 { display: inline; }`}
-                      </style>
-                      <g id="row2_1_">
-                        <g id="_x36__3_">
-                          <path
-                            className="st0"
-                            d="M64 .3C28.7.3 0 28.8 0 64s28.7 63.7 64 63.7 64-28.5 64-63.7S99.3.3 64 .3zm0 121C32.2 121.3 6.4 95.7 6.4 64 6.4 32.3 32.2 6.7 64 6.7c12.1 0 23.4 3.7 32.7 10.1 13.7 9.4 23.1 24.5 24.7 41.8 0 .5.1 9.8 0 10.7-2.7 29.2-27.4 52-57.4 52zm-3.2-89.1c-14.5 0-19.1 13.3-19.2 25.5h9.6c-.2-8.8.7-15.9 9.6-15.9 6.4 0 9.6 2.7 9.6 9.6 0 4.4-3.4 6.6-6.4 9.6-6.2 6-5.7 10.4-6 18.7h8.4c.3-7.5.2-7.3 6.4-13.9 4.2-4.1 7.1-8.2 7.1-14.5.1-10.1-5.3-19.1-19.1-19.1zm3.3 54.1c-3.6 0-6.4 2.9-6.4 6.4 0 3.5 2.9 6.4 6.4 6.4 3.6 0 6.4-2.9 6.4-6.4 0-3.6-2.9-6.4-6.4-6.4z"
-                            id="transparent"
-                          />
-                        </g>
-                      </g>
-                    </svg>
+                    <img src="/assets/images/overview.svg" className='w-5 h-5' alt="" />
 
                     Businesses
 
@@ -358,18 +323,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
 
                     Coupon Codes
 
@@ -383,18 +354,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
 
                     Review Type
 
@@ -408,18 +385,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
 
                     Feedback Type
 
@@ -437,18 +420,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
 
                     Feedback
 
@@ -464,18 +453,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
                     Users
                   </Link>
 
@@ -488,18 +483,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
                     Profile
                   </Link>
                 </>
@@ -511,28 +512,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
 
-                    <svg
-                      version="1.1"
-                      id="icons_1_"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      x="0"
-                      y="0"
-                      viewBox="0 0 128 128"
-                      xmlSpace="preserve">
-                      <style>
-                        {`.st0 { fill: #0a0a0a; } .st1 { display: none; } .st2 { display: inline; }`}
-                      </style>
-                      <g id="row2_1_">
-                        <g id="_x36__3_">
-                          <path
-                            className="st0"
-                            d="M64 .3C28.7.3 0 28.8 0 64s28.7 63.7 64 63.7 64-28.5 64-63.7S99.3.3 64 .3zm0 121C32.2 121.3 6.4 95.7 6.4 64 6.4 32.3 32.2 6.7 64 6.7c12.1 0 23.4 3.7 32.7 10.1 13.7 9.4 23.1 24.5 24.7 41.8 0 .5.1 9.8 0 10.7-2.7 29.2-27.4 52-57.4 52zm-3.2-89.1c-14.5 0-19.1 13.3-19.2 25.5h9.6c-.2-8.8.7-15.9 9.6-15.9 6.4 0 9.6 2.7 9.6 9.6 0 4.4-3.4 6.6-6.4 9.6-6.2 6-5.7 10.4-6 18.7h8.4c.3-7.5.2-7.3 6.4-13.9 4.2-4.1 7.1-8.2 7.1-14.5.1-10.1-5.3-19.1-19.1-19.1zm3.3 54.1c-3.6 0-6.4 2.9-6.4 6.4 0 3.5 2.9 6.4 6.4 6.4 3.6 0 6.4-2.9 6.4-6.4 0-3.6-2.9-6.4-6.4-6.4z"
-                            id="transparent"
-                          />
-                        </g>
-                      </g>
-                    </svg>
+                    <img src="/assets/images/overview.svg" className='w-5 h-5' alt="" />
 
                     Overview
 
@@ -546,18 +526,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
                     Subscriptions
                   </Link>
 
@@ -571,18 +557,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
                     >
                       <path
+                        d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeMiterlimit="10"
+                      />
+                      <path
+                        d="M200 200a56 56 0 01112 0c0 28-21 44-33 52s-23 18-23 36"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
+                      <circle cx="256" cy="336" r="16" fill="currentColor" />
                     </svg>
+
                     Questions
                   </Link>
 
@@ -597,18 +594,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
                     >
                       <path
-                        strokeLinecap="round"
+                        d="M128 224H64a32 32 0 00-32 32v192a32 32 0 0032 32h64a32 32 0 0032-32V256a32 32 0 00-32-32z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
+                      />
+                      <path
+                        d="M384 224h-92l12-70c6-36-12-70-41-86a14 14 0 00-23 9v94c0 28-22 53-48 53h-20v224h226c27 0 49-20 52-47l17-160c3-29-17-53-43-53z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeLinejoin="round"
                       />
                     </svg>
+
                     Reviews
                   </Link>
 
@@ -620,18 +626,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
                     Profile
                   </Link>
 
@@ -645,56 +657,64 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
 
-                    <svg
-                      version="1.1"
-                      id="icons_1_"
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      x="0"
-                      y="0"
-                      viewBox="0 0 128 128"
-                      xmlSpace="preserve">
-                      <style>
-                        {`.st0 { fill: #0a0a0a; } .st1 { display: none; } .st2 { display: inline; }`}
-                      </style>
-                      <g id="row2_1_">
-                        <g id="_x36__3_">
-                          <path
-                            className="st0"
-                            d="M64 .3C28.7.3 0 28.8 0 64s28.7 63.7 64 63.7 64-28.5 64-63.7S99.3.3 64 .3zm0 121C32.2 121.3 6.4 95.7 6.4 64 6.4 32.3 32.2 6.7 64 6.7c12.1 0 23.4 3.7 32.7 10.1 13.7 9.4 23.1 24.5 24.7 41.8 0 .5.1 9.8 0 10.7-2.7 29.2-27.4 52-57.4 52zm-3.2-89.1c-14.5 0-19.1 13.3-19.2 25.5h9.6c-.2-8.8.7-15.9 9.6-15.9 6.4 0 9.6 2.7 9.6 9.6 0 4.4-3.4 6.6-6.4 9.6-6.2 6-5.7 10.4-6 18.7h8.4c.3-7.5.2-7.3 6.4-13.9 4.2-4.1 7.1-8.2 7.1-14.5.1-10.1-5.3-19.1-19.1-19.1zm3.3 54.1c-3.6 0-6.4 2.9-6.4 6.4 0 3.5 2.9 6.4 6.4 6.4 3.6 0 6.4-2.9 6.4-6.4 0-3.6-2.9-6.4-6.4-6.4z"
-                            id="transparent"
-                          />
-                        </g>
-                      </g>
-                    </svg>
+                    <img src="/assets/images/overview.svg" className='w-5 h-5' alt="" />
 
                     Overview
 
                   </Link>
-
-                  <Link href="/dashboard/subscriptions" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
-                      }`}>
-
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                  {user?.paid_contributor ? (
+                    <Link
+                      href="/dashboard/subscriptions"
+                      className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
+                        }`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
-                    </svg>
-                    Subscriptions
-                  </Link>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 256 256"
+                        width="32"
+                        height="32"
+                        fill="currentColor"
+                        className="w-5 h-5"
+                      >
+                        <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a87.77,87.77,0,0,1-54.14-18.69,52,52,0,0,1,108.28,0A87.77,87.77,0,0,1,128,216Zm0-80a40,40,0,1,1,40-40A40,40,0,0,1,128,136Z" />
+                      </svg>
+                      Subscriptions
+                    </Link>
+                  ) : (
+                    <>
+                      <Link href="/dashboard/saved" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/saved")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
+                        }`}>
 
-                  
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 512 512"
+                          width="32"
+                          height="32"
+                          className="w-5 h-5"
+                        >
+                          <path
+                            d="M352 48H160a48 48 0 00-48 48v368l144-112 144 112V96a48 48 0 00-48-48z"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="32"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+
+                        Saved
+                      </Link>
+                    </>
+                  )
+                  }
+
+
+
+
 
 
 
@@ -706,18 +726,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
                     >
                       <path
+                        d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeMiterlimit="10"
+                      />
+                      <path
+                        d="M200 200a56 56 0 01112 0c0 28-21 44-33 52s-23 18-23 36"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
+                      <circle cx="256" cy="336" r="16" fill="currentColor" />
                     </svg>
+
                     Questions
                   </Link>
 
@@ -732,18 +763,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
                     >
                       <path
-                        strokeLinecap="round"
+                        d="M128 224H64a32 32 0 00-32 32v192a32 32 0 0032 32h64a32 32 0 0032-32V256a32 32 0 00-32-32z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
+                      />
+                      <path
+                        d="M384 224h-92l12-70c6-36-12-70-41-86a14 14 0 00-23 9v94c0 28-22 53-48 53h-20v224h226c27 0 49-20 52-47l17-160c3-29-17-53-43-53z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeLinejoin="round"
                       />
                     </svg>
+
                     Reviews
                   </Link>
 
@@ -755,43 +795,52 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
                     Profile
                   </Link>
 
                 </>
               ) : user?.user_role === "User" ? (
-                <>                 
+                <>
                   <Link href="/dashboard/saved" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/saved")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
-                      }`}>
+                    ? "bg-blue-700 text-white font-semibold"
+                    : "text-gray-700 hover:bg-gray-100"
+                    }`}>
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
                     >
                       <path
+                        d="M352 48H160a48 48 0 00-48 48v368l144-112 144 112V96a48 48 0 00-48-48z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
                     </svg>
+
                     Saved
                   </Link>
 
@@ -805,18 +854,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
                     >
                       <path
+                        d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeMiterlimit="10"
+                      />
+                      <path
+                        d="M200 200a56 56 0 01112 0c0 28-21 44-33 52s-23 18-23 36"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
                       />
+                      <circle cx="256" cy="336" r="16" fill="currentColor" />
                     </svg>
+
                     Questions
                   </Link>
 
@@ -831,18 +891,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
                     >
                       <path
-                        strokeLinecap="round"
+                        d="M128 224H64a32 32 0 00-32 32v192a32 32 0 0032 32h64a32 32 0 0032-32V256a32 32 0 00-32-32z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
+                      />
+                      <path
+                        d="M384 224h-92l12-70c6-36-12-70-41-86a14 14 0 00-23 9v94c0 28-22 53-48 53h-20v224h226c27 0 49-20 52-47l17-160c3-29-17-53-43-53z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeLinejoin="round"
                       />
                     </svg>
+
                     Reviews
                   </Link>
 
@@ -853,20 +922,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
 
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
-                    </svg>
+                    <img src="/assets/images/becomecontributor.svg" alt="" className='w-5 h-5' />
                     Become Contributor
                   </Link>
 
@@ -878,18 +934,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5 text-gray-600"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
                       fill="none"
-                      viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={24}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-5 h-5"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 12a5 5 0 100-10 5 5 0 000 10zm-7 8a7 7 0 0114 0H5z"
-                      />
+                      {/* Outer Circle */}
+                      <circle cx="256" cy="256" r="208" />
+                      {/* Head */}
+                      <circle cx="256" cy="176" r="72" />
+                      {/* Shoulders/Upper Body */}
+                      <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
+
                     Profile
                   </Link>
                 </>
@@ -908,20 +970,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-6 h-6 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5.121 17.804A9 9 0 1118.879 6.196 9 9 0 015.121 17.804z"
+                {user ? (
+                  <img
+                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/${user?.user_role?.toLowerCase()}/${user?.id}.png`}
+                    alt=""
                   />
-                </svg>
+                ) : (
+                  <div>Loading...</div> // Show loading message until user data is fetched
+                )}
+
+
 
               </div>
               {/* Display User Info */}

@@ -4,11 +4,11 @@ import Header from '../component/Header'
 import Citieshero from '../component/Citieshero'
 import Partner from '../component/Partner'
 import Social from '../component/Social'
-import Mapsections from '../component/Mapsection'
 import Cta from '../component/Cta'
 import Expand from '../component/Expand'
 import About from '../component/About'
 import Footer from '../component/Footer'
+import CitiesMap from '../component/CitiesMap';
 
 // test
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export default function page() {
         <Citieshero/>
         <Partner/>
         <Social/>
-        <Mapsections/>
+        <CitiesMap/>
         <Cta/>
         <Expand/>
         <About/>

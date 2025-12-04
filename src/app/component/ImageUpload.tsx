@@ -14,7 +14,7 @@ export default function ImageUpload() {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [currentImage, setCurrentImage] = useState("/assets/images/Meegan.avif");
+    const [currentImage, setCurrentImage] = useState("/assets/images/profile.png");
     const [editLoading, setEditLoading] = useState(false);
     const [editMessage, setEditMessage] = useState("");
     const [user, setUser] = useState<User | null>(null);
@@ -166,7 +166,7 @@ export default function ImageUpload() {
                     alt="Profile Picture"
                     className="rounded-full w-30 h-30 object-cover"
                     onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/assets/images/Meegan.avif";
+                        (e.target as HTMLImageElement).src = "/assets/images/profile.png";
                     }}
                 />
                 <button

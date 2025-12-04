@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
-
+import Link from "next/link";
 
 // TypeScript Interfaces
 interface Business {
@@ -33,6 +33,39 @@ interface ApiResponse {
   totalPages: number;
 }
 
+// Helper function to validate and parse coordinates
+const validateCoordinates = (lat: any, lng: any): { lat: number; lng: number } | null => {
+  const latitude = typeof lat === 'string' ? parseFloat(lat) : lat;
+  const longitude = typeof lng === 'string' ? parseFloat(lng) : lng;
+  
+  // Check if coordinates are valid numbers
+  if (isNaN(latitude) || isNaN(longitude)) {
+    console.warn('Invalid coordinates - not numbers:', { lat, lng });
+    return null;
+  }
+  
+  // Check if coordinates are in valid range
+  if (latitude < -90 || latitude > 90) {
+    console.warn('Invalid latitude (should be -90 to 90):', latitude);
+    return null;
+  }
+  
+  if (longitude < -180 || longitude > 180) {
+    console.warn('Invalid longitude (should be -180 to 180):', longitude);
+    return null;
+  }
+  
+  // Check if coordinates might be swapped (common issue)
+  // If latitude is in longitude range but longitude is in latitude range, they might be swapped
+  if (Math.abs(latitude) > 90 && Math.abs(longitude) <= 90) {
+    console.warn('Coordinates might be swapped!', { lat: latitude, lng: longitude });
+    // Optionally auto-swap them
+    return { lat: longitude, lng: latitude };
+  }
+  
+  return { lat: latitude, lng: longitude };
+};
+
 export default function Mapsections() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -41,6 +74,7 @@ export default function Mapsections() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.5073509, -0.1277589]);
   const [mapZoom, setMapZoom] = useState<number>(10);
   const [MapComponent, setMapComponent] = useState<any>(null);
+  const [shouldFitBounds, setShouldFitBounds] = useState<boolean>(true);
 
   // Dynamically load the map component only on client side
   useEffect(() => {
@@ -49,7 +83,6 @@ export default function Mapsections() {
         const L = (await import('leaflet')).default;
         const { MapContainer, TileLayer, Marker, Popup, useMap } = await import('react-leaflet');
         
-
         // Fix marker icons
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
@@ -57,20 +90,56 @@ export default function Mapsections() {
           iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
         });
+        
+        console.log('Map library loaded successfully');
 
         // Create Map Controller component
-        function MapController({ center, zoom }: { center: [number, number]; zoom: number }) {
+        function MapController({ 
+          center, 
+          zoom, 
+          businesses, 
+          shouldFitBounds 
+        }: { 
+          center: [number, number]; 
+          zoom: number; 
+          businesses: Business[];
+          shouldFitBounds: boolean;
+        }) {
           const map = useMap();
+          
           React.useEffect(() => {
-            if (center) {
+            if (shouldFitBounds && businesses.length > 0) {
+              // Calculate bounds to fit all markers
+              const validBusinesses = businesses.filter(b => {
+                const coords = validateCoordinates(b.latitude, b.longitude);
+                return coords !== null;
+              });
+              
+              console.log('Valid businesses for bounds:', validBusinesses.length);
+              
+              if (validBusinesses.length > 0) {
+                const bounds = L.latLngBounds(
+                  validBusinesses.map(b => {
+                    const coords = validateCoordinates(b.latitude, b.longitude)!;
+                    console.log(`Fitting bounds for ${b.name}:`, coords);
+                    return [coords.lat, coords.lng] as [number, number];
+                  })
+                );
+                
+                console.log('Fitting map to bounds:', bounds);
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+              }
+            } else if (center && !shouldFitBounds) {
+              console.log('Setting view to:', center, 'zoom:', zoom);
               map.setView(center, zoom);
             }
-          }, [center, zoom, map]);
+          }, [center, zoom, map, businesses, shouldFitBounds]);
+          
           return null;
         }
 
         // Create the map component
-        const Map = ({ businesses, center, zoom }: any) => (
+        const Map = ({ businesses, center, zoom, shouldFitBounds }: any) => (
           <MapContainer
             center={center}
             zoom={zoom}
@@ -81,18 +150,35 @@ export default function Mapsections() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <MapController center={center} zoom={zoom} />
+            <MapController 
+              center={center} 
+              zoom={zoom} 
+              businesses={businesses}
+              shouldFitBounds={shouldFitBounds}
+            />
             {businesses.map((business: Business) => {
-              if (!business.latitude || !business.longitude) return null;
+              const coords = validateCoordinates(business.latitude, business.longitude);
+              
+              if (!coords) {
+                console.warn(`Invalid coordinates for business ${business.name}:`, {
+                  lat: business.latitude,
+                  lng: business.longitude
+                });
+                return null;
+              }
+              
               return (
                 <Marker
                   key={business.id}
-                  position={[business.latitude, business.longitude]}
+                  position={[coords.lat, coords.lng]}
                 >
                   <Popup>
                     <div className="p-2">
                       <h3 className="font-bold text-base mb-1">{business.name}</h3>
                       <p className="text-sm text-gray-600 mb-2">{business.address}</p>
+                      <p className="text-xs text-gray-400 mb-2">
+                        Coords: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                      </p>
                       {business.phone_number && (
                         <p className="text-sm text-gray-600">📞 {business.phone_number}</p>
                       )}
@@ -125,18 +211,11 @@ export default function Mapsections() {
   const fetchBusinesses = async () => {
     try {
       setLoading(true);
-      
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-      
-      if (!token) {
-        throw new Error('No access token found');
-      }
 
-      const response = await fetch('https://staging-api.qtpack.co.uk/business/list', {
+      const response = await fetch('https://staging-api.qtpack.co.uk/business/list1', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -145,14 +224,24 @@ export default function Mapsections() {
       }
 
       const result: ApiResponse = await response.json();
-      setBusinesses(result.data || []);
-
+      
+      // Debug: Log ALL business coordinates
       if (result.data && result.data.length > 0) {
-        const firstBusiness = result.data[0];
-        if (firstBusiness.latitude && firstBusiness.longitude) {
-          setMapCenter([firstBusiness.latitude, firstBusiness.longitude]);
-        }
+        console.log('=== API Response Debug ===');
+        console.log('Total businesses:', result.data.length);
+        result.data.forEach((business, index) => {
+          console.log(`Business ${index + 1}: ${business.name}`);
+          console.log('  Latitude:', business.latitude, `(type: ${typeof business.latitude})`);
+          console.log('  Longitude:', business.longitude, `(type: ${typeof business.longitude})`);
+          console.log('  Address:', business.address);
+        });
+        console.log('======================');
       }
+      
+      setBusinesses(result.data || []);
+      
+      // Enable fit bounds for initial load
+      setShouldFitBounds(true);
 
       setError(null);
     } catch (err) {
@@ -169,21 +258,23 @@ export default function Mapsections() {
   );
 
   const handleBusinessClick = (business: Business) => {
-    if (business.latitude && business.longitude) {
-      setMapCenter([business.latitude, business.longitude]);
+    const coords = validateCoordinates(business.latitude, business.longitude);
+    if (coords) {
+      setShouldFitBounds(false);
+      setMapCenter([coords.lat, coords.lng]);
       setMapZoom(15);
     }
   };
 
   return (
-    <section className="w-5/6 lg:mx-auto px-4 py-12 mt-10">
+    <section className="w-5/6 custom-container lg:mx-auto px-4 py-12 mt-10">
       <h1 className="font-['Helvetica'] md:text-4xl lg:text-[48px] text-4xl font-bold mb-8">
         Interactive Map
       </h1>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-6 h-[580px]">
         {/* Map */}
-        <div className="w-full lg:w-2/3 h-[450px] rounded-lg overflow-hidden shadow">
+        <div className="w-full lg:w-2/3 h-[580px] rounded-lg shadow">
           {!MapComponent || loading ? (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
               <p className="text-gray-600">Loading map...</p>
@@ -197,6 +288,7 @@ export default function Mapsections() {
               businesses={filteredBusinesses}
               center={mapCenter}
               zoom={mapZoom}
+              shouldFitBounds={shouldFitBounds}
             />
           )}
         </div>
@@ -238,9 +330,10 @@ export default function Mapsections() {
               <p className="text-center text-gray-500 py-4">No businesses found</p>
             ) : (
               filteredBusinesses.map((business) => (
-                <button
+                <Link
                   key={business.id}
                   onClick={() => handleBusinessClick(business)}
+                  href={`/business-profile/${business.id}`}
                   className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition hover:bg-gray-50 text-left"
                 >
                   <img
@@ -273,7 +366,7 @@ export default function Mapsections() {
                       <p className="text-sm text-gray-600">{business.address}</p>
                     </div>
                   </div>
-                </button>
+                </Link>
               ))
             )}
           </div>

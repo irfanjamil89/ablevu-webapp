@@ -111,7 +111,7 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-10000">
       {/* MODAL CARD */}
       <div className="bg-white rounded-3xl shadow-2xl w-11/12 h-fit sm:w-[550px] p-8 relative">
         {/* CLOSE BUTTON */}
