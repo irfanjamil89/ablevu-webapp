@@ -16,7 +16,7 @@ export default function BusinessTypeForm({ onSuccess }: { onSuccess?: () => void
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/create/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/create/`,
         { name },
         {
           headers: {

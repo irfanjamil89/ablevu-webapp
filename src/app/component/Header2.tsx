@@ -6,8 +6,9 @@ import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
 import Feedback from "./Feedback";
+import AddBusinessModal from "./AddBusinessModal";
 
-export default function Header() {
+export default function Header2() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // Ensure client-side render
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -16,6 +17,8 @@ export default function Header() {
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
   const [OpenFeedbackModal, setOpenFeedbackModal] = useState(false);
+  const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
+  const [Loading, setLoading] = useState(false);
 
 
   useEffect(() => {
@@ -31,10 +34,23 @@ export default function Header() {
   }, [isMounted]);
 
   const handleLogout = () => {
+    setLoading(true);
     localStorage.removeItem("access_token");
     setIsLoggedIn(false);
     window.location.href = "/"; // Redirect after logout
   };
+
+  if (Loading) {
+    return (
+      <div className="fixed h-screen w-full flex justify-center items-center z-10 bg-white">
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
+      </div>
+    );
+  }
 
 
   return (
@@ -90,30 +106,31 @@ export default function Header() {
                         <span className="group-hover:text-black-800 relative">Access-friendly Cities</span>
                       </Link>
                     </li>
-                    <li
-                      
-                         onClick={() => setOpenFeedbackModal(true)}
-                        className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                      >
-                        <span className="group-hover:text-black-800 relative">Share Feedback</span>
-                      
-                    </li>
-                    <li>
-                      <Link
-                        href="#"
-                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                      >
-                        <span className="group-hover:text-black-800 relative">Add Business</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href="#"
-                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                      >
-                        <span className="group-hover:text-black-800 relative">Add Business</span>
-                      </Link>
-                    </li>
+
+
+                    {isLoggedIn ? (
+                      <div className="flex">
+                        <li
+
+                          onClick={() => setOpenFeedbackModal(true)}
+                          className="before:bg-black-100 mr-4 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                        >
+                          <span className="group-hover:text-black-800 relative">Share Feedback</span>
+
+                        </li>
+
+
+                        <li onClick={() => setOpenAddBusinessModal(true)}
+                          className="before:bg-black-100 group relative cursor-pointer  before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                        >
+                          <span className="group-hover:text-black-800 relative">Add Business</span>
+                        </li>
+
+                      </div>
+                    ) : (
+                      <></>
+                    )}
+
                     <li>
                       <Link
                         href="/search"
@@ -273,6 +290,10 @@ export default function Header() {
       )}
       {OpenFeedbackModal && (
         <Feedback setOpenFeedbackModal={setOpenFeedbackModal} />
+      )}
+
+      {OpenAddBusinessModal && (
+        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
       )}
 
 

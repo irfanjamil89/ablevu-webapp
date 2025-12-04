@@ -5,6 +5,8 @@ import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
+import Feedback from "./Feedback";
+import AddBusinessModal from "./AddBusinessModal";
 
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -14,6 +16,8 @@ export default function Header() {
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
+  const [OpenFeedbackModal, setOpenFeedbackModal] = useState(false);
+  const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
 
   // Run only after client-side hydration
   useEffect(() => {
@@ -33,6 +37,18 @@ export default function Header() {
     setIsLoggedIn(false);
     window.location.href = "/"; // Redirect after logout
   };
+
+  // if (loading) {
+  //   return (
+  //     <div className="flex justify-center items-center h-[400px]">
+  //       <img
+  //         src="/assets/images/favicon.png"
+  //         className="w-15 h-15 animate-spin"
+  //         alt="Favicon"
+  //       />
+  //     </div>
+  //   );
+  // }
 
 
   return (
@@ -85,17 +101,27 @@ export default function Header() {
                         href="/access-friendly-city"
                         className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                       >
-                        <span className="group-hover:text-black-800 relative">Access-friendly Cities</span>
+                        <span className="group-hover:text-black-800 relative">Access Friendly Cities</span>
                       </Link>
                     </li>
-                    <li>
-                      <Link
-                        href="#"
-                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                      >
-                        <span className="group-hover:text-black-800 relative">Add Business</span>
-                      </Link>
-                    </li>
+                    {isLoggedIn && (
+                      <>
+                        <li
+                          onClick={() => setOpenFeedbackModal(true)}
+                          className="before:bg-black-100 mr-4 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                        >
+                          <span className="group-hover:text-black-800 relative">Share Feedback</span>
+                        </li>
+
+                        <li
+                          onClick={() => setOpenAddBusinessModal(true)}
+                          className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                        >
+                          <span className="group-hover:text-black-800 relative">Add Business</span>
+                        </li>
+                      </>
+                    )}
+
                     <li>
                       <Link
                         href="/search"
@@ -252,6 +278,14 @@ export default function Header() {
           setOpenLoginModal={setOpenLoginModal}
           setOpenSignupModal={setOpenSignupModal}
         />
+      )}
+
+      {OpenFeedbackModal && (
+        <Feedback setOpenFeedbackModal={setOpenFeedbackModal} />
+      )}
+
+      {OpenAddBusinessModal && (
+        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
       )}
 
 

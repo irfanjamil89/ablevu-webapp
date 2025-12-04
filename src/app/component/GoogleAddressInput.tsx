@@ -1,15 +1,18 @@
 "use client";
 import { useEffect, useRef } from "react";
 
+type GoogleAddressResult = {
+  formatted_address: string;
+  place_id?: string;
+  lat?: number;
+  lng?: number;
+  address_components?: any[];   // ⭐ added for city/state/country/zipcode
+};
+
 type GoogleAddressInputProps = {
   value: string;
-  onSelect: (result: {
-    formatted_address: string;
-    place_id?: string;
-    lat?: number;
-    lng?: number;
-  }) => void;
-  onChangeText?: (text: string) => void; 
+  onSelect: (result: GoogleAddressResult) => void;
+  onChangeText?: (text: string) => void;
 };
 
 declare global {
@@ -32,21 +35,33 @@ export default function GoogleAddressInput({
       inputRef.current,
       {
         types: ["address"],
+        fields: [
+          "formatted_address",
+          "place_id",
+          "address_components",
+          "geometry",
+        ], // ⭐ ensures Google returns full data
       }
     );
 
     autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
 
-      const result = {
+      const result: GoogleAddressResult = {
         formatted_address: place.formatted_address || "",
         place_id: place.place_id,
         lat: place.geometry?.location?.lat(),
         lng: place.geometry?.location?.lng(),
+        address_components: place.address_components || [], // ⭐ IMPORTANT
       };
 
       onSelect(result);
     });
+
+    // Cleanup
+    return () => {
+      window.google.maps.event.clearInstanceListeners(autocomplete);
+    };
   }, [onSelect]);
 
   return (

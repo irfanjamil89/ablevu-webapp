@@ -201,7 +201,7 @@ export default function AccessibilityFeatureForm({ onSuccess }: { onSuccess?: ()
                 </label>
 
                 {businessTypes.map((business) => (
-                  <label key={business.id} className="flex w-1/2 items-center gap-2 text-gray-700 text-sm">
+                  <label key={business.id} className="flex w-1/2  gap-2 text-gray-700 text-sm">
                     <input
                       type="checkbox"
                       className="category h-4 w-4 text-[#0519CE] border-gray-300 rounded"
@@ -219,7 +219,7 @@ export default function AccessibilityFeatureForm({ onSuccess }: { onSuccess?: ()
                         setSelectAllCategories(updatedList.length === businessTypes.length);
                       }}
                     />
-                    {business.name}
+                    <p className="w-[90%]">{business.name}</p>
                   </label>
                 ))}
               </div>

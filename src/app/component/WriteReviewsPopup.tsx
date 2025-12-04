@@ -1,0 +1,113 @@
+import React from 'react'
+
+export type BusinessProfile = {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  zipcode: string | null;
+  email: string | null;
+  phone_number: string | null;
+  website: string | null;
+};
+
+interface WriteReviewsPopupProps {
+  businessId: string;
+  setOpenWriteReviewsPopup: React.Dispatch<React.SetStateAction<boolean>>;
+  onUpdated?: (b: BusinessProfile) => void;
+}
+
+// ---------- Component ----------
+const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
+  businessId,
+  setOpenWriteReviewsPopup,
+  onUpdated,
+}) => {
+
+  return (
+    <div
+              className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
+
+              {/* <!-- MODAL CARD --> */}
+              <div
+                className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[520px] p-6 relative">
+
+                {/* <!-- CLOSE BUTTON --> */}
+                <label onClick={()=> setOpenWriteReviewsPopup(false)}   
+                  className="absolute top-5 right-7 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer">
+                  ×
+                </label>
+
+                {/* <!-- HEADER --> */}
+                <h2 className="text-md font-semibold text-gray-900 mb-1">Write Review</h2>
+                <p className="text-gray-700 text-md mb-4">
+                  Our platform encourages positive comments, but we value your feedback as it helps our partners identify areas for improvement.
+                </p>
+
+                {/* <!-- FORM --> */}
+                <form className="space-y-4">
+
+                  {/* <!-- What went well? --> */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">What went well?</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-1 py-2 text-md focus:ring-1 focus:ring-[#0519CE] outline-none">
+                      <option value="" disabled selected>Select Features</option>
+                      <option>Ease of Entry & Navigation</option>
+                      <option>Parking & Transportation</option>
+                      <option>Seating & Resting Areas</option>
+                    </select>
+                  </div>
+
+
+                  {/* <!-- What do you like about this business? --> */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-1">What do you like about this business?</label>
+                    <textarea placeholder="Enter comments..."
+                      rows={5}
+                      cols={20}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-md focus:ring-1 focus:ring-[#0519CE] outline-none"></textarea>
+                  </div>
+
+
+                  {/* <!-- Upload Business Logo --> */}
+                  <div>
+                    <label className="block text-md font-medium text-gray-700 mb-2">Upload Picture</label>
+                    <div className="relative">
+                      {/* Hidden file input */}
+                      <input
+                        type="file"
+                        accept=".svg,.png,.jpg,.gif"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+
+                      {/* Upload Area */}
+                      <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
+                        <img src="/assets/images/upload-icon.avif" alt="upload-icon" className='w-10 h-10' />
+                        <p className="text-[#0519CE] font-semibold text-sm">Click to upload <span className='text-gray-500 text-xs'>or drag and drop</span></p>
+                        <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* <!-- BUTTONS --> */}
+                  <div className="flex justify-center gap-3 pt-2">
+                    <label onClick={()=> setOpenWriteReviewsPopup(false)}
+                      className="px-5 py-3 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100">
+                      Cancel
+                    </label>
+                    <button type="submit"
+                      className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700">
+                      Submit to business
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+  )
+}
+
+export default WriteReviewsPopup
