@@ -95,7 +95,7 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cityName || !latitude || !longitude || selectedBusinesses.length === 0) {
-      setError("Please fill in all required fields.");
+      setError("Please fill in all required fields and use autocomplete for City name.");
       setSuccess(null);
       return;
     }
@@ -106,7 +106,7 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
       longitude,
       business_Ids: selectedBusinesses.map((b) => b.id),
     };
-    console.log("Payload:", payload);
+
 
     try {
       const token = localStorage.getItem("access_token");
