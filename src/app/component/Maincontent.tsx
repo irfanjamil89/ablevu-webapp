@@ -234,8 +234,6 @@ export default function Maincontent({
   error,
   setOpenVirtualTour,
   setOpenAccessibilityFeaturePopup,
-  onEditAccessibilityFeature,
-  onDeleteAccessibilityFeature,
   onEditAccessibilityFeatureGroup,
   onDeleteAccessibilityFeatureGroup,
   setOpenPropertyImagePopup,
@@ -504,12 +502,6 @@ export default function Maincontent({
                 src="/assets/images/green-tick.svg"
                 alt="green-tick"
                 className="w-5 h-5 cursor-pointer"
-              />
-              <img
-                src="/assets/images/yellow-pencil.svg"
-                alt="yellow-pencil"
-                className="w-5 h-5 cursor-pointer"
-                onClick={() => onEditAccessibilityFeatureGroup?.(group)}
               />
               <img
                 src="/assets/images/red-delete.svg"

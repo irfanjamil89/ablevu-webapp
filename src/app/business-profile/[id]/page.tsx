@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
+import { use } from "react";
 import BusinessSidebar from "@/app/component/BusinessSidebar";
 import Maincontent from "@/app/component/Maincontent";
 import BusinessDetail from "@/app/component/BusinessDetail";
@@ -27,8 +28,8 @@ type AccessibilityFeatureGroup = {
   items: any[]; // business.accessibilityFeatures ke items
 };
 
-export default function Page({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
 
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
