@@ -43,13 +43,13 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
       });
   }, []);
 
-
-
-
-  const handleLogout = () => {
+const handleLogout = () => {
+    setLoading(true);
     localStorage.removeItem("access_token");
+    sessionStorage.clear(); // Clears all session storage data
     window.location.href = "/"; 
-  };
+    
+};
 
  if (loading) {
     return (

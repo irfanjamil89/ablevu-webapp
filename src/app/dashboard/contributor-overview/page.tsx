@@ -768,7 +768,7 @@ export default function Page() {
                                     </div>
                                 </div>
 
-                               
+
 
                                 {/* Search */}
                                 <div className="flex items-center border border-gray-300 rounded-md px-3 py-3 w-auto lg:w-[200px] md:w-[150px]">
@@ -1085,8 +1085,7 @@ export default function Page() {
                                             <div
                                                 className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                                                 style={{
-                                                    backgroundImage: `url(${business.logo_url || "/assets/images/b-img.png"
-                                                        })`,
+                                                    backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`
                                                 }}
                                             >
                                                 {statusInfo.label && (

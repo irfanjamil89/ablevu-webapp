@@ -576,20 +576,18 @@ export default function Page() {
                     <Link
                       key={business.id}
                       href={`/business-profile/${business.id}`}
-                      className="border border-gray-200 rounded-xl flex md:items-center flex-col md:flex-row font-['Helvetica'] bg-white md:bg-[#E5E5E5]"
+                      className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
                     >
-                      {/* left-side image */}
+                      {/* Left image */}
                       <div
-                        className="relative flex items-center w-full h-[300px] xxl:w-[15%] xl:w-[18%] lg:w-[18%] md:w-[25%] md:h-24 shadow-sm bg-contain md:bg-cover bg-center bg-no-repeat opacity-95"
+                        className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(${
-                            business.logo_url || "/assets/images/search-1.jpg"
-                          })`,
+                          backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`
                         }}
                       >
                         {statusInfo.label && (
                           <span
-                            className="absolute md:-top-6 top-5 md:right-2 right-14 text-sm font-semibold px-2 py-0.5 rounded-md shadow-sm"
+                            className="absolute top-3 md:right-2 right-14 text-sm font-semibold px-2 py-1 rounded-md shadow-sm"
                             style={{
                               backgroundColor: statusInfo.bg,
                               color: statusInfo.text,
@@ -600,15 +598,14 @@ export default function Page() {
                         )}
                       </div>
 
-                      {/* right-side */}
-                      <div className="flex-1 bg-white p-4 ps-6 space-y-4">
-                        <div className="flex md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-1">
-                          <h3 className="font-semibold text-gray-800 text-xl">
+                      {/* Right content */}
+                      <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
+                        <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
+                          <h3 className="font-semibold text-gray-800 text-2xl">
                             {business.name}
                           </h3>
-
                           <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
-                            {/* Saved (static) */}
+                            {/* Saved */}
                             <label className="inline-flex items-center gap-1 cursor-pointer">
                               <input type="checkbox" className="peer hidden" />
                               <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
@@ -647,7 +644,7 @@ export default function Page() {
                                 />
                                 <circle cx="12" cy="12" r="3" />
                               </svg>
-                              {business.views ?? 0} Views
+                              {business.views} Views
                             </button>
 
                             {/* Recommendations */}
@@ -663,6 +660,7 @@ export default function Page() {
                                 <path
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
+                                  strokeWidth="2"
                                   d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
                                 />
                               </svg>
@@ -673,7 +671,7 @@ export default function Page() {
                         </div>
 
                         {/* Categories */}
-                        <div className="text-sm">
+                        <div className="text-md">
                           <div className="flex">
                             <span className="font-medium text-gray-500 pe-2">
                               Categories
@@ -692,7 +690,7 @@ export default function Page() {
                         </div>
 
                         {/* Accessible Features */}
-                        <div className="text-xs text-gray-500 mt-2">
+                        <div className="text-md text-gray-500 mt-2">
                           <div className="flex flex-wrap md:gap-0 gap-2">
                             <span className="font-medium text-gray-500 pe-2">
                               Accessible Features
@@ -701,7 +699,7 @@ export default function Page() {
                               {business.accessibilityFeatures.map((feature) => (
                                 <li
                                   key={feature.id}
-                                  className="bg-[#F7F7F7] rounded-full px-2"
+                                  className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
                                 >
                                   {getFeatureName(feature)}
                                 </li>
@@ -710,28 +708,24 @@ export default function Page() {
                           </div>
                         </div>
 
-                        {/* Hours (now dynamic from BusinessSchedule) */}
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 mt-2">
+                        {/* Other info */}
+                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
                           <img
                             src="/assets/images/clock.webp"
-                            className="w-3 h-3"
-                            alt="clock"
+                            className="w-4 h-4"
                           />
-                          <span className="text-sm">
+                          <span className="text-md text-gray-700">
                             {getTodayScheduleLabel(business.id) ||
                               "Operating hours not specified"}
                           </span>
                         </div>
-
-                        {/* Location */}
-                        <div className="flex items-center space-x-2 text-xs text-gray-500 mt-2">
+                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
                           <img
                             src="/assets/images/location.png"
-                            className="w-3 h-3"
-                            alt="location"
+                            className="w-4 h-4"
                           />
-                          <span className="text-sm">
-                            {formatFullAddress(business)}
+                          <span className="text-md text-gray-700">
+                            {business.address}
                           </span>
                         </div>
                       </div>

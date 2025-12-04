@@ -8,6 +8,20 @@ import Successmodal from "./Successmodal";
 import Feedback from "./Feedback";
 import AddBusinessModal from "./AddBusinessModal";
 
+
+
+
+interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  user_role: string;
+  paid_contributor: boolean;
+  email: string;
+}
+
+
+
 export default function Header2() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // Ensure client-side render
@@ -19,6 +33,20 @@ export default function Header2() {
   const [OpenFeedbackModal, setOpenFeedbackModal] = useState(false);
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
   const [Loading, setLoading] = useState(false);
+const [user, setUser] = useState<User | null>(null);
+
+  const getUserFromSession = (): User | null => {
+    const userData = sessionStorage.getItem('user');
+    return userData ? JSON.parse(userData) : null;
+  };
+
+
+  useEffect(() => {
+    const storedUser = getUserFromSession();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
 
 
   useEffect(() => {
@@ -33,12 +61,15 @@ export default function Header2() {
     setIsLoggedIn(!!token);
   }, [isMounted]);
 
+
+  
   const handleLogout = () => {
     setLoading(true);
     localStorage.removeItem("access_token");
-    setIsLoggedIn(false);
+    sessionStorage.clear(); // Clears all session storage data
+
     window.location.href = "/"; // Redirect after logout
-  };
+};
 
   if (Loading) {
     return (
@@ -194,9 +225,13 @@ export default function Header2() {
                     ) : (
                       <div className="relative user-dropdown">
                         <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                          <img src="/assets/images/profile.png" alt="User Icon"
+                          <img
+                            src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+                            alt="User"
                             className="cursor-pointer h-10 w-10 mr-1"
-
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/assets/images/profile.png";
+                            }}
                           />
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
