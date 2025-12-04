@@ -82,11 +82,11 @@ export default function ImageUpload() {
             });
 
             let folder = "user";
-            const role = user.user_role?.toLowerCase();
+            // const role = user.user_role?.toLowerCase();
 
-            if (role === "admin") folder = "admin";
-            else if (role === "business") folder = "business";
-            else if (role === "contributor") folder = "contributor";
+            // if (role === "admin") folder = "admin";
+            // else if (role === "business") folder = "business";
+            // else if (role === "contributor") folder = "contributor";
 
             console.log("DATA SENDING TO API:", {
                 data: base64Data,
@@ -169,6 +169,8 @@ export default function ImageUpload() {
                         (e.target as HTMLImageElement).src = "/assets/images/profile.png";
                     }}
                 />
+
+                
                 <button
                     type="button"
                     onClick={() => setOpenEditModal(true)}

@@ -27,20 +27,20 @@ export default function Header() {
   const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
   const [OpenFeedbackModal, setOpenFeedbackModal] = useState(false);
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
-    const [user, setUser] = useState<User | null>(null);
-  
-    const getUserFromSession = (): User | null => {
+  const [user, setUser] = useState<User | null>(null);
+
+  const getUserFromSession = (): User | null => {
     const userData = sessionStorage.getItem('user');
     return userData ? JSON.parse(userData) : null;
   };
 
 
-useEffect(() => {
-  const storedUser = getUserFromSession();
-  if (storedUser) {
-    setUser(storedUser);
-  }
-}, []);
+  useEffect(() => {
+    const storedUser = getUserFromSession();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+  }, []);
 
 
 
@@ -75,7 +75,7 @@ useEffect(() => {
   //   );
   // }
 
-  
+
 
 
   return (
@@ -212,12 +212,15 @@ useEffect(() => {
                     ) : (
                       <div className="relative user-dropdown">
                         <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                          <img src="/assets/images/profile.png" alt="User Icon"
+                          <img
+                            src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+                            alt="User"
                             className="cursor-pointer h-10 w-10 mr-1"
-
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/assets/images/profile.png";
+                            }}
                           />
 
-                        
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"

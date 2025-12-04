@@ -6,7 +6,6 @@ interface LoginProps {
   setOpenLoginModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenSignupModal: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenForgotPasswordModal: React.Dispatch<React.SetStateAction<boolean>>;
-
 }
 
 const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, setOpenForgotPasswordModal }) => {
@@ -29,8 +28,6 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         password: password,
       });
 
-
-
       // The API returns { access_token: "..." } with status 201
       if (response.status === 201 && response.data?.access_token) {
         localStorage.setItem("access_token", response.data.access_token);
@@ -40,24 +37,22 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         window.location.href = "/dashboard";
       }
       else {
-        setError("Username or Password is incrrect.");
+        setError("Username or Password is incorrect.");
       }
     } catch (err: any) {
       console.error("Login failed:", err?.response?.data || err);
-      setError("Username or Password is incrrect.");
+      setError("Username or Password is incorrect.");
     } finally {
       setLoading(false);
     }
-
   };
-
-
 
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-xs">
       <div className="relative bg-white rounded-2xl shadow-2xl w-[550px] max-w-md p-8">
         {/* Close Button */}
         <button
+          type="button"
           onClick={() => setOpenLoginModal(false)}
           className="absolute top-3 right-3 text-gray-500 p-0 hover:text-gray-800 text-xl font-bold cursor-pointer"
         >
@@ -167,10 +162,14 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
               </label>
             </div>
 
-            {/* Forgot Password link */}
+            {/* Forgot Password link - FIXED: Added type="button" */}
             <div>
               <button
-                onClick={() => { setOpenForgotPasswordModal(true), setOpenLoginModal(false) }}
+                type="button"
+                onClick={() => { 
+                  setOpenForgotPasswordModal(true);
+                  setOpenLoginModal(false);
+                }}
                 className="text-sm text-[#0519CE] hover:underline cursor-pointer"
               >
                 Forgot Password?
@@ -187,13 +186,17 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
           </button>
         </form>
 
-        {/* Footer */}
+        {/* Footer - FIXED: Added type="button" */}
         <p className="text-center text-sm text-gray-700 mt-4">
           New to AbleVu?{" "}
-          <button className="text-[#0519CE] underline font-bold cursor-pointer" onClick={() => {
-            setOpenLoginModal(false)
-            setOpenSignupModal(true)
-          }}>
+          <button 
+            type="button"
+            className="text-[#0519CE] underline font-bold cursor-pointer" 
+            onClick={() => {
+              setOpenLoginModal(false);
+              setOpenSignupModal(true);
+            }}
+          >
             Sign Up
           </button>
         </p>

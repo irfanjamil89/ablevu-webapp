@@ -970,14 +970,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                {user ? (
-                  <img
-                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/${user?.user_role?.toLowerCase()}/${user?.id}.png`}
-                    alt=""
-                  />
-                ) : (
-                  <div>Loading...</div> // Show loading message until user data is fetched
-                )}
+                <img
+                  src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+                  alt="User"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = "/assets/images/profile.png";
+                  }}
+                />
 
 
 
