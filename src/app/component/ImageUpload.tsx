@@ -81,7 +81,6 @@ export default function ImageUpload() {
                 reader.onerror = reject;
             });
 
-            let folder = "user";
             // const role = user.user_role?.toLowerCase();
 
             // if (role === "admin") folder = "admin";
@@ -90,7 +89,7 @@ export default function ImageUpload() {
 
             console.log("DATA SENDING TO API:", {
                 data: base64Data,
-                folder: folder,
+                folder: "user",
                 fileName: String(user.id)
             });
 
@@ -102,7 +101,7 @@ export default function ImageUpload() {
                 },
                 body: JSON.stringify({
                     data: base64Data,
-                    folder: folder,
+                    folder: "user",
                     fileName: String(user.id),
                 }),
             });
