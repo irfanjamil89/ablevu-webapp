@@ -337,7 +337,7 @@ export default function Mapsections() {
                   className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition hover:bg-gray-50 text-left"
                 >
                   <img
-                    src={business.logo_url || "https://storage.googleapis.com/glide-prod.appspot.com/uploads-v2/dX0bIKmg86veqjBkh4IS/pub/IA4TYJ966rpTtErQpEtG.png"}
+                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png`}
                     alt={business.name}
                     className="rounded-lg object-cover w-20 h-16"
                   />

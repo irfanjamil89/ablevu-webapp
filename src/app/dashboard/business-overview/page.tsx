@@ -582,10 +582,10 @@ export default function Page() {
   // ---------- Loading state ----------
 
   if (loading) {
-      return <div className=" w-full flex justify-center items-center h-[400px]">
-        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-      </div>;
-    }
+    return <div className=" w-full flex justify-center items-center h-[400px]">
+      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+    </div>;
+  }
 
 
   const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);
@@ -1091,8 +1091,7 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(${business.logo_url || "/assets/images/b-img.png"
-                            })`,
+                          backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`
                         }}
                       >
                         {statusInfo.label && (

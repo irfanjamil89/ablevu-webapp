@@ -14,6 +14,7 @@ import {
   BsInstagram,
   BsClock,
 } from "react-icons/bs";
+import BusinessImageUpload from "./BusinessImageUpload";
 
 // ---------- Types ----------
 type DayKey =
@@ -110,6 +111,8 @@ export default function BusinessSidebar({
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleteSuccess, setDeleteSuccess] = useState("");
+
+
 
   // 🔥 DELETE BUSINESS HANDLER (called from popup)
   const confirmDeleteAction = async () => {
@@ -257,13 +260,15 @@ export default function BusinessSidebar({
       </div>
 
       {/* Logo */}
-      <div className="border rounded-3xl mt-6 flex justify-center border-[#e5e5e7]">
-        <img
-          src={business.logo_url || "/assets/images/businesslogo.png"}
-          alt={business.name}
-          className="w-80 object-contain"
-        />
-      </div>
+      <BusinessImageUpload
+        businessId={business.id}
+        businessName={business.name}
+        initialImageUrl={business.logo_url}
+        onImageUpdate={(newUrl) => {
+          // Optional: Update your business state if needed
+          console.log('New image uploaded:', newUrl);
+        }}
+      />
 
       {/* Info */}
       <div className="py-8">
