@@ -21,11 +21,10 @@ import PartnerCertificationPopup from "@/app/component/PartnerCertificationPopup
 type BusinessProfile = any;
 type BusinessType = any;
 
-// same shape jo Maincontent me group ke liye use hoga
 type AccessibilityFeatureGroup = {
   typeId: string;
   typeName: string;
-  items: any[]; // business.accessibilityFeatures ke items
+  items: any[]; 
 };
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
@@ -340,13 +339,18 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       "Delete this partner certification/program?"
     );
     if (!confirmDelete) return;
+    const payload ={
+      partner_id: partner
+    };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/partner/delete/${partner.id}`, {
+      const res = await fetch(`${API_BASE_URL}/business-partner/delete/${business.id}`, {
         method: "DELETE",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -359,7 +363,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
               : body.message;
           }
         } catch {
-          // ignore JSON parse error
         }
         throw new Error(msg);
       }
