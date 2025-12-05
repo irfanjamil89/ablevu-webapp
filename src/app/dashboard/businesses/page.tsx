@@ -72,7 +72,7 @@ type FeatureType = {
 };
 
 type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
-type StatusFilter = "" | "draft" | "pending" | "approved" | "claimed";
+type StatusFilter = "" | "draft" | "pending approved" | "approved" | "claimed";
 
 type BusinessSchedule = {
   id: string;
@@ -97,6 +97,8 @@ type ScheduleListResponse = {
   limit: number;
   totalPages: number;
 };
+const normalizeStatus = (status: string) =>
+  status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
 
 // ---------- Address helper ----------
 
@@ -159,7 +161,7 @@ export default function Page() {
   const statusFilterLabel =
     statusFilter === "draft"
       ? "Draft"
-      : statusFilter === "pending"
+      : statusFilter === "pending approved"
         ? "Pending Approved"
         : statusFilter === "approved"
           ? "Approved"
@@ -293,94 +295,105 @@ export default function Page() {
   // ---------- Status badge (business.business_status) ----------
 
   const getStatusInfo = (b: Business) => {
-    const raw = (b.business_status || "").toLowerCase().trim();
-    let label = "";
-    let bg = "";
-    let text = "";
+  const raw = (b.business_status || "").toLowerCase().trim();
+  const status = normalizeStatus(raw);
 
-    if (raw === "draft") {
-      label = "Draft";
-      bg = "#FFF3CD";
-      text = "#C28A00";
-    } else if (raw === "pending" || raw === "pending_approval") {
-      label = "Pending Approval";
-      bg = "#FFEFD5";
-      text = "#B46A00";
-    } else if (raw === "claimed") {
-      label = "Claimed";
-      bg = "#E0F7FF";
-      text = "#0369A1";
-    } else if (b.active && !b.blocked) {
-      label = "Approved";
-      bg = "#D1FAE5";
-      text = "#065F46";
-    }
+  let label = "";
+  let bg = "";
+  let text = "";
 
-    return { label, bg, text };
-  };
+  if (status === "draft") {
+    label = "Draft";
+    bg = "#FFF3CD";
+    text = "#C28A00";
+  } else if (status === "pending approved") {
+    label = "Pending Approved";
+    bg = "#FFEFD5";
+    text = "#B46A00";
+  } else if (status === "claimed") {
+    label = "Claimed";
+    bg = "#E0F7FF";
+    text = "#0369A1";
+  } else if (status === "approved") {
+    label = "Approved";
+    bg = "#D1FAE5";
+    text = "#065F46";
+  } else {
+    label = "";
+    bg = "";
+    text = "";
+  }
+
+  return { label, bg, text };
+};
+
 
   // ---------- Sorting + Status filter ----------
 
   const sortedBusinesses = useMemo(() => {
-    let arr = [...businesses];
+  let arr = [...businesses];
 
-    if (statusFilter) {
-      arr = arr.filter((b) => {
-        const status = (b.business_status || "").toLowerCase();
+  if (statusFilter) {
+    const normalizedFilter = normalizeStatus(statusFilter); // 👈 value from STATUS_OPTIONS
 
-        switch (statusFilter) {
-          case "draft":
-            return status === "draft";
+    arr = arr.filter((b) => {
+      const raw = (b.business_status || "").toLowerCase().trim();
+      const status = normalizeStatus(raw);
 
-          case "approved":
-            return (
-              b.active === true &&
-              !b.blocked &&
-              status !== "pending" &&
-              status !== "pending_approval" &&
-              status !== "claimed" &&
-              status !== "draft"
-            );
+      switch (normalizedFilter) {
+        case "draft":
+          return status === "draft";
 
-          case "pending":
-            return status === "pending" || status === "pending_approval";
+        case "approved":
+          return (
+            status === "approved" ||
+            (!status && b.active === true && !b.blocked) // same fallback as getStatusInfo
+          );
 
-          case "claimed":
-            return status === "claimed";
+        case "pending approved":
+          return (
+            status === "pending" ||
+            status === "pending approval" ||
+            status === "pending approved"
+          );
 
-          default:
-            return true;
-        }
-      });
-    }
+        case "claimed":
+          return status === "claimed";
 
-    switch (sortOption) {
-      case "name-asc":
-        arr.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "name-desc":
-        arr.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case "created-asc":
-        arr.sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime()
-        );
-        break;
-      case "created-desc":
-        arr.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-        );
-        break;
-      default:
-        break;
-    }
+        default:
+          return true;
+      }
+    });
+  }
 
-    return arr;
-  }, [businesses, sortOption, statusFilter]);
+  // baki tumhara sort waala code as-is ↓
+  switch (sortOption) {
+    case "name-asc":
+      arr.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "name-desc":
+      arr.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+    case "created-asc":
+      arr.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() -
+          new Date(b.created_at).getTime()
+      );
+      break;
+    case "created-desc":
+      arr.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      );
+      break;
+    default:
+      break;
+  }
+
+  return arr;
+}, [businesses, sortOption, statusFilter]);
 
   // Schedule Helper
   const dayOrder = [
@@ -824,7 +837,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => setStatusFilter("pending")}
+                          onClick={() => setStatusFilter("pending approved")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Pending Approved
