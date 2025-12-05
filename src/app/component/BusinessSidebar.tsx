@@ -112,6 +112,7 @@ export default function BusinessSidebar({
   const [deleteError, setDeleteError] = useState("");
   const [deleteSuccess, setDeleteSuccess] = useState("");
 
+  const [currentBusiness, setCurrentBusiness] = useState(business);
 
 
   // 🔥 DELETE BUSINESS HANDLER (called from popup)
