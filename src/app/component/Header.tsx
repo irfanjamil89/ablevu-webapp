@@ -69,7 +69,7 @@ export default function Header() {
 
     if (Loading) {
       return (
-        <div className="flex justify-center items-center h-[400px]">
+        <div className="flex fixed justify-center items-center  z-[10000] w-full inset-1 bg-white">
           <img
             src="/assets/images/favicon.png"
             className="w-15 h-15 animate-spin"
