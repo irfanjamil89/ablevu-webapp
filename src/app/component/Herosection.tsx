@@ -29,13 +29,14 @@ export default function HeroSection() {
           </p>
 
           {/* Accessible button */}
-          <button
-            className=" cursor-pointer font-['Montserrat'] bg-transparent border-2 border-white text-white font-semibold py-3 px-8 rounded-lg transition duration-300 focus:outline-none focus:ring-4 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
+          <a href="/access-friendly-city" className="block"><button
+            className=" cursor-pointer font-['Montserrat'] bg-transparent border-2 border-white text-white font-semibold py-3 px-8 rounded-lg transition duration-300 focus:outline-none focus:ring-offset-2 focus:ring-offset-transparent"
             type="button"
             aria-label="Explore access-friendly cities"
           >
             Access-friendly Cities
           </button>
+          </a>
         </div>
       </div>
     </section>

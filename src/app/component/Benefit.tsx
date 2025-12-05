@@ -7,7 +7,7 @@ export default function Benefit() {
     <div className="bg-gray-100 rounded-2xl p-8 md:px-0 lg:px-6 flex lg:flex-row flex-col md:flex-col sm:flex-col md:items-center md:justify-between sm:gap-0 gap-8 font-['Montserrat']">
       
       {/* Left: Heading */}
-      <h2 className="font-bold text-gray-800 lg:w-1/4 md:w-1/4 sm:mb-6 md:mb-6 lg:mb-0 text-center md:text-left md:text-4xl lg:text-[48px] text-4xl">
+      <h2 className="font-bold text-gray-800 w-[450px] sm:mb-6 md:mb-6 lg:mb-0 text-center md:text-left md:text-4xl lg:text-[48px] text-4xl">
         BENEFITS
       </h2>
 

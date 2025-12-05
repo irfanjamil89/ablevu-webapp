@@ -162,13 +162,15 @@ export default function ImageUpload() {
 
                 <img
                     key={currentImage}
-                    src={currentImage}
+                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
                     alt="Profile Picture"
                     className="rounded-full w-30 h-30 object-cover"
                     onError={(e) => {
                         (e.target as HTMLImageElement).src = "/assets/images/profile.png";
                     }}
                 />
+
+
                 <button
                     type="button"
                     onClick={() => setOpenEditModal(true)}
@@ -200,6 +202,7 @@ export default function ImageUpload() {
                                     alt="Profile"
                                     className="w-40 h-40 rounded-full object-cover shadow-md hover:opacity-80 transition"
                                 />
+
                             </label>
                         </div>
 
