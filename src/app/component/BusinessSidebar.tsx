@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AiOutlineLike } from "react-icons/ai";
 import {
@@ -28,7 +28,7 @@ type DayKey =
 
 type BusinessScheduleItem = {
   id: string;
-  day: string; // backend se string aa raha hai
+  day: string;
   opening_time_text: string;
   closing_time_text: string;
   active: boolean;
@@ -59,6 +59,7 @@ type BusinessProfile = {
   logo_url: string | null;
   linkedTypes: LinkedTypeItem[];
   businessSchedule: BusinessScheduleItem[];
+  business_status?: string
 };
 
 type BusinessType = {
@@ -77,7 +78,17 @@ interface BusinessSidebarProps {
   setOpenAboutModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-// 🔁 day order map
+const STATUS_OPTIONS = [
+  { label: "Draft", value: "draft" },
+  { label: "Pending Approved", value: "pending approved" },
+  { label: "Approved", value: "approved" },
+  { label: "Claimed", value: "claimed" },
+];
+
+const normalizeStatus = (status: string) =>
+  status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
+
+
 const DAY_ORDER: Record<DayKey, number> = {
   monday: 1,
   tuesday: 2,
@@ -90,7 +101,7 @@ const DAY_ORDER: Record<DayKey, number> = {
 
 const getDayOrder = (day: string) => {
   const key = day.toLowerCase() as DayKey;
-  return DAY_ORDER[key] ?? 999; // unknown day last
+  return DAY_ORDER[key] ?? 999;
 };
 
 export default function BusinessSidebar({
@@ -106,15 +117,61 @@ export default function BusinessSidebar({
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // 🔴 Delete & success state
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError] = useState("");
+  const [status, setStatus] = useState<string>("draft");
+
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleteSuccess, setDeleteSuccess] = useState("");
 
+  // ✅ Sync status with business data whenever it changes
+  useEffect(() => {
+  if (business?.business_status) {
+    setStatus(normalizeStatus(business.business_status));
+  }
+}, [business?.business_status]);
+
+  const handleStatusChange = async (newStatus: string) => {
+  if (!business) return;
+
+  const normalized = normalizeStatus(newStatus); // "pending approved" etc.
+
+  try {
+    setStatusError("");
+    setStatusSaving(true);
+
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("access_token")
+        : null;
+
+    const res = await fetch(
+      `${API_BASE_URL}/business/status/${business.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          business_status: normalized, // backend ko normalized value bhej rahe
+        }),
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed to update");
+
+    setStatus(normalized);
+  } catch (err) {
+    setStatusError("Failed to update status");
+  } finally {
+    setStatusSaving(false);
+  }
+};
 
 
-  // 🔥 DELETE BUSINESS HANDLER (called from popup)
   const confirmDeleteAction = async () => {
     if (!business) return;
 
@@ -159,7 +216,7 @@ export default function BusinessSidebar({
 
       setOpenDeleteModal(false);
       setDeleteSuccess("Business deleted successfully.");
-      setOpenSuccessModal(true); // ✅ success modal open
+      setOpenSuccessModal(true);
     } catch (err: unknown) {
       console.error(err);
       const msg =
@@ -168,7 +225,6 @@ export default function BusinessSidebar({
     }
   };
 
-  // ---------- Map IDs → Names ----------
   const businessTypesMap = useMemo(() => {
     const map: Record<string, string> = {};
     businessTypes.forEach((bt) => {
@@ -177,7 +233,6 @@ export default function BusinessSidebar({
     return map;
   }, [businessTypes]);
 
-  // ---------- Build category names ----------
   const categoryNames = useMemo(() => {
     if (!business?.linkedTypes) return [];
 
@@ -203,7 +258,6 @@ export default function BusinessSidebar({
   const formatDay = (day: string) =>
     day ? day.charAt(0).toUpperCase() + day.slice(1).toLowerCase() : "";
 
-  // 🔁 Sorted & filtered schedule (Mon → Sun)
   const sortedBusinessSchedule = useMemo(() => {
     if (!business?.businessSchedule?.length) return [];
     return [...business.businessSchedule]
@@ -211,7 +265,6 @@ export default function BusinessSidebar({
       .sort((a, b) => getDayOrder(a.day) - getDayOrder(b.day));
   }, [business?.businessSchedule]);
 
-  // ---------- Loading ----------
   if (loading) {
     return (
       <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
@@ -223,7 +276,6 @@ export default function BusinessSidebar({
     );
   }
 
-  // ---------- Error / No business ----------
   if (error || !business) {
     return (
       <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
@@ -237,7 +289,6 @@ export default function BusinessSidebar({
     );
   }
 
-  // ---------- MAIN UI ----------
   return (
     <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
       {/* Header */}
@@ -265,7 +316,6 @@ export default function BusinessSidebar({
         businessName={business.name}
         initialImageUrl={business.logo_url}
         onImageUpdate={(newUrl) => {
-          // Optional: Update your business state if needed
           console.log('New image uploaded:', newUrl);
         }}
       />
@@ -456,67 +506,31 @@ export default function BusinessSidebar({
         <p>{business.description || "No description added yet."}</p>
       </div>
 
-      {/* Single Business dropdown */}
-      <div className="text-left">
-        <input
-          type="checkbox"
-          id="single-business-toggle"
-          className="hidden peer"
-        />
-
-        <label
-          htmlFor="single-business-toggle"
-          className="flex items-center justify-between border border-gray-300 text-gray-500 text-sm px-3 py-3 rounded-full hover:border-[#0519CE] cursor-pointer w-full transition-all duration-200"
+      {/* Status Dropdown */}
+      <div className="pb-4">
+        <select
+          className="w-full border border-gray-300 rounded-full px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
+          value={status}
+          disabled={statusSaving}
+          onChange={(e) => handleStatusChange(e.target.value)}
         >
-          Claimed
-          <svg
-            className="w-2.5 h-2.5 ms-3 transition-transform duration-200 peer-checked:rotate-180"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 10 6"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="m1 1 4 4 4-4"
-            />
-          </svg>
-        </label>
+          {STATUS_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
 
-        <label
-          htmlFor="single-business-toggle"
-          className="hidden peer-checked:block fixed inset-0 z-10"
-        ></label>
+        {statusSaving && (
+          <p className="text-xs text-gray-500 mt-1">Saving...</p>
+        )}
 
-        <div className="absolute z-20 mt-2 hidden peer-checked:block border border-gray-200 bg-white divide-y divide-gray-100 rounded-lg shadow-md">
-          <ul className="py-2 text-sm text-gray-700">
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Draft
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Pending Approved
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Approved
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Claimed
-              </a>
-            </li>
-          </ul>
-        </div>
+        {statusError && (
+          <p className="text-red-500 text-sm mt-1">{statusError}</p>
+        )}
       </div>
 
-      {/* Delete Business button + inline error/success */}
+      {/* Delete Business button */}
       <div className="mt-3">
         <button
           type="button"
@@ -539,7 +553,7 @@ export default function BusinessSidebar({
         )}
       </div>
 
-      {/* 🔴 Delete Confirmation Popup */}
+      {/* Delete Confirmation Popup */}
       {openDeleteModal && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8">
@@ -586,7 +600,7 @@ export default function BusinessSidebar({
         </div>
       )}
 
-      {/* ✅ Success Modal */}
+      {/* Success Modal */}
       {openSuccessModal && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
@@ -614,7 +628,7 @@ export default function BusinessSidebar({
               className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
               onClick={() => {
                 setOpenSuccessModal(false);
-                router.push("/dashboard/businesses"); // ✅ redirect after OK
+                router.push("/dashboard/businesses");
               }}
             >
               OK
