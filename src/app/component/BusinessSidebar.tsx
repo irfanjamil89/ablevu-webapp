@@ -27,7 +27,7 @@ type DayKey =
 
 type BusinessScheduleItem = {
   id: string;
-  day: string; // backend se string aa raha hai
+  day: string;
   opening_time_text: string;
   closing_time_text: string;
   active: boolean;
@@ -58,6 +58,7 @@ type BusinessProfile = {
   logo_url: string | null;
   linkedTypes: LinkedTypeItem[];
   businessSchedule: BusinessScheduleItem[];
+  business_status?: string | null; // ⭐
 };
 
 type BusinessType = {
@@ -76,6 +77,13 @@ interface BusinessSidebarProps {
   setOpenAboutModal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
+const STATUS_OPTIONS = [
+  { label: "Draft", value: "draft" },
+  { label: "Pending Approved", value: "pending approved" },
+  { label: "Approved", value: "approved" },
+  { label: "Claimed", value: "claimed" },
+];
+
 // 🔁 day order map
 const DAY_ORDER: Record<DayKey, number> = {
   monday: 1,
@@ -89,7 +97,7 @@ const DAY_ORDER: Record<DayKey, number> = {
 
 const getDayOrder = (day: string) => {
   const key = day.toLowerCase() as DayKey;
-  return DAY_ORDER[key] ?? 999; // unknown day last
+  return DAY_ORDER[key] ?? 999;
 };
 
 export default function BusinessSidebar({
@@ -111,7 +119,14 @@ export default function BusinessSidebar({
   const [deleteError, setDeleteError] = useState("");
   const [deleteSuccess, setDeleteSuccess] = useState("");
 
-  // 🔥 DELETE BUSINESS HANDLER (called from popup)
+  // ⭐ Status state
+  const [status, setStatus] = useState<string>(
+    business?.business_status || "Draft"
+  );
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError] = useState("");
+
+  // 🔥 DELETE BUSINESS HANDLER
   const confirmDeleteAction = async () => {
     if (!business) return;
 
@@ -156,12 +171,70 @@ export default function BusinessSidebar({
 
       setOpenDeleteModal(false);
       setDeleteSuccess("Business deleted successfully.");
-      setOpenSuccessModal(true); // ✅ success modal open
+      setOpenSuccessModal(true);
     } catch (err: unknown) {
       console.error(err);
       const msg =
         err instanceof Error ? err.message : "Failed to delete business";
       setDeleteError(msg);
+    }
+  };
+
+  // ⭐ Change Business Status handler (business/status/:id)
+  const handleStatusChange = async (newStatus: string) => {
+    if (!business) return;
+
+    try {
+      setStatusError("");
+      setStatusSaving(true);
+
+      if (!API_BASE_URL) {
+        setStatusError("API base URL is not configured.");
+        return;
+      }
+
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("access_token")
+          : null;
+
+      if (!token) {
+        setStatusError("Login required. No access token found.");
+        return;
+      }
+
+      const res = await fetch(
+        `${API_BASE_URL}/business/status/${business.id}`,
+        {
+          method: "PATCH", // change if backend uses POST/PUT
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            business_status: newStatus,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        console.error("Update business status error:", body);
+        const message =
+          (body as { message?: string })?.message ||
+          `Failed to update business status (${res.status})`;
+        throw new Error(message);
+      }
+
+      // ✅ update UI
+      setStatus(newStatus);
+    } catch (err: unknown) {
+      console.error(err);
+      const msg =
+        err instanceof Error ? err.message : "Failed to update business status";
+      setStatusError(msg);
+    } finally {
+      setStatusSaving(false);
     }
   };
 
@@ -451,65 +524,34 @@ export default function BusinessSidebar({
         <p>{business.description || "No description added yet."}</p>
       </div>
 
-      {/* Single Business dropdown */}
-      <div className="text-left">
-        <input
-          type="checkbox"
-          id="single-business-toggle"
-          className="hidden peer"
-        />
+      {/* ⭐ Business Status - SELECT DROPDOWN */}
+      <div className="pb-4">
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Business Status
+  </label>
 
-        <label
-          htmlFor="single-business-toggle"
-          className="flex items-center justify-between border border-gray-300 text-gray-500 text-sm px-3 py-3 rounded-full hover:border-[#0519CE] cursor-pointer w-full transition-all duration-200"
-        >
-          Claimed
-          <svg
-            className="w-2.5 h-2.5 ms-3 transition-transform duration-200 peer-checked:rotate-180"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 10 6"
-          >
-            <path
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="m1 1 4 4 4-4"
-            />
-          </svg>
-        </label>
+  <select
+    className="w-full border border-gray-300 rounded-full px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
+    value={status}
+    disabled={statusSaving}
+    onChange={(e) => handleStatusChange(e.target.value)}
+  >
+    {STATUS_OPTIONS.map((opt) => (
+      <option key={opt.value} value={opt.value}>
+        {opt.label} 
+      </option>
+    ))}
+  </select>
 
-        <label
-          htmlFor="single-business-toggle"
-          className="hidden peer-checked:block fixed inset-0 z-10"
-        ></label>
+  {statusSaving && (
+    <p className="text-xs text-gray-500 mt-1">Saving...</p>
+  )}
 
-        <div className="absolute z-20 mt-2 hidden peer-checked:block border border-gray-200 bg-white divide-y divide-gray-100 rounded-lg shadow-md">
-          <ul className="py-2 text-sm text-gray-700">
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Draft
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Pending Approved
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Approved
-              </a>
-            </li>
-            <li>
-              <a href="#" className="block px-3 py-1 hover:bg-gray-100">
-                Claimed
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
+  {statusError && (
+    <p className="text-red-500 text-sm mt-1">{statusError}</p>
+  )}
+</div>
+
 
       {/* Delete Business button + inline error/success */}
       <div className="mt-3">
@@ -609,7 +651,7 @@ export default function BusinessSidebar({
               className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
               onClick={() => {
                 setOpenSuccessModal(false);
-                router.push("/dashboard/businesses"); // ✅ redirect after OK
+                router.push("/dashboard/businesses");
               }}
             >
               OK
