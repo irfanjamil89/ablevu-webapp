@@ -58,7 +58,7 @@ type BusinessProfile = {
   logo_url: string | null;
   linkedTypes: LinkedTypeItem[];
   businessSchedule: BusinessScheduleItem[];
-  business_status?: string | null; // ⭐
+  business_status?: string | null; 
 };
 
 type BusinessType = {
@@ -84,7 +84,6 @@ const STATUS_OPTIONS = [
   { label: "Claimed", value: "claimed" },
 ];
 
-// 🔁 day order map
 const DAY_ORDER: Record<DayKey, number> = {
   monday: 1,
   tuesday: 2,
@@ -113,20 +112,32 @@ export default function BusinessSidebar({
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // 🔴 Delete & success state
+  const handleShareClick = async () => {
+    try {
+      const url =
+        typeof window !== "undefined" ? window.location.href : "";
+
+      if (!url) return;
+
+      await navigator.clipboard.writeText(url);
+      alert("Page link copied to clipboard!");
+    } catch (err) {
+      console.error("Failed to copy URL", err);
+      alert("Could not copy link. Please try again.");
+    }
+  };
+
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleteSuccess, setDeleteSuccess] = useState("");
-
-  // ⭐ Status state
   const [status, setStatus] = useState<string>(
     business?.business_status || "Draft"
   );
   const [statusSaving, setStatusSaving] = useState(false);
   const [statusError, setStatusError] = useState("");
 
-  // 🔥 DELETE BUSINESS HANDLER
+
   const confirmDeleteAction = async () => {
     if (!business) return;
 
@@ -180,7 +191,6 @@ export default function BusinessSidebar({
     }
   };
 
-  // ⭐ Change Business Status handler (business/status/:id)
   const handleStatusChange = async (newStatus: string) => {
     if (!business) return;
 
@@ -206,7 +216,7 @@ export default function BusinessSidebar({
       const res = await fetch(
         `${API_BASE_URL}/business/status/${business.id}`,
         {
-          method: "PATCH", // change if backend uses POST/PUT
+          method: "PATCH", 
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -226,7 +236,6 @@ export default function BusinessSidebar({
         throw new Error(message);
       }
 
-      // ✅ update UI
       setStatus(newStatus);
     } catch (err: unknown) {
       console.error(err);
@@ -238,7 +247,6 @@ export default function BusinessSidebar({
     }
   };
 
-  // ---------- Map IDs → Names ----------
   const businessTypesMap = useMemo(() => {
     const map: Record<string, string> = {};
     businessTypes.forEach((bt) => {
@@ -247,7 +255,6 @@ export default function BusinessSidebar({
     return map;
   }, [businessTypes]);
 
-  // ---------- Build category names ----------
   const categoryNames = useMemo(() => {
     if (!business?.linkedTypes) return [];
 
@@ -273,7 +280,6 @@ export default function BusinessSidebar({
   const formatDay = (day: string) =>
     day ? day.charAt(0).toUpperCase() + day.slice(1).toLowerCase() : "";
 
-  // 🔁 Sorted & filtered schedule (Mon → Sun)
   const sortedBusinessSchedule = useMemo(() => {
     if (!business?.businessSchedule?.length) return [];
     return [...business.businessSchedule]
@@ -281,7 +287,6 @@ export default function BusinessSidebar({
       .sort((a, b) => getDayOrder(a.day) - getDayOrder(b.day));
   }, [business?.businessSchedule]);
 
-  // ---------- Loading ----------
   if (loading) {
     return (
       <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
@@ -293,7 +298,6 @@ export default function BusinessSidebar({
     );
   }
 
-  // ---------- Error / No business ----------
   if (error || !business) {
     return (
       <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
@@ -307,7 +311,6 @@ export default function BusinessSidebar({
     );
   }
 
-  // ---------- MAIN UI ----------
   return (
     <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
       {/* Header */}
@@ -319,14 +322,17 @@ export default function BusinessSidebar({
           Business Details
         </div>
 
-        <button className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center">
+        <button
+          className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center"
+          onClick={handleShareClick} 
+          >
           <img
-            src="/assets/images/share.png"
-            alt="Share"
-            className="w-5 h-5 mr-3"
+          src="/assets/images/share.png"
+          alt="Share"
+          className="w-5 h-5 mr-3"
           />
           Share
-        </button>
+          </button>
       </div>
 
       {/* Logo */}
