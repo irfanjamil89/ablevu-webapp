@@ -605,7 +605,7 @@ export default function Maincontent({
                         src="/assets/images/red-delete.svg"
                         alt="red-delete"
                         className="w-5 h-5 cursor-pointer"
-                        onClick={() => onDeletePartner?.(p)}
+                        onClick={() => onDeletePartner?.(p.partner?.id)}
                       />
                     </div>
                   </div>

@@ -125,7 +125,6 @@ export default function BusinessSidebar({
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleteSuccess, setDeleteSuccess] = useState("");
-
   // ✅ Sync status with business data whenever it changes
   useEffect(() => {
   if (business?.business_status) {
@@ -170,6 +169,9 @@ export default function BusinessSidebar({
     setStatusSaving(false);
   }
 };
+
+  const [currentBusiness, setCurrentBusiness] = useState(business);
+
 
 
   const confirmDeleteAction = async () => {

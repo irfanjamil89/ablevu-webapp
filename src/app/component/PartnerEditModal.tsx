@@ -20,8 +20,8 @@ const PartnerEditModal: React.FC<PartnerEditModalProps> = ({
   const [success, setSuccess] = useState("");
   
   const [form, setForm] = useState({
-    name: partnerName,
-    web_url:partnerWebsite ,
+    name: partnerName|| "",
+    web_url:partnerWebsite || "" ,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,7 +146,7 @@ const PartnerEditModal: React.FC<PartnerEditModalProps> = ({
               type="text" 
               placeholder="https://website.com"
               id="web_url"
-              value={form.web_url}
+              value={form.web_url || ""}
               onChange={handleChange}
               disabled={loading}
               required
