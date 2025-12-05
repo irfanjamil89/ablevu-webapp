@@ -48,6 +48,8 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
   const [partners, setPartners] = useState<Partner[]>([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // -------- Fetch partner list on mount --------
   useEffect(() => {
@@ -99,7 +101,8 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
     }
 
     if (!selectedPartnerId) {
-      alert("Please select a partner.");
+      setError("Please select a partner.");
+      setSuccess(null);
       return;
     }
 
@@ -111,7 +114,7 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
         active: true,
       };
 
-      const res = await fetch(`${API_BASE_URL}/business-partner/create/{businessId}`, {
+      const res = await fetch(`${API_BASE_URL}/business-partner/create/${businessId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -119,8 +122,11 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
         },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
+      if (res.ok){
+        setSuccess("Partner Certficaton created successfully!");
+        setError("");
+      }
+      else {
         let msg = "Failed to save partner certification";
         try {
           const body = await res.json();
@@ -132,11 +138,10 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
         } catch {
           // ignore parse error
         }
-        throw new Error(msg);
+        setError(msg);
       }
 
       const updated = await res.json();
-      // assume API returns updated business profile or something compatible
       if (onUpdated && updated) {
         onUpdated(updated);
       }
@@ -144,7 +149,8 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
       setOpenPartnerCertificationsPopup(false);
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to save partner certification");
+      setError("Failed to save partner certification");
+      setSuccess("");
     } finally {
       setSaving(false);
     }
@@ -169,6 +175,8 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
 
         {/* <!-- FORM --> */}
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {error && <div className="text-red-500 text-sm ">{error}</div>}
+          {success && <div className="text-green-500 text-sm">{success}</div>}
           {/* <!-- Select Partner --> */}
           <div>
             <label className="block text-md font-medium text-gray-700 mb-1">
@@ -188,27 +196,6 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
                   {p.name}
                 </option>
               ))}
-
-              {/* fallback static options if API is empty */}
-              {partners.length === 0 && (
-                <>
-                  <option value="hidden-disabilities">
-                    Hidden Disabilities
-                  </option>
-                  <option value="autism-double-checked">
-                    Autism Double - Checked
-                  </option>
-                  <option value="kulture-city">Kulture City</option>
-                  <option value="visit-able">Visit Able</option>
-                  <option value="autism-travel-club">
-                    Autism Travel Club
-                  </option>
-                  <option value="becoming-rentable">
-                    Becoming rentABLE
-                  </option>
-                  <option value="righthear">RightHear</option>
-                </>
-              )}
             </select>
           </div>
 
