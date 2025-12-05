@@ -216,10 +216,14 @@ export default function Header() {
                       ) : (
                         <div className="relative user-dropdown">
                           <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                            <img src="/assets/images/profile.png" alt="User Icon"
-                              className="cursor-pointer h-10 w-10 mr-1"
-
-                            />
+                            <img
+                            src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+                            alt="User"
+                            className="cursor-pointer h-10 w-10 mr-1"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/assets/images/profile.png";
+                            }}
+                          />
 
 
                             <svg

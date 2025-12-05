@@ -73,7 +73,7 @@ const [user, setUser] = useState<User | null>(null);
 
   if (Loading) {
     return (
-      <div className="fixed h-screen w-full flex justify-center items-center z-10 bg-white">
+      <div className="fixed h-screen w-full flex justify-center items-center z-10 ">
         <img
           src="/assets/images/favicon.png"
           className="w-15 h-15 animate-spin"

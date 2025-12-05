@@ -891,7 +891,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                 {user ? (
                   <img
-                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/${user?.user_role?.toLowerCase()}/${user?.id}.png`}
+                  src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
                     alt=""
                   />
                 ) : (
