@@ -89,13 +89,14 @@ export default function Partner() {
         <div className="flex animate-slide gap-10 items-center">
           {/* Duplicate partners for seamless loop */}
           {[...partners, ...partners].map((partner, index) => (
-            <img
+            <img key={index}
                 src="/assets/images/brand-1-Photoroom.png"
                 alt="Logo 1"
                 className="h-12 object-cover"
               />
           ))}
         </div>
+      
       </div>
 
       <style jsx>{`
