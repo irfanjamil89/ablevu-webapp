@@ -128,6 +128,16 @@ export default function BusinessSidebar({
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  const handleShare = async () => {
+  try {
+    const url = window.location.href;
+    await navigator.clipboard.writeText(url);
+    showSuccess("Link Copied", "Page URL copied to clipboard.");
+  } catch {
+    showError("Share Failed", "Unable to copy link.");
+  }
+};
+
   // ✅ Sync status with business data whenever it changes
   useEffect(() => {
     if (business?.business_status) {
@@ -328,6 +338,7 @@ export default function BusinessSidebar({
             src="/assets/images/share.png"
             alt="Share"
             className="w-5 h-5 mr-3"
+            onClick={handleShare}
           />
           Share
         </button>
