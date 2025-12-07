@@ -333,15 +333,17 @@ export default function BusinessSidebar({
           Business Details
         </div>
 
-        <button className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center">
+        <button
+          className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center"
+          onClick={handleShare}   
+          >
           <img
             src="/assets/images/share.png"
             alt="Share"
             className="w-5 h-5 mr-3"
-            onClick={handleShare}
           />
           Share
-        </button>
+          </button>
       </div>
 
       {/* Logo */}

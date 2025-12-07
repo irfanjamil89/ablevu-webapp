@@ -43,7 +43,7 @@ type ConfirmState = {
 };
 
 export default function Page({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const { id } = params;  
 
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
