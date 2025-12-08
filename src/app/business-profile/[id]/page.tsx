@@ -42,8 +42,12 @@ type ConfirmState = {
   onConfirm?: () => void | Promise<void>;
 };
 
-export default function Page({ params }: { params: { id: string } }) {
-  const { id } = params;  
+export default function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
 
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);

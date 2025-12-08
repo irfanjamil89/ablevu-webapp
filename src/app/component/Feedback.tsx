@@ -11,6 +11,14 @@ type FeedbackType = {
   name: string;
 };
 
+// 🌟 Success / Error popup state
+type FeedbackPopupState = {
+  type: "success" | "error" | null;
+  title: string;
+  message: string;
+  onClose?: () => void;
+};
+
 const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
   const [feedbackTypeId, setFeedbackTypeId] = useState<string>("");
   const [comment, setComment] = useState<string>("");
@@ -20,6 +28,34 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
   const [types, setTypes] = useState<FeedbackType[]>([]);
   const [typesLoading, setTypesLoading] = useState<boolean>(true);
   const [typesError, setTypesError] = useState<string>("");
+
+  // 🌟 Local success/error popup state
+  const [feedbackPopup, setFeedbackPopup] = useState<FeedbackPopupState>({
+    type: null,
+    title: "",
+    message: "",
+  });
+
+  const showSuccess = (
+    title: string,
+    message: string,
+    onClose?: () => void
+  ) => {
+    setFeedbackPopup({ type: "success", title, message, onClose });
+  };
+
+  const showErrorPopup = (
+    title: string,
+    message: string,
+    onClose?: () => void
+  ) => {
+    setFeedbackPopup({ type: "error", title, message, onClose });
+  };
+
+  const handleCloseFeedbackPopup = () => {
+    if (feedbackPopup.onClose) feedbackPopup.onClose();
+    setFeedbackPopup({ type: null, title: "", message: "" });
+  };
 
   // 🔹 Feedback types list fetch
   const fetchFeedbackTypes = async () => {
@@ -35,7 +71,7 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
         }
       );
 
-      const data = res.data; // 👈 yahan let → const
+      const data = res.data;
 
       if (Array.isArray(data)) {
         setTypes(data);
@@ -44,14 +80,18 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
       } else if (Array.isArray(data?.items)) {
         setTypes(data.items);
       } else {
-        setTypesError("Unable to load feedback types.");
+        const msg = "Unable to load feedback types.";
+        setTypesError(msg);
+        showErrorPopup("Load Failed", msg);
       }
     } catch (err: any) {
       console.error(
         "Feedback types load error:",
         err.response?.data || err.message
       );
-      setTypesError("Failed to load feedback types.");
+      const msg = "Failed to load feedback types.";
+      setTypesError(msg);
+      showErrorPopup("Load Failed", msg);
     } finally {
       setTypesLoading(false);
     }
@@ -66,11 +106,15 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
     setError("");
 
     if (!feedbackTypeId) {
-      setError("Please select a feedback type.");
+      const msg = "Please select a feedback type.";
+      setError(msg);
+      showErrorPopup("Validation Error", msg);
       return;
     }
     if (!comment.trim()) {
-      setError("Please enter your comments.");
+      const msg = "Please enter your comments.";
+      setError(msg);
+      showErrorPopup("Validation Error", msg);
       return;
     }
 
@@ -95,16 +139,25 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
 
       setComment("");
       setFeedbackTypeId("");
-      setOpenFeedbackModal(false);
+
+      // ✅ Success popup – OK press par modal close
+      showSuccess(
+        "Feedback Submitted",
+        "Thank you for your feedback!",
+        () => {
+          setOpenFeedbackModal(false);
+        }
+      );
     } catch (err: any) {
       console.error(
         "Feedback submit error:",
         err.response?.data || err.message
       );
-      setError(
+      const msg =
         err.response?.data?.message ||
-          "Failed to submit feedback. Please try again."
-      );
+        "Failed to submit feedback. Please try again.";
+      setError(msg);
+      showErrorPopup("Submit Failed", msg);
     } finally {
       setLoading(false);
     }
@@ -189,6 +242,60 @@ const Feedback: React.FC<FeedbackProps> = ({ setOpenFeedbackModal }) => {
           </div>
         </form>
       </div>
+
+      {/* 🌟 Local Success/Error Popup */}
+      {feedbackPopup.type && (
+        <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div
+                className={`rounded-full p-3 ${
+                  feedbackPopup.type === "success"
+                    ? "bg-[#0519CE]"
+                    : "bg-red-600"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  {feedbackPopup.type === "success" ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14"
+                    />
+                  )}
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-bold mb-2">
+              {feedbackPopup.title}
+            </h2>
+            <p className="mb-4">{feedbackPopup.message}</p>
+            <button
+              className={`px-4 py-2 rounded-lg cursor-pointer text-white ${
+                feedbackPopup.type === "success"
+                  ? "bg-[#0519CE]"
+                  : "bg-red-600"
+              }`}
+              onClick={handleCloseFeedbackPopup}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
