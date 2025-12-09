@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 // ---- Types ----
 type VirtualTour = {
@@ -28,6 +28,9 @@ type AccessibilityFeature = {
   feature_name?: string;
   featureType?: { id: string; name: string };
   accessible_feature?: { id: string; title: string };
+
+  // (just in case backend direct id bhej dey)
+  accessible_feature_type_id?: string;
 };
 
 type AccessibilityFeatureGroup = {
@@ -131,6 +134,29 @@ type BusinessScheduleItem = {
   active: boolean;
   created_at: string;
   modified_at: string;
+};
+
+// ⭐ feature-type list ka type (API: accessible-feature-types/list)
+type AccessibleFeatureTypeMaster = {
+  id: string;
+  name?: string;
+  title?: string;
+  label?: string;
+};
+
+// ⭐ accessible-feature master (API: accessible-feature/list)
+type AccessibleFeatureLinkedType = {
+  id: string;
+  accessible_feature_id: string;
+  accessible_feature_type_id: string;
+  active: boolean;
+};
+
+type AccessibleFeatureMaster = {
+  id: string;
+  title: string;
+  slug: string;
+  linkedTypes?: AccessibleFeatureLinkedType[];
 };
 
 type BusinessProfile = {
@@ -261,6 +287,69 @@ export default function Maincontent({
   showSuccess,
   showError,
 }: MaincontentProps) {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  // ⭐ master lists
+  const [featureTypes, setFeatureTypes] =
+    useState<AccessibleFeatureTypeMaster[]>([]);
+  const [allFeatures, setAllFeatures] = useState<AccessibleFeatureMaster[]>([]);
+
+  // ⭐ feature types list load (accessible-feature-types/list)
+  useEffect(() => {
+    if (!API_BASE_URL) return;
+
+    const fetchTypes = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/accessible-feature-types/list?limit=100&page=1`
+        );
+        if (!res.ok) {
+          console.error("Failed to load feature types", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        let items: any[] = [];
+        if (Array.isArray(data)) items = data;
+        else if (Array.isArray(data.items)) items = data.items;
+        else if (Array.isArray(data.data)) items = data.data;
+
+        setFeatureTypes(items);
+      } catch (e) {
+        console.error("Error loading feature types", e);
+      }
+    };
+
+    fetchTypes();
+  }, [API_BASE_URL]);
+
+  // ⭐ accessible-feature master list load (accessible-feature/list)
+  useEffect(() => {
+    if (!API_BASE_URL) return;
+
+    const fetchFeatures = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/accessible-feature/list?limit=1000&page=1`
+        );
+        if (!res.ok) {
+          console.error("Failed to load accessible features", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        const items: AccessibleFeatureMaster[] = Array.isArray(data)
+          ? data
+          : data.items || data.data || [];
+        setAllFeatures(items);
+      } catch (e) {
+        console.error("Error loading accessible features", e);
+      }
+    };
+
+    fetchFeatures();
+  }, [API_BASE_URL]);
+
   // small helper to get a label from unknown objects
   const getLabel = (item: any): string =>
     item?.title ||
@@ -281,6 +370,22 @@ export default function Maincontent({
     f.optional_answer ||
     f.accessible_feature_id;
 
+  // ⭐ map: featureId -> featureTypeId (master list se)
+  const featureIdToTypeId: Record<string, string> = {};
+  allFeatures.forEach((f) => {
+    const activeLink = f.linkedTypes?.find((lt) => lt.active);
+    if (activeLink) {
+      featureIdToTypeId[f.id] = activeLink.accessible_feature_type_id;
+    }
+  });
+
+  // ⭐ helper: typeId se naam lao
+  const getTypeNameFromId = (typeId: string): string => {
+    if (!typeId || typeId === "other") return "Other";
+    const t = featureTypes.find((ft) => ft.id === typeId);
+    return t?.name || t?.title || t?.label || "Other";
+  };
+
   const activeTours: VirtualTour[] =
     business?.virtualTours?.filter((t) => t.active) || [];
 
@@ -288,6 +393,36 @@ export default function Maincontent({
     business?.businessMedia
       ?.map((m: any) => m.image_url || m.media_url || m.url)
       .filter(Boolean) || [];
+
+  // ⭐ groups pre-compute (same typeId -> same group)
+  const featureGroups: AccessibilityFeatureGroup[] =
+    business?.accessibilityFeatures && business.accessibilityFeatures.length > 0
+      ? Object.values(
+          (business.accessibilityFeatures || []).reduce(
+            (
+              acc: Record<string, AccessibilityFeatureGroup>,
+              f: AccessibilityFeature
+            ) => {
+              // is business feature ka type id master list se
+              const typeId =
+                featureIdToTypeId[f.accessible_feature_id] ||
+                f.featureType?.id ||
+                f.accessible_feature_type_id ||
+                "other";
+
+              const safeTypeId = typeId || "other";
+              const typeName = getTypeNameFromId(safeTypeId);
+
+              if (!acc[safeTypeId]) {
+                acc[safeTypeId] = { typeId: safeTypeId, typeName, items: [] };
+              }
+              acc[safeTypeId].items.push(f);
+              return acc;
+            },
+            {}
+          )
+        )
+      : [];
 
   // ---------- Loading / Error ----------
   if (loading) {
@@ -486,26 +621,9 @@ export default function Maincontent({
           </div>
         </div>
 
-        {business.accessibilityFeatures &&
-        business.accessibilityFeatures.length > 0 ? (
+        {featureGroups.length > 0 ? (
           <div className="audios py-6 rounded-xl space-y-4">
-            {Object.values(
-              (business.accessibilityFeatures || []).reduce(
-                (
-                  acc: Record<string, AccessibilityFeatureGroup>,
-                  f: AccessibilityFeature
-                ) => {
-                  const typeId = f.featureType?.id || "other";
-                  const typeName = f.featureType?.name || "Other";
-                  if (!acc[typeId]) {
-                    acc[typeId] = { typeId, typeName, items: [] };
-                  }
-                  acc[typeId].items.push(f);
-                  return acc;
-                },
-                {}
-              )
-            ).map((group) => (
+            {featureGroups.map((group) => (
               <div key={group.typeId} className="box flex items-start gap-3">
                 {/* left icons */}
                 <div className="w-[120px]">
@@ -665,7 +783,6 @@ export default function Maincontent({
       <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-[600] mb-4">Reviews</h3>
-
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <button

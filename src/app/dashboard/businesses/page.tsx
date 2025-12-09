@@ -1093,6 +1093,9 @@ export default function Page() {
               <div>
                 {currentbusiness.map((business) => {
                   const statusInfo = getStatusInfo(business);
+                   const allFeatures = business.accessibilityFeatures || [];
+                    const visibleFeatures = allFeatures.slice(0, 2); 
+                    const extraFeaturesCount = allFeatures.length - visibleFeatures.length;
 
                   return (
                     <Link
@@ -1218,7 +1221,8 @@ export default function Page() {
                               Accessible Features
                             </span>
                             <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                              {business.accessibilityFeatures.map((feature) => (
+                              {/* sirf pehle 2 features */}
+                              {visibleFeatures.map((feature) => (
                                 <li
                                   key={feature.id}
                                   className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
@@ -1226,6 +1230,11 @@ export default function Page() {
                                   {getFeatureName(feature)}
                                 </li>
                               ))}
+                              {extraFeaturesCount > 0 && (
+                                <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-3">
+                                  +{extraFeaturesCount}
+                                </li>
+                              )}
                             </ul>
                           </div>
                         </div>
