@@ -38,7 +38,6 @@ type ConfirmState = {
   open: boolean;
   title: string;
   message: string;
-  // yahan async bhi allow hai
   onConfirm?: () => void | Promise<void>;
 };
 
