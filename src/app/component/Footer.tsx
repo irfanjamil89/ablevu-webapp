@@ -11,7 +11,7 @@ export default function Footer() {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubscribe = async (e) => {
+  const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setSuccessMsg("");
@@ -26,24 +26,21 @@ export default function Footer() {
       setSuccessMsg("Subscribed successfully!");
       setEmail("");
 
-      // hide message after 3 seconds
       setTimeout(() => setSuccessMsg(""), 3000);
-
-    } catch (error) {
+    } catch (err: any) {
       setErrorMsg(
-        error?.response?.data?.message || "Failed to subscribe. Try again."
+        err?.response?.data?.message || "Failed to subscribe. Try again."
       );
 
       setTimeout(() => setErrorMsg(""), 3000);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
     <footer className="bg-[#0A1733] px-6 py-10 text-white text-center sm:pt-[50px] sm:text-center md:px-20 md:pt-[150px] md:text-start lg:pt-[150px] lg:text-start">
       <div className="grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:mx-auto">
-
         {/* Logo and Social Icons */}
         <div>
           <div className="mb-4 flex items-center justify-center lg:justify-start">
@@ -68,27 +65,57 @@ export default function Footer() {
 
         {/* Information */}
         <div>
-          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">Information</h3>
+          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">
+            Information
+          </h3>
           <ul className="space-y-2 font-['Helvetica'] text-sm">
-            <li><a href="#" className="hover:underline">FAQ</a></li>
-            <li><a href="#" className="hover:underline">Blog</a></li>
-            <li><a href="#" className="hover:underline">Support</a></li>
+            <li>
+              <a href="#" className="hover:underline">
+                FAQ
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:underline">
+                Blog
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:underline">
+                Support
+              </a>
+            </li>
           </ul>
         </div>
 
         {/* Quick Links */}
         <div>
-          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">Quick Links</h3>
+          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">
+            Quick Links
+          </h3>
           <ul className="space-y-2 font-['Helvetica'] text-sm">
-            <li><a href="#" className="hover:underline">Businesses</a></li>
-            <li><a href="#" className="hover:underline">Contributor</a></li>
-            <li><a href="#" className="hover:underline">Access-friendly Cities</a></li>
+            <li>
+              <a href="#" className="hover:underline">
+                Businesses
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:underline">
+                Contributor
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:underline">
+                Access-friendly Cities
+              </a>
+            </li>
           </ul>
         </div>
 
         {/* Subscribe */}
         <div className="bg-[rgb(34,44,68)] p-4 text-start rounded-xl">
-          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">Subscribe</h3>
+          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">
+            Subscribe
+          </h3>
 
           <form className="mb-4 flex items-center" onSubmit={handleSubscribe}>
             <input
@@ -105,9 +132,14 @@ export default function Footer() {
               className="rounded-r bg-blue-500 px-4 py-2 hover:bg-blue-600 disabled:opacity-50"
             >
               {loading ? (
-                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path
                     fillRule="evenodd"
                     d="M10.293 15.707a1 1 0 010-1.414L13.586 11H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
@@ -118,12 +150,10 @@ export default function Footer() {
             </button>
           </form>
 
-          {/* Success Message */}
           {successMsg && (
             <p className="text-green-400 text-sm mb-2">{successMsg}</p>
           )}
 
-          {/* Error Message */}
           {errorMsg && (
             <p className="text-red-400 text-sm mb-2">{errorMsg}</p>
           )}
