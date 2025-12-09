@@ -59,7 +59,7 @@ type BusinessProfile = {
   logo_url: string | null;
   linkedTypes: LinkedTypeItem[];
   businessSchedule: BusinessScheduleItem[];
-  business_status?: string
+  business_status?: string;
 };
 
 type BusinessType = {
@@ -76,8 +76,11 @@ interface BusinessSidebarProps {
   setOpenOperatingHours: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenSocialLinks: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAboutModal: React.Dispatch<React.SetStateAction<boolean>>;
+  showSuccess: (title: string, message: string, onClose?: () => void) => void;
+  showError: (title: string, message: string, onClose?: () => void) => void;
 }
 
+// ---------- Status helper ----------
 const STATUS_OPTIONS = [
   { label: "Draft", value: "draft" },
   { label: "Pending Approved", value: "pending approved" },
@@ -87,7 +90,6 @@ const STATUS_OPTIONS = [
 
 const normalizeStatus = (status: string) =>
   status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
-
 
 const DAY_ORDER: Record<DayKey, number> = {
   monday: 1,
@@ -113,6 +115,8 @@ export default function BusinessSidebar({
   setOpenOperatingHours,
   setOpenSocialLinks,
   setOpenAboutModal,
+  showSuccess,
+  showError,
 }: BusinessSidebarProps) {
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -122,67 +126,84 @@ export default function BusinessSidebar({
   const [status, setStatus] = useState<string>("draft");
 
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
-  const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [deleteSuccess, setDeleteSuccess] = useState("");
-  // ✅ Sync status with business data whenever it changes
-  useEffect(() => {
-  if (business?.business_status) {
-    setStatus(normalizeStatus(business.business_status));
-  }
-}, [business?.business_status]);
 
-  const handleStatusChange = async (newStatus: string) => {
-  if (!business) return;
-
-  const normalized = normalizeStatus(newStatus); // "pending approved" etc.
-
+  const handleShare = async () => {
   try {
-    setStatusError("");
-    setStatusSaving(true);
-
-    const token =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("access_token")
-        : null;
-
-    const res = await fetch(
-      `${API_BASE_URL}/business/status/${business.id}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          business_status: normalized, // backend ko normalized value bhej rahe
-        }),
-      }
-    );
-
-    if (!res.ok) throw new Error("Failed to update");
-
-    setStatus(normalized);
-  } catch (err) {
-    setStatusError("Failed to update status");
-  } finally {
-    setStatusSaving(false);
+    const url = window.location.href;
+    await navigator.clipboard.writeText(url);
+    showSuccess("Link Copied", "Page URL copied to clipboard.");
+  } catch {
+    showError("Share Failed", "Unable to copy link.");
   }
 };
 
-  const [currentBusiness, setCurrentBusiness] = useState(business);
+  // ✅ Sync status with business data whenever it changes
+  useEffect(() => {
+    if (business?.business_status) {
+      setStatus(normalizeStatus(business.business_status));
+    }
+  }, [business?.business_status]);
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (!business) return;
 
+    const normalized = normalizeStatus(newStatus);
+
+    try {
+      setStatusError("");
+      setStatusSaving(true);
+
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("access_token")
+          : null;
+
+      const res = await fetch(
+        `${API_BASE_URL}/business/status/${business.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            business_status: normalized,
+          }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update");
+
+      setStatus(normalized);
+
+      // ✅ global success popup
+      showSuccess(
+        "Status Updated",
+        "Business status has been updated successfully."
+      );
+    } catch (err) {
+      setStatusError("Failed to update status");
+      // ❌ global error popup
+      showError(
+        "Status Update Failed",
+        "There was a problem updating the business status. Please try again."
+      );
+    } finally {
+      setStatusSaving(false);
+    }
+  };
 
   const confirmDeleteAction = async () => {
     if (!business) return;
 
     try {
       setDeleteError("");
-      setDeleteSuccess("");
 
       if (!API_BASE_URL) {
-        setDeleteError("API base URL is not configured.");
+        const msg = "API base URL is not configured.";
+        setDeleteError(msg);
+        showError("Delete Failed", msg);
         return;
       }
 
@@ -192,7 +213,9 @@ export default function BusinessSidebar({
           : null;
 
       if (!token) {
-        setDeleteError("Login required. No access token found.");
+        const msg = "Login required. No access token found.";
+        setDeleteError(msg);
+        showError("Delete Failed", msg);
         return;
       }
 
@@ -217,13 +240,21 @@ export default function BusinessSidebar({
       }
 
       setOpenDeleteModal(false);
-      setDeleteSuccess("Business deleted successfully.");
-      setOpenSuccessModal(true);
+
+      // ✅ global success popup + redirect on close
+      showSuccess(
+        "Deleted Successfully!",
+        "The business has been removed.",
+        () => {
+          router.push("/dashboard/businesses");
+        }
+      );
     } catch (err: unknown) {
       console.error(err);
       const msg =
         err instanceof Error ? err.message : "Failed to delete business";
       setDeleteError(msg);
+      showError("Delete Failed", msg);
     }
   };
 
@@ -302,14 +333,17 @@ export default function BusinessSidebar({
           Business Details
         </div>
 
-        <button className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center">
+        <button
+          className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center"
+          onClick={handleShare}   
+          >
           <img
             src="/assets/images/share.png"
             alt="Share"
             className="w-5 h-5 mr-3"
           />
           Share
-        </button>
+          </button>
       </div>
 
       {/* Logo */}
@@ -318,8 +352,14 @@ export default function BusinessSidebar({
         businessName={business.name}
         initialImageUrl={business.logo_url}
         onImageUpdate={(newUrl) => {
-          console.log('New image uploaded:', newUrl);
+          console.log("New image uploaded:", newUrl);
+          showSuccess(
+            "Logo Updated",
+            "Business logo has been updated successfully."
+          );
         }}
+        // Agar BusinessImageUpload mein error callback add karo:
+        // onError={(msg) => showError("Logo Update Failed", msg)}
       />
 
       {/* Info */}
@@ -550,9 +590,6 @@ export default function BusinessSidebar({
         {deleteError && (
           <p className="text-red-500 text-sm mt-2">{deleteError}</p>
         )}
-        {deleteSuccess && (
-          <p className="text-green-600 text-sm mt-1">{deleteSuccess}</p>
-        )}
       </div>
 
       {/* Delete Confirmation Popup */}
@@ -598,43 +635,6 @@ export default function BusinessSidebar({
                 Delete
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Modal */}
-      {openSuccessModal && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
-            <div className="flex justify-center mb-4">
-              <div className="bg-[#0519CE] rounded-full p-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-            </div>
-            <h2 className="text-lg font-bold mb-2">Deleted Successfully!</h2>
-            <p className="mb-4">The business has been removed.</p>
-            <button
-              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
-              onClick={() => {
-                setOpenSuccessModal(false);
-                router.push("/dashboard/businesses");
-              }}
-            >
-              OK
-            </button>
           </div>
         </div>
       )}

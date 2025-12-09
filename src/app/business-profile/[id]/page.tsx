@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { use } from "react";
 import BusinessSidebar from "@/app/component/BusinessSidebar";
 import Maincontent from "@/app/component/Maincontent";
 import BusinessDetail from "@/app/component/BusinessDetail";
@@ -24,11 +23,31 @@ type BusinessType = any;
 type AccessibilityFeatureGroup = {
   typeId: string;
   typeName: string;
-  items: any[]; 
+  items: any[];
 };
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+// 🌟 Global feedback popup type
+type FeedbackState = {
+  type: "success" | "error" | null;
+  title: string;
+  message: string;
+  onClose?: () => void;
+};
+
+type ConfirmState = {
+  open: boolean;
+  title: string;
+  message: string;
+  // yahan async bhi allow hai
+  onConfirm?: () => void | Promise<void>;
+};
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
 
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
@@ -82,6 +101,55 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     return localStorage.getItem("access_token");
   };
 
+  // 🌟 Global feedback state
+  const [feedback, setFeedback] = useState<FeedbackState>({
+    type: null,
+    title: "",
+    message: "",
+  });
+
+  const [confirm, setConfirm] = useState<ConfirmState>({
+  open: false,
+  title: "",
+  message: "",
+  onConfirm: undefined,
+});
+
+const askConfirm = (
+  title: string,
+  message: string,
+  onConfirm: () => void | Promise<void>
+) => {
+  setConfirm({
+    open: true,
+    title,
+    message,
+    onConfirm,
+  });
+};
+
+const handleCloseConfirm = () => {
+  setConfirm((prev) => ({ ...prev, open: false, onConfirm: undefined }));
+};
+
+
+  const showSuccess = (
+    title: string,
+    message: string,
+    onClose?: () => void
+  ) => {
+    setFeedback({ type: "success", title, message, onClose });
+  };
+
+  const showError = (title: string, message: string, onClose?: () => void) => {
+    setFeedback({ type: "error", title, message, onClose });
+  };
+
+  const handleCloseFeedback = () => {
+    if (feedback.onClose) feedback.onClose();
+    setFeedback({ type: null, title: "", message: "" });
+  };
+
   // 🔁 Common function: business profile + business types fetch karo
   const fetchAllData = useCallback(async () => {
     try {
@@ -92,7 +160,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
       if (!token) {
         setError("No access token found");
-        setLoading(false);
         return;
       }
 
@@ -135,6 +202,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Something went wrong");
+      showError("Error", err.message || "Something went wrong while loading.");
     } finally {
       setLoading(false);
     }
@@ -157,7 +225,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   // ---- Virtual tour actions for Maincontent icons ----
   const handleEditVirtualTour = (tour: any) => {
-    // map API fields → popup fields
     setSelectedVirtualTour({
       id: tour.id,
       name: tour.name,
@@ -168,41 +235,52 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     setOpenVirtualTourState(true);
   };
 
-  const handleDeleteVirtualTour = async (tour: any) => {
-    if (!API_BASE_URL || !business) return;
-    const token = getToken();
-    if (!token) {
-      alert("No access token");
-      return;
-    }
+  const handleDeleteVirtualTour = (tour: any) => {
+  if (!API_BASE_URL || !business) return;
+  const token = getToken();
+  if (!token) {
+    showError("Unauthorized", "No access token found.");
+    return;
+  }
 
-    if (!window.confirm("Delete this virtual tour?")) return;
+  askConfirm(
+    "Delete Virtual Tour?",
+    "Are you sure you want to delete this virtual tour?",
+    async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/business-virtual-tours/delete/${tour.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-    const res = await fetch(
-      `${API_BASE_URL}/business-virtual-tours/delete/${tour.id}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        if (!res.ok) {
+          const t = await res.text();
+          console.error(t || "Failed to delete tour");
+          throw new Error("Failed to delete tour");
+        }
+
+        await fetchAllData();
+        showSuccess("Deleted", "Virtual tour deleted successfully.");
+      } catch (err: any) {
+        console.error(err);
+        showError("Delete Failed", err.message || "Failed to delete tour.");
+      } finally {
+        handleCloseConfirm();
       }
-    );
-
-    if (!res.ok) {
-      const t = await res.text();
-      console.error(t || "Failed to delete tour");
-      alert("Failed to delete tour");
-      return;
     }
-
-    await fetchAllData();
-  };
+  );
+};
 
   const handleToggleVirtualTourActive = async (tour: any) => {
     if (!API_BASE_URL || !business) return;
     const token = getToken();
     if (!token) {
-      alert("No access token");
+      showError("Unauthorized", "No access token found.");
       return;
     }
 
@@ -211,265 +289,288 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       businessId: business.id,
     };
 
-    const res = await fetch(
-      `${API_BASE_URL}/business-virtual-tours/update/${tour.id}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/business-virtual-tours/update/${tour.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        const t = await res.text();
+        console.error(t || "Failed to update active state");
+        throw new Error("Failed to update active state");
       }
-    );
 
-    if (!res.ok) {
-      const t = await res.text();
-      console.error(t || "Failed to update active state");
-      alert("Failed to update active state");
-      return;
+      await fetchAllData();
+      showSuccess(
+        "Updated",
+        `Virtual tour has been ${!tour.active ? "activated" : "deactivated"}.`
+      );
+    } catch (err: any) {
+      console.error(err);
+      showError(
+        "Update Failed",
+        err.message || "Failed to update virtual tour status."
+      );
     }
-
-    await fetchAllData();
   };
 
   // ---- Review delete handler ----
-  const handleDeleteReview = async (review: any) => {
-    if (!API_BASE_URL || !business) return;
+  const handleDeleteReview = (review: any) => {
+  if (!API_BASE_URL || !business) return;
 
-    const token = getToken();
-    if (!token) {
-      alert("No access token");
-      return;
-    }
+  const token = getToken();
+  if (!token) {
+    showError("Unauthorized", "No access token found.");
+    return;
+  }
 
-    const confirmDelete = window.confirm("Delete this review?");
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/business-reviews/delete/${review.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        let msg = "Failed to delete review";
-        try {
-          const body = await res.json();
-          if (body?.message) {
-            msg = Array.isArray(body.message)
-              ? body.message.join(", ")
-              : body.message;
+  askConfirm(
+    "Delete Review?",
+    "Are you sure you want to delete this review?",
+    async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/business-reviews/delete/${review.id}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
           }
-        } catch {
-          // ignore JSON parse error
-        }
-        throw new Error(msg);
-      }
+        );
 
-      await fetchAllData();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete review");
+        if (!res.ok) {
+          let msg = "Failed to delete review";
+          try {
+            const body = await res.json();
+            if (body?.message) {
+              msg = Array.isArray(body.message)
+                ? body.message.join(", ")
+                : body.message;
+            }
+          } catch {}
+          throw new Error(msg);
+        }
+
+        await fetchAllData();
+        showSuccess("Deleted", "Review has been deleted successfully.");
+      } catch (err: any) {
+        console.error(err);
+        showError("Delete Failed", err.message || "Failed to delete review.");
+      } finally {
+        handleCloseConfirm();
+      }
     }
-  };
+  );
+};
 
   // ---- Question delete handler ----
-  const handleDeleteQuestion = async (question: any) => {
-    if (!API_BASE_URL || !business) return;
+  const handleDeleteQuestion = (question: any) => {
+  if (!API_BASE_URL || !business) return;
 
-    const token = getToken();
-    if (!token) {
-      alert("No access token");
-      return;
-    }
+  const token = getToken();
+  if (!token) {
+    showError("Unauthorized", "No access token found.");
+    return;
+  }
 
-    const confirmDelete = window.confirm("Delete this question?");
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/business-questions/delete/${question.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        let msg = "Failed to delete question";
-        try {
-          const body = await res.json();
-          if (body?.message) {
-            msg = Array.isArray(body.message)
-              ? body.message.join(", ")
-              : body.message;
+  askConfirm(
+    "Delete Question?",
+    "Are you sure you want to delete this question?",
+    async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/business-questions/delete/${question.id}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
           }
-        } catch {
-          // ignore JSON parse error
+        );
+
+        if (!res.ok) {
+          let msg = "Failed to delete question";
+          try {
+            const body = await res.json();
+            if (body?.message) {
+              msg = Array.isArray(body.message)
+                ? body.message.join(", ")
+                : body.message;
+            }
+          } catch {}
+          throw new Error(msg);
         }
-        throw new Error(msg);
+
+        await fetchAllData();
+        showSuccess("Deleted", "Question has been deleted successfully.");
+      } catch (err: any) {
+        console.error(err);
+        showError("Delete Failed", err.message || "Failed to delete question.");
+      } finally {
+        handleCloseConfirm();
       }
-
-      await fetchAllData();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete question");
     }
-  };
-
+  );
+};
   // ---- Partner delete handler ----
-  const handleDeletePartner = async (partner: any) => {
-    if (!API_BASE_URL || !business) return;
+  const handleDeletePartner = (partnerId: string) => {
+  if (!API_BASE_URL || !business) return;
 
-    const token = getToken();
-    if (!token) {
-      alert("No access token");
-      return;
-    }
+  const token = getToken();
+  if (!token) {
+    showError("Unauthorized", "No access token found.");
+    return;
+  }
 
-    const confirmDelete = window.confirm(
-      "Delete this partner certification/program?"
-    );
-    if (!confirmDelete) return;
-    const payload ={
-      partner_id: partner
-    };
+  askConfirm(
+    "Delete Partner?",
+    "Are you sure you want to delete this partner certification/program?",
+    async () => {
+      const payload = { partner_id: partnerId };
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/business-partner/delete/${business.id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        let msg = "Failed to delete partner";
-        try {
-          const body = await res.json();
-          if (body?.message) {
-            msg = Array.isArray(body.message)
-              ? body.message.join(", ")
-              : body.message;
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/business-partner/delete/${business.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
           }
-        } catch {
-        }
-        throw new Error(msg);
-      }
+        );
 
-      await fetchAllData();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete partner");
+        if (!res.ok) {
+          let msg = "Failed to delete partner";
+          try {
+            const body = await res.json();
+            if (body?.message) {
+              msg = Array.isArray(body.message)
+                ? body.message.join(", ")
+                : body.message;
+            }
+          } catch {}
+          throw new Error(msg);
+        }
+
+        await fetchAllData();
+        showSuccess("Deleted", "Partner certification has been deleted.");
+      } catch (err: any) {
+        console.error(err);
+        showError("Delete Failed", err.message || "Failed to delete partner.");
+      } finally {
+        handleCloseConfirm();
+      }
     }
-  };
+  );
+};
 
   // ---- Additional Accessibility Resource delete handler ----
-  const handleDeleteAdditionalResource = async (resource: any) => {
-    if (!API_BASE_URL || !business) return;
+  const handleDeleteAdditionalResource = (resource: any) => {
+  if (!API_BASE_URL || !business) return;
 
-    const token = getToken();
-    if (!token) {
-      alert("No access token");
-      return;
-    }
+  const token = getToken();
+  if (!token) {
+    showError("Unauthorized", "No access token found.");
+    return;
+  }
 
-    const confirmDelete = window.confirm(
-      "Delete this accessibility resource?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/additional-resource/delete/${resource.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        let msg = "Failed to delete resource";
-        try {
-          const body = await res.json();
-          if (body?.message) {
-            msg = Array.isArray(body.message)
-              ? body.message.join(", ")
-              : body.message;
+  askConfirm(
+    "Delete Resource?",
+    "Are you sure you want to delete this accessibility resource?",
+    async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/additional-resource/delete/${resource.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        } catch {
-          // ignore JSON parse error
-        }
-        throw new Error(msg);
-      }
+        );
 
-      await fetchAllData();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete resource");
+        if (!res.ok) {
+          let msg = "Failed to delete resource";
+          try {
+            const body = await res.json();
+            if (body?.message) {
+              msg = Array.isArray(body.message)
+                ? body.message.join(", ")
+                : body.message;
+            }
+          } catch {}
+          throw new Error(msg);
+        }
+
+        await fetchAllData();
+        showSuccess("Deleted", "Accessibility resource has been deleted.");
+      } catch (err: any) {
+        console.error(err);
+        showError("Delete Failed", err.message || "Failed to delete resource.");
+      } finally {
+        handleCloseConfirm();
+      }
     }
-  };
+  );
+};
+
 
   // ---- Business Media delete handler ----
-  const handleDeleteBusinessMedia = async (media: any) => {
-    if (!API_BASE_URL || !business) return;
+  const handleDeleteBusinessMedia = (media: any) => {
+  if (!API_BASE_URL || !business) return;
 
-    const token = getToken();
-    if (!token) {
-      alert("No access token");
-      return;
-    }
+  const token = getToken();
+  if (!token) {
+    showError("Unauthorized", "No access token found.");
+    return;
+  }
 
-    const confirmDelete = window.confirm(
-      "Delete this accessibility media item?"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/business-media/delete/${media.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) {
-        let msg = "Failed to delete media";
-        try {
-          const body = await res.json();
-          if (body?.message) {
-            msg = Array.isArray(body.message)
-              ? body.message.join(", ")
-              : body.message;
+  askConfirm(
+    "Delete Media?",
+    "Are you sure you want to delete this accessibility media item?",
+    async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/business-media/delete/${media.id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        } catch {
-          // ignore JSON parse error
+        );
+
+        if (!res.ok) {
+          let msg = "Failed to delete media";
+          try {
+            const body = await res.json();
+            if (body?.message) {
+              msg = Array.isArray(body.message)
+                ? body.message.join(", ")
+                : body.message;
+            }
+          } catch {}
+          throw new Error(msg);
         }
-        throw new Error(msg);
+
+        await fetchAllData();
+        showSuccess("Deleted", "Accessibility media has been deleted.");
+      } catch (err: any) {
+        console.error(err);
+        showError("Delete Failed", err.message || "Failed to delete media.");
+      } finally {
+        handleCloseConfirm();
       }
-
-      await fetchAllData();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete media");
     }
-  };
-
+  );
+};
   // ---- Accessibility Media: Add button popup handler ----
   const handleSetOpenAccessibilityMediaPopup: React.Dispatch<
     React.SetStateAction<boolean>
@@ -478,7 +579,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       setOpenAccessibilityMediaPopupState((prev) => {
         const next = value(prev);
         if (next) {
-          // Add Media → blank form
           setSelectedMedia(null);
         }
         return next;
@@ -493,7 +593,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   // ---- Accessibility Media: edit handler (yellow pencil) ----
   const handleEditBusinessMedia = (media: any) => {
-    setSelectedMedia(media); // pre-fill form
+    setSelectedMedia(media);
     setOpenAccessibilityMediaPopupState(true);
   };
 
@@ -505,7 +605,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       setOpenAccessibilityResourcesPopupState((prev) => {
         const next = value(prev);
         if (next) {
-          // Add Resources → edit clear
           setSelectedResource(null);
         }
         return next;
@@ -520,7 +619,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
   // ---- Additional Resources: edit handler (yellow pencil) ----
   const handleEditAdditionalResource = (resource: any) => {
-    setSelectedResource(resource); // pre-fill form
+    setSelectedResource(resource);
     setOpenAccessibilityResourcesPopupState(true);
   };
 
@@ -532,7 +631,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       setOpenAccessibilityFeaturePopup((prev) => {
         const next = value(prev);
         if (next) {
-          // ADD mode → edit state clear
           setEditFeatureTypeId(null);
           setEditFeatureIds([]);
         }
@@ -540,7 +638,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
       });
     } else {
       if (value) {
-        // ADD mode → edit state clear
         setEditFeatureTypeId(null);
         setEditFeatureIds([]);
       }
@@ -552,7 +649,6 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const handleEditAccessibilityFeatureGroup = (
     group: AccessibilityFeatureGroup
   ) => {
-    // group.items ke andar accessible_feature_id hona chahiye
     const ids =
       group.items
         ?.map((item: any) => item.accessible_feature_id)
@@ -564,42 +660,50 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   };
 
   // ---- Accessibility Feature: delete handler (group trash) ----
-  const handleDeleteAccessibilityFeatureGroup = async (
-    group: AccessibilityFeatureGroup
-  ) => {
-    if (!API_BASE_URL || !business) return;
+  const handleDeleteAccessibilityFeatureGroup = (group: AccessibilityFeatureGroup) => {
+  if (!API_BASE_URL || !business) return;
 
-    const token = getToken();
-    if (!token) {
-      alert("No access token");
-      return;
-    }
+  const token = getToken();
+  if (!token) {
+    showError("Unauthorized", "No access token found.");
+    return;
+  }
 
-    const confirmDelete = window.confirm(
-      `Delete all accessibility features of type "${group.typeName}"?`
-    );
-    if (!confirmDelete) return;
+  askConfirm(
+    `Delete "${group.typeName}" Features?`,
+    `Are you sure you want to delete all accessibility features under "${group.typeName}"?`,
+    async () => {
+      try {
+        for (const f of group.items) {
+          await fetch(
+            `${API_BASE_URL}/business-accessible-feature/delete/${f.id}`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+        }
 
-    try {
-      // group.items ke andar har item ka id join-table id hona chahiye
-      for (const f of group.items) {
-        await fetch(
-          `${API_BASE_URL}/business-accessible-feature/delete/${f.id}`,
-          {
-            method: "DELETE",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+        await fetchAllData();
+        showSuccess(
+          "Deleted",
+          `All accessibility features of type "${group.typeName}" have been deleted.`
         );
+      } catch (err: any) {
+        console.error(err);
+        showError(
+          "Delete Failed",
+          err.message || "Failed to delete accessibility features."
+        );
+      } finally {
+        handleCloseConfirm();
       }
-
-      await fetchAllData();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete accessibility features");
     }
-  };
+  );
+};
+
 
   // 🌟 Return UI
   return (
@@ -614,18 +718,24 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           setOpenOperatingHours={setOpenOperatingHours}
           setOpenSocialLinks={setOpenSocialLinks}
           setOpenAboutModal={setOpenAboutModal}
+          // ⭐ New props for popup
+          showSuccess={showSuccess}
+          showError={showError}
         />
 
         <Maincontent
           business={business}
           loading={loading}
           error={error}
-          // ⭐ custom handler
           setOpenVirtualTour={handleSetOpenVirtualTour}
-          setOpenAccessibilityFeaturePopup={handleSetOpenAccessibilityFeaturePopup}
+          setOpenAccessibilityFeaturePopup={
+            handleSetOpenAccessibilityFeaturePopup
+          }
           setOpenPropertyImagePopup={setOpenPropertyImagePopup}
           setOpenCustonSectionPopup={setOpenCustonSectionPopup}
-          setOpenAccessibilityMediaPopup={handleSetOpenAccessibilityMediaPopup}
+          setOpenAccessibilityMediaPopup={
+            handleSetOpenAccessibilityMediaPopup
+          }
           setOpenAccessibilityResourcesPopup={
             handleSetOpenAccessibilityResourcesPopup
           }
@@ -634,27 +744,24 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           setOpenPartnerCertificationsPopup={
             setOpenPartnerCertificationsPopup
           }
-          // ⭐ Virtual tour icon handlers
           onEditVirtualTour={handleEditVirtualTour}
           onDeleteVirtualTour={handleDeleteVirtualTour}
           onToggleVirtualTourActive={handleToggleVirtualTourActive}
-          // ⭐ Review delete handler
           onDeleteReview={handleDeleteReview}
-          // ⭐ Question delete handler
           onDeleteQuestion={handleDeleteQuestion}
-          // ⭐ Partner delete handler
           onDeletePartner={handleDeletePartner}
-          // ⭐ Additional resource handlers
           onDeleteAdditionalResource={handleDeleteAdditionalResource}
           onEditAdditionalResource={handleEditAdditionalResource}
-          // ⭐ Business media handlers
           onDeleteBusinessMedia={handleDeleteBusinessMedia}
           onEditBusinessMedia={handleEditBusinessMedia}
-          // ⭐ Accessibility Feature group handlers
-          onEditAccessibilityFeatureGroup={handleEditAccessibilityFeatureGroup}
+          onEditAccessibilityFeatureGroup={
+            handleEditAccessibilityFeatureGroup
+          }
           onDeleteAccessibilityFeatureGroup={
             handleDeleteAccessibilityFeatureGroup
           }
+          showSuccess={showSuccess}
+          showError={showError}
         />
       </div>
 
@@ -665,6 +772,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Details Updated",
+              "Business details updated successfully."
+            );
           }}
         />
       )}
@@ -676,6 +787,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Operating Hours Updated",
+              "Operating hours updated successfully."
+            );
           }}
         />
       )}
@@ -687,6 +802,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Social Links Updated",
+              "Social links updated successfully."
+            );
           }}
         />
       )}
@@ -698,6 +817,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "About Updated",
+              "Business about section updated successfully."
+            );
           }}
         />
       )}
@@ -707,7 +830,13 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           businessId={business.id}
           setOpenVirtualTour={handleSetOpenVirtualTour}
           tour={selectedVirtualTour}
-          onUpdated={fetchAllData} // UI refresh
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess(
+              "Virtual Tour Saved",
+              "Virtual tour has been saved successfully."
+            );
+          }}
         />
       )}
 
@@ -720,6 +849,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Accessibility Updated",
+              "Accessibility features updated successfully."
+            );
           }}
         />
       )}
@@ -731,6 +864,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Images Updated",
+              "Property images updated successfully."
+            );
           }}
         />
       )}
@@ -742,6 +879,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Custom Section Updated",
+              "Custom sections updated successfully."
+            );
           }}
         />
       )}
@@ -754,6 +895,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Media Updated",
+              "Accessibility media updated successfully."
+            );
           }}
         />
       )}
@@ -768,6 +913,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Resources Updated",
+              "Accessibility resources updated successfully."
+            );
           }}
         />
       )}
@@ -776,7 +925,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         <QuestionPopup
           businessId={business.id}
           setOpenQuestionPopup={setOpenQuestionPopup}
-          onUpdated={fetchAllData}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess("Question Added", "Question added successfully.");
+          }}
         />
       )}
 
@@ -784,7 +936,10 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         <WriteReviewsPopup
           businessId={business.id}
           setOpenWriteReviewsPopup={setOpenWriteReviewsPopup}
-          onUpdated={fetchAllData}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess("Review Added", "Review added successfully.");
+          }}
         />
       )}
 
@@ -797,8 +952,92 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onUpdated={async (updated) => {
             setBusiness(updated);
             await fetchAllData();
+            showSuccess(
+              "Partners Updated",
+              "Partner certifications updated successfully."
+            );
           }}
         />
+      )}
+
+      {/* 🌟 Global Confirm Popup */}
+{confirm.open && (
+  <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+      <h2 className="text-lg font-bold mb-2">{confirm.title}</h2>
+      <p className="mb-6">{confirm.message}</p>
+
+      <div className="flex gap-3 justify-center">
+        <button
+          className="px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 cursor-pointer"
+          onClick={handleCloseConfirm}
+        >
+          Cancel
+        </button>
+        <button
+          className="px-5 py-2 rounded-full bg-[#DD3820] text-white hover:bg-red-700 cursor-pointer"
+          onClick={async () => {
+            if (confirm.onConfirm) {
+              await confirm.onConfirm();
+            } else {
+              handleCloseConfirm();
+            }
+          }}
+        >
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
+      {/* 🌟 Global Success/Error Popup */}
+      {feedback.type && (
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div
+                className={`rounded-full p-3 ${
+                  feedback.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  {feedback.type === "success" ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14"
+                    />
+                  )}
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-bold mb-2">{feedback.title}</h2>
+            <p className="mb-4">{feedback.message}</p>
+            <button
+              className={`px-4 py-2 rounded-lg cursor-pointer text-white ${
+                feedback.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
+              }`}
+              onClick={handleCloseFeedback}
+            >
+              OK
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
