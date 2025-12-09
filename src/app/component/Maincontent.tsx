@@ -133,6 +133,22 @@ type BusinessScheduleItem = {
   modified_at: string;
 };
 
+type BusinessImage = {
+  id: string;
+  name: string;
+  description: string;
+  tags: string | null;
+  image_url: string | null;
+  business_id: string;
+  active: boolean;
+  created_by: string;
+  modified_by: string;
+  created_at: string;
+  modified_at: string;
+};
+
+
+
 type BusinessProfile = {
   id: string;
   name: string;
@@ -177,6 +193,7 @@ type BusinessProfile = {
 
 interface MaincontentProps {
   business: BusinessProfile | null;
+  businessImages: BusinessImage[];
   loading: boolean;
   error: string | null;
 
@@ -225,11 +242,14 @@ interface MaincontentProps {
     resource: AdditionalAccessibilityResource
   ) => void;
   onDeleteBusinessMedia?: (media: any) => void;
+
   onEditBusinessMedia?: (media: any) => void;
+  onDeleteBusinessImage?: (image: BusinessImage) => void;
 }
 
 export default function Maincontent({
   business,
+  businessImages,
   loading,
   error,
   setOpenVirtualTour,
@@ -252,6 +272,7 @@ export default function Maincontent({
   onEditAdditionalResource,
   onDeleteBusinessMedia,
   onEditBusinessMedia,
+  onDeleteBusinessImage,
 }: MaincontentProps) {
   // small helper to get a label from unknown objects
   const getLabel = (item: any): string =>
@@ -281,6 +302,12 @@ export default function Maincontent({
       ?.map((m: any) => m.image_url || m.media_url || m.url)
       .filter(Boolean) || [];
 
+  const currentBusinessImages = businessImages.filter(
+    (img) => img.business_id === business?.id && img.active
+  );
+
+
+  console.log(currentBusinessImages);
   // ---------- Loading / Error ----------
   if (loading) {
     return (
@@ -419,16 +446,16 @@ export default function Maincontent({
           </div>
         </div>
 
-        {propertyImages.length > 0 ? (
-          <div className="flex flex-wrap gap-3 items-center">
-            {propertyImages.map((src, index) => (
+        {currentBusinessImages.length > 0 ? (
+          <div className="flex flex-wrap gap-2 items-center">
+            {currentBusinessImages.map((image, index) => (
               <div
-                key={index}
-                className="relative box-content overflow-hidden w-1/4"
+                key={image.id || index}
+                className="relative box-content overflow-hidden w-[24%]"
               >
                 <img
-                  src={src}
-                  alt={`Property image ${index + 1}`}
+                  src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/business-images/${image.id}.png`}
+                  alt={image.name || `Property image ${index + 1}`}
                   className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
                 />
                 <div className="absolute top-2 right-2 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
@@ -446,6 +473,7 @@ export default function Maincontent({
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
+                    onClick={() => onDeleteBusinessImage?.(image)}
                   />
                 </div>
               </div>
@@ -462,93 +490,93 @@ export default function Maincontent({
       </div>
 
       {/* ---------- Accessibility Features ---------- */}
-<div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
-  <div className="flex justify-between items-center">
-    <h3 className="text-xl font-[600] mb-4">Accessibility Features</h3>
+      <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-[600] mb-4">Accessibility Features</h3>
 
-    <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setOpenAccessibilityFeaturePopup(true)}
-          className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
-        >
-          Add Accessibility Features
-        </button>
-      </div>
-    </div>
-  </div>
-
-  {business.accessibilityFeatures && business.accessibilityFeatures.length > 0 ? (
-    <div className="audios py-6 rounded-xl space-y-4">
-      {Object.values(
-        (business.accessibilityFeatures || []).reduce(
-          (acc: Record<string, AccessibilityFeatureGroup>, f: AccessibilityFeature) => {
-            const typeId = f.featureType?.id || "other";
-            const typeName = f.featureType?.name || "Other";
-            if (!acc[typeId]) {
-              acc[typeId] = { typeId, typeName, items: [] };
-            }
-            acc[typeId].items.push(f);
-            return acc;
-          },
-          {}
-        )
-      ).map((group) => (
-        <div key={group.typeId} className="box flex items-start gap-3">
-          {/* left icons */}
-          <div className="w-[120px]">
-            <div className="icon-box flex items-center gap-2 box-content w-full">
-              <img
-                src="/assets/images/green-tick.svg"
-                alt="green-tick"
-                className="w-5 h-5 cursor-pointer"
-              />
-              <img
-                src="/assets/images/red-delete.svg"
-                alt="red-delete"
-                className="w-5 h-5 cursor-pointer"
-                onClick={() => onDeleteAccessibilityFeatureGroup?.(group)}
-              />
+          <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setOpenAccessibilityFeaturePopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
+                Add Accessibility Features
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* type name: Physical, Sensory, ... */}
-          <div className="heading box-content w-[120px]">
-            <h3 className="text-md text-gray-700 font-semibold">
-              {group.typeName}
-            </h3>
-          </div>
+        {business.accessibilityFeatures && business.accessibilityFeatures.length > 0 ? (
+          <div className="audios py-6 rounded-xl space-y-4">
+            {Object.values(
+              (business.accessibilityFeatures || []).reduce(
+                (acc: Record<string, AccessibilityFeatureGroup>, f: AccessibilityFeature) => {
+                  const typeId = f.featureType?.id || "other";
+                  const typeName = f.featureType?.name || "Other";
+                  if (!acc[typeId]) {
+                    acc[typeId] = { typeId, typeName, items: [] };
+                  }
+                  acc[typeId].items.push(f);
+                  return acc;
+                },
+                {}
+              )
+            ).map((group) => (
+              <div key={group.typeId} className="box flex items-start gap-3">
+                {/* left icons */}
+                <div className="w-[120px]">
+                  <div className="icon-box flex items-center gap-2 box-content w-full">
+                    <img
+                      src="/assets/images/green-tick.svg"
+                      alt="green-tick"
+                      className="w-5 h-5 cursor-pointer"
+                    />
+                    <img
+                      src="/assets/images/red-delete.svg"
+                      alt="red-delete"
+                      className="w-5 h-5 cursor-pointer"
+                      onClick={() => onDeleteAccessibilityFeatureGroup?.(group)}
+                    />
+                  </div>
+                </div>
 
-          {/* selected features as pills */}
-          <div className="content flex flex-wrap items-start gap-2">
-            {group.items.map((f) => (
-              <div
-                key={f.id}
-                className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto"
-              >
-                <img
-                  src="/assets/images/tick.svg"
-                  alt="tick"
-                  className="w-5 h-5"
-                />
-                <h3 className="text-sm">
-                  {getAccessibilityLabel(f)}
-                </h3>
+                {/* type name: Physical, Sensory, ... */}
+                <div className="heading box-content w-[120px]">
+                  <h3 className="text-md text-gray-700 font-semibold">
+                    {group.typeName}
+                  </h3>
+                </div>
+
+                {/* selected features as pills */}
+                <div className="content flex flex-wrap items-start gap-2">
+                  {group.items.map((f) => (
+                    <div
+                      key={f.id}
+                      className="flex items-center gap-1 bg-[#F2F2F3] p-2 rounded-lg w-auto"
+                    >
+                      <img
+                        src="/assets/images/tick.svg"
+                        alt="tick"
+                        className="w-5 h-5"
+                      />
+                      <h3 className="text-sm">
+                        {getAccessibilityLabel(f)}
+                      </h3>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      ))}
-    </div>
-  ) : (
-    <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
-      <img src="/assets/images/blank.avif" alt="" />
-      <p className="mt-4 font-medium text-[#6d6d6d]">
-        No Features to show
-      </p>
-    </div>
-  )}
-</div>
+        ) : (
+          <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
+            <img src="/assets/images/blank.avif" alt="" />
+            <p className="mt-4 font-medium text-[#6d6d6d]">
+              No Features to show
+            </p>
+          </div>
+        )}
+      </div>
 
 
 
@@ -844,7 +872,7 @@ export default function Maincontent({
         </div>
 
         {business.additionalaccessibilityresources &&
-        business.additionalaccessibilityresources.length > 0 ? (
+          business.additionalaccessibilityresources.length > 0 ? (
           <div className="pr-2 flex flex-wrap justify-between gap-3">
             {business.additionalaccessibilityresources.map((r) => (
               <div
@@ -1000,7 +1028,7 @@ export default function Maincontent({
         </div>
 
         {business.businessCustomSections &&
-        business.businessCustomSections.length > 0 ? (
+          business.businessCustomSections.length > 0 ? (
           <ul className="space-y-2 text-sm text-gray-700">
             {business.businessCustomSections.map((s: any) => (
               <li key={s.id} className="border-b pb-2">

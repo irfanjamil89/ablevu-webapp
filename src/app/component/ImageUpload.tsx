@@ -25,9 +25,7 @@ export default function ImageUpload() {
         if (userData) {
             const parsedUser = JSON.parse(userData);
             setUser(parsedUser);
-            if (parsedUser.profile_image_url) {
-                setCurrentImage(parsedUser.profile_image_url + '?t=' + Date.now());
-            }
+            
         }
     }, []);
 
@@ -81,16 +79,11 @@ export default function ImageUpload() {
                 reader.onerror = reject;
             });
 
-            let folder = "user";
-            const role = user.user_role?.toLowerCase();
-
-            if (role === "admin") folder = "admin";
-            else if (role === "business") folder = "business";
-            else if (role === "contributor") folder = "contributor";
+            
 
             console.log("DATA SENDING TO API:", {
                 data: base64Data,
-                folder: folder,
+                folder: "user",
                 fileName: String(user.id)
             });
 
@@ -102,7 +95,7 @@ export default function ImageUpload() {
                 },
                 body: JSON.stringify({
                     data: base64Data,
-                    folder: folder,
+                    folder: "user",
                     fileName: String(user.id),
                 }),
             });
@@ -162,7 +155,7 @@ export default function ImageUpload() {
 
                 <img
                     key={currentImage}
-                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+                    src={currentImage}
                     alt="Profile Picture"
                     className="rounded-full w-30 h-30 object-cover"
                     onError={(e) => {

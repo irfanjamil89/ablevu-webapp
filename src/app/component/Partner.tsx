@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import Link from "next/link";
 
 // Interfaces
 interface LinkedType {
@@ -50,7 +51,7 @@ export default function Partner() {
       setLoading(true);
       const response = await fetch('https://staging-api.qtpack.co.uk/partner/list?page=1&limit=1000');
       const data: ApiResponse = await response.json();
-      
+
       // Filter only active partners
       const activePartners = data.items.filter(partner => partner.active);
       setPartners(activePartners);
@@ -85,21 +86,50 @@ export default function Partner() {
 
   return (
     <section className="bg-white py-16">
-      <div className="lg:w-5/6 lg:mx-auto bg-gray-100 rounded-2xl py-10 px-10 overflow-hidden">
-        <div className="flex animate-slide gap-10 items-center">
-          {/* Duplicate partners for seamless loop */}
-          {[...partners, ...partners].map((partner, index) => (
-            <img key={index}
-                src="/assets/images/brand-1-Photoroom.png"
-                alt="Logo 1"
-                className="h-12 object-cover"
-              />
-          ))}
-        </div>
-      
+      <div className="lg:w-5/6 lg:mx-auto bg-gray-100 rounded-2xl py-10 px-10 overflow-hidden flex items-center justify-center flex-wrap gap-2">
+
+        {/* First set of partners */}
+        {partners.map((partner, index) => (
+          <Link
+            key={`first-${index}`}
+            href={partner.web_url || '#'}
+            className=" w-[19%] "
+          >
+            <img
+              src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/partner/${partner.id}.png`}
+              alt={`${partner.name} logo`}
+              className=" object-contain w-[140px]"
+              onError={(e) => {
+                e.currentTarget.src = "/assets/images/HDS_RGB-2048x610.png";
+              }}
+            />
+          </Link>
+        ))}
+
       </div>
 
       <style jsx>{`
+        .slider-container {
+          overflow: hidden;
+          width: 100%;
+        }
+
+        .slider-track {
+          display: flex;
+          gap: 2.5rem;
+          width: fit-content;
+          animation: slide 30s linear infinite;
+        }
+
+        .slider-item {
+          width: 10rem;
+          height: 5rem;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         @keyframes slide {
           0% {
             transform: translateX(0);
@@ -109,15 +139,10 @@ export default function Partner() {
           }
         }
 
-        .animate-slide {
-          animation: slide 30s linear infinite;
-        }
-
-        .animate-slide:hover {
+        .slider-track:hover {
           animation-play-state: paused;
         }
       `}</style>
     </section>
   );
 }
-

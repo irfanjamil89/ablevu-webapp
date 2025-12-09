@@ -11,6 +11,8 @@ interface User {
   user_role: string;
   paid_contributor: boolean;
   email: string;
+  profile_picture_url?: string;
+
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -890,10 +892,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                 {user ? (
+               
                   <img
-                  src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
-                    alt=""
-                  />
+                    src={user.profile_picture_url}
+                    alt={user.first_name}
+                    className=""
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/assets/images/profile.png";
+                    }}
+                />
                 ) : (
                   <div>Loading...</div> // Show loading message until user data is fetched
                 )}

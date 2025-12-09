@@ -27,11 +27,28 @@ type AccessibilityFeatureGroup = {
   items: any[]; 
 };
 
+// ⭐ Business Image type
+type BusinessImage = {
+  id: string;
+  name: string;
+  description: string;
+  tags: string | null;
+  image_url: string | null;
+  business_id: string;
+  active: boolean;
+  created_by: string;
+  modified_by: string;
+  created_at: string;
+  modified_at: string;
+};
+
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
 
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+  // ⭐ NEW: Business images state
+  const [businessImages, setBusinessImages] = useState<BusinessImage[]>([]);
 
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +99,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     return localStorage.getItem("access_token");
   };
 
-  // 🔁 Common function: business profile + business types fetch karo
+  // 🔁 Common function: business profile + business types + business images fetch karo
   const fetchAllData = useCallback(async () => {
     try {
       setLoading(true);
@@ -132,6 +149,26 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
         : typeData.items || typeData.data || [];
 
       setBusinessTypes(types);
+
+      // 3️⃣ ⭐ NEW: Fetch business-images
+      const imagesRes = await fetch(
+        `${API_BASE_URL}/business-images/list`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!imagesRes.ok) throw new Error("Failed to fetch business images");
+
+      const imagesData = await imagesRes.json();
+      
+      // Extract data array from response
+      const images = imagesData.data || [];
+      setBusinessImages(images);
+
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Something went wrong");
@@ -470,6 +507,52 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
     }
   };
 
+  // ⭐ NEW: Business Image delete handler
+  const handleDeleteBusinessImage = async (image: BusinessImage) => {
+    if (!API_BASE_URL || !business) return;
+
+    const token = getToken();
+    if (!token) {
+      alert("No access token");
+      return;
+    }
+
+    const confirmDelete = window.confirm("Delete this business image?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/business-images/delete/${image.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        let msg = "Failed to delete business image";
+        try {
+          const body = await res.json();
+          if (body?.message) {
+            msg = Array.isArray(body.message)
+              ? body.message.join(", ")
+              : body.message;
+          }
+        } catch {
+          // ignore JSON parse error
+        }
+        throw new Error(msg);
+      }
+
+      await fetchAllData();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Failed to delete business image");
+    }
+  };
+
   // ---- Accessibility Media: Add button popup handler ----
   const handleSetOpenAccessibilityMediaPopup: React.Dispatch<
     React.SetStateAction<boolean>
@@ -618,6 +701,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
 
         <Maincontent
           business={business}
+          businessImages={businessImages} // ⭐ NEW: Pass business images
           loading={loading}
           error={error}
           // ⭐ custom handler
@@ -655,6 +739,8 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           onDeleteAccessibilityFeatureGroup={
             handleDeleteAccessibilityFeatureGroup
           }
+          // ⭐ NEW: Business image delete handler
+          onDeleteBusinessImage={handleDeleteBusinessImage}
         />
       </div>
 

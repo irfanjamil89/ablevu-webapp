@@ -36,6 +36,32 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  const totalPages = Math.ceil(feedbacks.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentFeedbacks = feedbacks.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   const fetchFeedback = async () => {
     setLoading(true);
     setError(null);
@@ -156,8 +182,45 @@ export default function Page() {
     return ft?.name || "Feedback";
   };
 
+
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
   return (
-    <div className="w-full h-screen overflow-hidden">
+    <div className="w-full h-screen ">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
           {/* Header Row */}
@@ -193,7 +256,7 @@ export default function Page() {
                         </td>
                       </tr>
                     ) : (
-                      feedbacks.map((fb) => (
+                      currentFeedbacks.map((fb) => (
                         <tr
                           key={fb.id}
                           className="border rounded-lg border-gray-200 justify-between flex flex-row items-center"
@@ -239,6 +302,62 @@ export default function Page() {
                     )}
                   </tbody>
                 </table>
+                {!loading && !error && currentFeedbacks.length > 0 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+                    {/* Left side: Entry counter */}
+                    <div className="text-sm text-gray-600">
+                      Showing {startIndex + 1} to {Math.min(endIndex, currentFeedbacks.length)} of {currentFeedbacks.length} entries
+                    </div>
+
+                    {/* Right side: Pagination buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
+                      >
+                        Previous
+                      </button>
+
+                      {/* Page Numbers */}
+                      <div className="flex items-center gap-1">
+                        {getPageNumbers().map((page, idx) => (
+                          <React.Fragment key={idx}>
+                            {page === '...' ? (
+                              <span className="px-3 py-1 text-gray-500">...</span>
+                            ) : (
+                              <button
+                                onClick={() => goToPage(page as number)}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                                  ? "bg-[#0519CE] text-white"
+                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                  }`}
+                              >
+                                {page}
+                              </button>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </div>
+
+                      {/* Next Button */}
+                      <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
