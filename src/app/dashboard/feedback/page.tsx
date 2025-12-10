@@ -87,34 +87,32 @@ export default function Page() {
         )
       );
 
-      // 3) Fetch each user once
-      const userMap: Record<string, UserInfo> = {};
-      await Promise.all(
-        userIds.map(async (id) => {
-          try {
-            const userRes = await axios.get(
-              `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${id}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${localStorage.getItem(
-                    "access_token"
-                  )}`,
-                },
+      // 3) Fetch each user once using /users/me/:id
+          const userMap: Record<string, UserInfo> = {};
+          await Promise.all(
+            userIds.map(async (id) => {
+              try {
+                const userRes = await axios.get(
+                  `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/me/${id}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                  }
+                );
+                const u = userRes.data;
+                userMap[id] = {
+                  id: u.id,
+                  first_name: u.first_name,
+                  last_name: u.last_name,
+                  email: u.email,
+                  profile_picture_url: u.profile_picture_url,
+                };
+              } catch (e) {
+                console.error("Error fetching user", id, e);
               }
-            );
-            const u = userRes.data;
-            userMap[id] = {
-              id: u.id,
-              first_name: u.first_name,
-              last_name: u.last_name,
-              email: u.email,
-              profile_picture_url: u.profile_picture_url,
-            };
-          } catch (e) {
-            console.error("Error fetching user", id, e);
-          }
-        })
-      );
+            })
+          );
 
       // 4) Attach user to each feedback
       const withUsers = data.map((fb) => ({

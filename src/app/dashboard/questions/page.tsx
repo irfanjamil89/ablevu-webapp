@@ -13,6 +13,7 @@ interface Question {
   modified_at?: string;
   modified_by?: string;
   show_name: boolean;
+  created_by_name: string;
 }
 
 export default function Page() {
@@ -140,7 +141,9 @@ export default function Page() {
                     />
                   </div>
                   <div className="text-gray-700 font-semibold">
-                    {q.show_name ? "Anonymous" : "Anonymous"}
+                    {q.show_name && q.created_by_name
+                    ? q.created_by_name
+                     : "Anonymous"}
                   </div>
                   <div className="text-gray-400 text-sm">
                     {new Date(q.created_at).toLocaleDateString()}

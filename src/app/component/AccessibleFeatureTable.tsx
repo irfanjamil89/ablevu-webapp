@@ -114,13 +114,16 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
 
     const confirmDeleteAction = async () => {
       if (!featureToDelete) return;
+      const token = localStorage.getItem("access_token");
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/delete/${featureToDelete.id}`,
+           `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/delete/${featureToDelete.id}`,
           {
             method: "DELETE",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              Authorization: `Bearer ${token}`,
+             "Content-Type": "application/json" },
           }
         );
 
