@@ -63,3 +63,9 @@ body {
 .pac-item:hover {
   background-color: #f3f4f6;
 }
+.leaflet-container a{
+  color: unset;
+}
+.leaflet-container a.redd{
+  color: white;
+}

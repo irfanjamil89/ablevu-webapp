@@ -214,16 +214,17 @@ export default function Mapsections() {
                         Coords: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
                       </p>
                       {business.phone_number && (
-                        <p className="text-sm text-gray-600">📞 {business.phone_number}</p>
+                        <p className="text-sm text-gray-600"> {business.phone_number}</p>
                       )}
                       {business.website && (
+                        
                         <a
-                          href={business.website}
+                          
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 text-sm hover:underline"
+                          className="bg-red-700 rounded cursor-pointer hover:bg-red-800 transition-all ease-in-out text-sm block text-center p-4 redd"
                         >
-                          Visit Website
+                          Claim Business
                         </a>
                       )}
                     </div>
