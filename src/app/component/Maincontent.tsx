@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 // ---- Types ----
 type VirtualTour = {
@@ -28,6 +28,9 @@ type AccessibilityFeature = {
   feature_name?: string;
   featureType?: { id: string; name: string };
   accessible_feature?: { id: string; title: string };
+
+  // (just in case backend direct id bhej dey)
+  accessible_feature_type_id?: string;
 };
 
 type AccessibilityFeatureGroup = {
@@ -148,6 +151,28 @@ type BusinessImage = {
 };
 
 
+// ⭐ feature-type list ka type (API: accessible-feature-types/list)
+type AccessibleFeatureTypeMaster = {
+  id: string;
+  name?: string;
+  title?: string;
+  label?: string;
+};
+
+// ⭐ accessible-feature master (API: accessible-feature/list)
+type AccessibleFeatureLinkedType = {
+  id: string;
+  accessible_feature_id: string;
+  accessible_feature_type_id: string;
+  active: boolean;
+};
+
+type AccessibleFeatureMaster = {
+  id: string;
+  title: string;
+  slug: string;
+  linkedTypes?: AccessibleFeatureLinkedType[];
+};
 
 type BusinessProfile = {
   id: string;
@@ -231,7 +256,7 @@ interface MaincontentProps {
   // ⭐ handler for review delete icon
   onDeleteReview?: (review: BusinessReview) => void;
 
-  // ⭐ NEW: handler for question delete icon
+  // ⭐ handler for question delete icon
   onDeleteQuestion?: (question: BusinessQuestion) => void;
 
   onDeletePartner?: (partner: any) => void;
@@ -245,6 +270,10 @@ interface MaincontentProps {
 
   onEditBusinessMedia?: (media: any) => void;
   onDeleteBusinessImage?: (image: BusinessImage) => void;
+
+  // ⭐⭐ Global feedback handlers from Page
+  showSuccess: (title: string, message: string, onClose?: () => void) => void;
+  showError: (title: string, message: string, onClose?: () => void) => void;
 }
 
 export default function Maincontent({
@@ -265,6 +294,7 @@ export default function Maincontent({
   setOpenPartnerCertificationsPopup,
   onEditVirtualTour,
   onDeleteVirtualTour,
+  onToggleVirtualTourActive,
   onDeleteReview,
   onDeleteQuestion,
   onDeletePartner,
@@ -273,7 +303,73 @@ export default function Maincontent({
   onDeleteBusinessMedia,
   onEditBusinessMedia,
   onDeleteBusinessImage,
+
+  showSuccess,
+  showError,
 }: MaincontentProps) {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  // ⭐ master lists
+  const [featureTypes, setFeatureTypes] =
+    useState<AccessibleFeatureTypeMaster[]>([]);
+  const [allFeatures, setAllFeatures] = useState<AccessibleFeatureMaster[]>([]);
+
+  // ⭐ feature types list load (accessible-feature-types/list)
+  useEffect(() => {
+    if (!API_BASE_URL) return;
+
+    const fetchTypes = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/accessible-feature-types/list?limit=100&page=1`
+        );
+        if (!res.ok) {
+          console.error("Failed to load feature types", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        let items: any[] = [];
+        if (Array.isArray(data)) items = data;
+        else if (Array.isArray(data.items)) items = data.items;
+        else if (Array.isArray(data.data)) items = data.data;
+
+        setFeatureTypes(items);
+      } catch (e) {
+        console.error("Error loading feature types", e);
+      }
+    };
+
+    fetchTypes();
+  }, [API_BASE_URL]);
+
+  // ⭐ accessible-feature master list load (accessible-feature/list)
+  useEffect(() => {
+    if (!API_BASE_URL) return;
+
+    const fetchFeatures = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/accessible-feature/list?limit=1000&page=1`
+        );
+        if (!res.ok) {
+          console.error("Failed to load accessible features", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        const items: AccessibleFeatureMaster[] = Array.isArray(data)
+          ? data
+          : data.items || data.data || [];
+        setAllFeatures(items);
+      } catch (e) {
+        console.error("Error loading accessible features", e);
+      }
+    };
+
+    fetchFeatures();
+  }, [API_BASE_URL]);
+
   // small helper to get a label from unknown objects
   const getLabel = (item: any): string =>
     item?.title ||
@@ -294,6 +390,22 @@ export default function Maincontent({
     f.optional_answer ||
     f.accessible_feature_id;
 
+  // ⭐ map: featureId -> featureTypeId (master list se)
+  const featureIdToTypeId: Record<string, string> = {};
+  allFeatures.forEach((f) => {
+    const activeLink = f.linkedTypes?.find((lt) => lt.active);
+    if (activeLink) {
+      featureIdToTypeId[f.id] = activeLink.accessible_feature_type_id;
+    }
+  });
+
+  // ⭐ helper: typeId se naam lao
+  const getTypeNameFromId = (typeId: string): string => {
+    if (!typeId || typeId === "other") return "Other";
+    const t = featureTypes.find((ft) => ft.id === typeId);
+    return t?.name || t?.title || t?.label || "Other";
+  };
+
   const activeTours: VirtualTour[] =
     business?.virtualTours?.filter((t) => t.active) || [];
 
@@ -308,6 +420,36 @@ export default function Maincontent({
 
 
   console.log(currentBusinessImages);
+  // ⭐ groups pre-compute (same typeId -> same group)
+  const featureGroups: AccessibilityFeatureGroup[] =
+    business?.accessibilityFeatures && business.accessibilityFeatures.length > 0
+      ? Object.values(
+          (business.accessibilityFeatures || []).reduce(
+            (
+              acc: Record<string, AccessibilityFeatureGroup>,
+              f: AccessibilityFeature
+            ) => {
+              // is business feature ka type id master list se
+              const typeId =
+                featureIdToTypeId[f.accessible_feature_id] ||
+                f.featureType?.id ||
+                f.accessible_feature_type_id ||
+                "other";
+
+              const safeTypeId = typeId || "other";
+              const typeName = getTypeNameFromId(safeTypeId);
+
+              if (!acc[safeTypeId]) {
+                acc[safeTypeId] = { typeId: safeTypeId, typeName, items: [] };
+              }
+              acc[safeTypeId].items.push(f);
+              return acc;
+            },
+            {}
+          )
+        )
+      : [];
+
   // ---------- Loading / Error ----------
   if (loading) {
     return (
@@ -506,23 +648,10 @@ export default function Maincontent({
           </div>
         </div>
 
-        {business.accessibilityFeatures && business.accessibilityFeatures.length > 0 ? (
+        {featureGroups.length > 0 ? (
           <div className="audios py-6 rounded-xl space-y-4">
-            {Object.values(
-              (business.accessibilityFeatures || []).reduce(
-                (acc: Record<string, AccessibilityFeatureGroup>, f: AccessibilityFeature) => {
-                  const typeId = f.featureType?.id || "other";
-                  const typeName = f.featureType?.name || "Other";
-                  if (!acc[typeId]) {
-                    acc[typeId] = { typeId, typeName, items: [] };
-                  }
-                  acc[typeId].items.push(f);
-                  return acc;
-                },
-                {}
-              )
-            ).map((group) => (
-              <div key={group.typeId} className="box flex items-start gap-3">
+            {featureGroups.map((group) => (
+              <div key={group.typeId} className="box flex items-center gap-3">
                 {/* left icons */}
                 <div className="w-[120px]">
                   <div className="icon-box flex items-center gap-2 box-content w-full">
@@ -535,13 +664,15 @@ export default function Maincontent({
                       src="/assets/images/red-delete.svg"
                       alt="red-delete"
                       className="w-5 h-5 cursor-pointer"
-                      onClick={() => onDeleteAccessibilityFeatureGroup?.(group)}
+                      onClick={() =>
+                        onDeleteAccessibilityFeatureGroup?.(group)
+                      }
                     />
                   </div>
                 </div>
 
                 {/* type name: Physical, Sensory, ... */}
-                <div className="heading box-content w-[120px]">
+                <div className="heading box-content ">
                   <h3 className="text-md text-gray-700 font-semibold">
                     {group.typeName}
                   </h3>
@@ -559,9 +690,7 @@ export default function Maincontent({
                         alt="tick"
                         className="w-5 h-5"
                       />
-                      <h3 className="text-sm">
-                        {getAccessibilityLabel(f)}
-                      </h3>
+                      <h3 className="text-sm">{getAccessibilityLabel(f)}</h3>
                     </div>
                   ))}
                 </div>
@@ -577,8 +706,6 @@ export default function Maincontent({
           </div>
         )}
       </div>
-
-
 
       {/* ---------- Partner Certifications / Programs ---------- */}
       <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
@@ -602,7 +729,6 @@ export default function Maincontent({
         {business.businessPartners && business.businessPartners.length > 0 ? (
           <div className="flex flex-wrap gap-3">
             {business.businessPartners.map((p: any) => {
-              // ⭐ support both shapes: direct fields or nested partner
               const partner = p.partner || p;
 
               const partnerName = partner.name || getLabel(partner);
@@ -684,7 +810,6 @@ export default function Maincontent({
       <div className="my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-[600] mb-4">Reviews</h3>
-
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <button
@@ -978,7 +1103,6 @@ export default function Maincontent({
 
                 <div className="heading flex justify-between items-start">
                   <h3 className="text-xl text-gray-800 text-start font-semibold mb-4 pr-2">
-                    {/* label ko priority di hai */}
                     {m.label || m.title || getLabel(m)}
                   </h3>
 
@@ -1032,12 +1156,10 @@ export default function Maincontent({
           <ul className="space-y-2 text-sm text-gray-700">
             {business.businessCustomSections.map((s: any) => (
               <li key={s.id} className="border-b pb-2">
-                {/* Title or label support */}
                 <div className="font-semibold">
                   {s.heading || s.title || s.label || getLabel(s)}
                 </div>
 
-                {/* Description support if later added */}
                 {(s.description || s.content) && (
                   <p className="text-gray-600 mt-1">
                     {s.description || s.content}
