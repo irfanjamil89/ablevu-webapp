@@ -67,6 +67,8 @@ type BusinessType = {
   name: string;
 };
 
+type UserRole = "Admin" | "Business" | "Contributor" | "User" | string;
+
 interface BusinessSidebarProps {
   business: BusinessProfile | null;
   businessTypes: BusinessType[];
@@ -81,13 +83,6 @@ interface BusinessSidebarProps {
 }
 
 // ---------- Status helper ----------
-const STATUS_OPTIONS = [
-  { label: "Draft", value: "draft" },
-  { label: "Pending Approved", value: "pending approved" },
-  { label: "Approved", value: "approved" },
-  { label: "Claimed", value: "claimed" },
-];
-
 const normalizeStatus = (status: string) =>
   status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
 
@@ -128,15 +123,73 @@ export default function BusinessSidebar({
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  // ⭐ current logged-in user role
+  const [userRole, setUserRole] = useState<UserRole | null>(null);
+
   const handleShare = async () => {
-  try {
-    const url = window.location.href;
-    await navigator.clipboard.writeText(url);
-    showSuccess("Link Copied", "Page URL copied to clipboard.");
-  } catch {
-    showError("Share Failed", "Unable to copy link.");
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      showSuccess("Link Copied", "Page URL copied to clipboard.");
+    } catch {
+      showError("Share Failed", "Unable to copy link.");
+    }
+  };
+
+  // ⭐ JWT se userId nikalna
+  function getUserIdFromToken(token: string | null): string | null {
+    if (!token) return null;
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const payload = JSON.parse(atob(base64));
+      return payload?.sub || payload?.id || null;
+    } catch (e) {
+      console.error("Failed to decode token", e);
+      return null;
+    }
   }
-};
+
+  // ⭐ User role fetch from /users/me/:id
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("access_token")
+            : null;
+
+        const userId = getUserIdFromToken(token);
+
+        if (!userId) {
+          console.error("User ID not found in token");
+          return;
+        }
+
+        const res = await fetch(
+          `http://localhost:3006/users/me/${userId}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data?.user_role) {
+          setUserRole(data.user_role);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user role", err);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
 
   // ✅ Sync status with business data whenever it changes
   useEffect(() => {
@@ -298,6 +351,51 @@ export default function BusinessSidebar({
       .sort((a, b) => getDayOrder(a.day) - getDayOrder(b.day));
   }, [business?.businessSchedule]);
 
+  // ⭐ role-based status options
+  const statusOptions = useMemo(() => {
+    if (!userRole) return [];
+
+    const normalizedStatus = normalizeStatus(status);
+
+    // base options with backend values
+    const base = [
+      { label: "Draft", value: "draft" },
+      {
+        // Admin ko "Pending Approved", others ko "Approval Request"
+        label: userRole === "Admin" ? "Pending Approved" : "Approval Request",
+        value: "pending approved",
+      },
+      { label: "Approved", value: "approved" },
+      { label: "Claimed", value: "claimed" },
+    ];
+
+    if (userRole === "Admin") {
+      // Admin → 4 options
+      return base;
+    }
+
+    if (userRole === "Business" || userRole === "Contributor") {
+      // ✅ agar abhi tak approve nahi hua
+      if (normalizedStatus !== "approved") {
+        // Business / Contributor → sirf Draft + Approval Request choose kar sakta
+        return base.filter((opt) =>
+          ["draft", "pending approved"].includes(opt.value)
+        );
+      }
+
+      // ✅ agar Admin ne approve kar diya ho
+      // Business Owner ko dropdown me sirf Approved dikhana (read-only feel)
+      return [{ label: "Approved", value: "approved" }];
+    }
+
+    // User ya koi aur → status mat dikhayo
+    return [];
+  }, [userRole, status]);
+
+  const isStatusReadOnly =
+    (userRole === "Business" || userRole === "Contributor") &&
+    normalizeStatus(status) === "approved";
+
   if (loading) {
     return (
       <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
@@ -335,15 +433,15 @@ export default function BusinessSidebar({
 
         <button
           className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center"
-          onClick={handleShare}   
-          >
+          onClick={handleShare}
+        >
           <img
             src="/assets/images/share.png"
             alt="Share"
             className="w-5 h-5 mr-3"
           />
           Share
-          </button>
+        </button>
       </div>
 
       {/* Logo */}
@@ -358,8 +456,6 @@ export default function BusinessSidebar({
             "Business logo has been updated successfully."
           );
         }}
-        // Agar BusinessImageUpload mein error callback add karo:
-        // onError={(msg) => showError("Logo Update Failed", msg)}
       />
 
       {/* Info */}
@@ -548,29 +644,31 @@ export default function BusinessSidebar({
         <p>{business.description || "No description added yet."}</p>
       </div>
 
-      {/* Status Dropdown */}
-      <div className="pb-4">
-        <select
-          className="w-full border border-gray-300 rounded-full px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
-          value={status}
-          disabled={statusSaving}
-          onChange={(e) => handleStatusChange(e.target.value)}
-        >
-          {STATUS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+      {/* Status Dropdown – sirf jab role allowed ho */}
+      {statusOptions.length > 0 && (
+        <div className="pb-4">
+          <select
+            className="w-full border border-gray-300 rounded-full px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
+            value={status}
+            disabled={statusSaving || isStatusReadOnly}
+            onChange={(e) => handleStatusChange(e.target.value)}
+          >
+            {statusOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
 
-        {statusSaving && (
-          <p className="text-xs text-gray-500 mt-1">Saving...</p>
-        )}
+          {statusSaving && (
+            <p className="text-xs text-gray-500 mt-1">Saving...</p>
+          )}
 
-        {statusError && (
-          <p className="text-red-500 text-sm mt-1">{statusError}</p>
-        )}
-      </div>
+          {statusError && (
+            <p className="text-red-500 text-sm mt-1">{statusError}</p>
+          )}
+        </div>
+      )}
 
       {/* Delete Business button */}
       <div className="mt-3">
