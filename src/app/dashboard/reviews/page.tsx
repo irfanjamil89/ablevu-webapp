@@ -20,64 +20,115 @@ export default function Page() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      setLoading(true);
-      setError(null);
 
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) throw new Error("No access token found");
+  const decodeJWT = (token: string) => {
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch {
+      return null;
+    }
+  };
 
-        const res = await fetch(
-          "https://staging-api.qtpack.co.uk/business-reviews/list",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+  const fetchReviews = async () => {
+    setLoading(true);
+    setError(null);
 
-        if (!res.ok) {
-          throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("No access token found");
+      const payload = decodeJWT(token);
+      const uid = payload?.sub;
+      setUserId(uid);
+
+      const userRes = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
+      );
 
-        const json = await res.json();
-        console.log("API Response:", json); // Log full response
+      const userData = await userRes.json();
+      setUserRole(userData.user_role);
 
-        // Ensure reviews is always an array
-        if (Array.isArray(json.data)) {
-          setReviews(json.data);
-        } else if (Array.isArray(json)) {
-          setReviews(json);
-        } else {
-          setReviews([]);
-          console.warn("Reviews is not an array:", json);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business-reviews/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      } catch (err: any) {
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
+      );
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch: ${res.status} ${res.statusText}`);
       }
-    };
 
+      const json = await res.json();
+      let list = Array.isArray(json.data) ? json.data : [];
+      if (userData.user_role !== "Admin") {
+        list = list.filter((r: any) => r.created_by === uid);
+      }
+
+      // Ensure reviews is always an array
+      setReviews(list);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchReviews();
   }, []);
+
+  const approveReview = async (reviewId: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("No token");
+
+      const res = await fetch(
+       `${process.env.NEXT_PUBLIC_API_BASE_URL}business-reviews/update/${reviewId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ approved: true }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to approve review");
+
+
+      await fetchReviews();
+
+      setOpenSuccessModal(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   if (loading)
     return (
       <div className="flex justify-center w-full items-center h-[400px]">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+      </div>
     );
 
 
   return (
     <div className="w-full min-h-screen bg-white px-6 py-5 space-y-4">
       <h1 className="text-2xl font-semibold text-gray-900 mb-6">All Reviews</h1>
-        <p className="text-red-500 text-lg">{error}</p>
+      <p className="text-red-500 text-lg">{error}</p>
 
 
       {Array.isArray(reviews) && reviews.length > 0 ? (
@@ -102,7 +153,7 @@ export default function Page() {
                 </div>
               </div>
 
-              
+
             </div>
 
             {/* Question & Feature */}
@@ -139,18 +190,60 @@ export default function Page() {
               >
                 Private
               </label>
-              <button
-                type="button"
-                className="px-7 py-3 text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700"
-              >
-                Approve & Post
-              </button>
+              {userRole === "Admin" && (
+                <>
+                  {!review.approved ? (
+                    <button
+                      type="button"
+                      onClick={() => approveReview(review.id)}
+                      className="px-7 py-3 text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700"
+                    >
+                      Approve & Post
+                    </button>
+                  ) : (
+                    <span className="px-5 py-3 text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full ">
+                      Approved
+                    </span>
+                  )}
+                </>
+              )}
             </div>
           </section>
         ))
       ) : (
         <p className="text-gray-500">No reviews found.</p>
       )}
+      {openSuccessModal && (
+  <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+
+      <div className="flex justify-center mb-4">
+        <div className="bg-[#0519CE] rounded-full p-3">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-8 w-8 text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      </div>
+
+      <h2 className="text-lg font-bold mb-2">Approved Successfully!</h2>
+      <p className="mb-4">The review has been approved & posted.</p>
+
+      <button
+        className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
+        onClick={() => setOpenSuccessModal(false)}
+      >
+        OK
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }

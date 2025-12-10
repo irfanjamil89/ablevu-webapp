@@ -123,7 +123,6 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
         business_id: businessId,
         review_type_id: selectedReviewTypeId,
         description: description.trim(),
-        approved: true,
         active: true,
       };
 
