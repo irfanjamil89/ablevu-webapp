@@ -34,6 +34,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
   const [error, setError] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [Success, setSuccess] = useState("");
   
   // Image states
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -233,7 +234,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
               console.error("Image upload failed:", imageResult);
               setError(`Image upload failed: ${imageResult.message || "Unknown error"}`);
             } else {
-              console.log("Image uploaded successfully!");
+              setSuccess("Image uploaded successfully!");
             }
           } catch (imgErr: any) {
             console.error("Image upload error:", imgErr);
@@ -241,8 +242,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
           }
         }
 
-        if (onSuccess) onSuccess();
-        closeModal();
+       
       } else {
         console.error(result);
         setError("Failed to update city");
@@ -267,7 +267,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
     <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50 overflow-auto">
       <div className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[550px] p-8 relative">
         {updating && (
-          <div className="absolute inset-0 bg-transparent bg-opacity-40 flex items-center justify-center z-50 rounded-3xl">
+          <div className="absolute inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 rounded-3xl">
             <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Loading" />
           </div>
         )}
@@ -275,6 +275,8 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
         <h2 className="text-lg font-bold text-gray-700 mb-4 pt-6">Update Accessibility City</h2>
         <form className="space-y-6" onSubmit={handleUpdate}>
           {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
+          {Success && <div className="text-green-500 text-sm bg-green-50 p-3 rounded-lg">{Success}</div>}
+
 
           {/* Upload Section */}
           <div>
