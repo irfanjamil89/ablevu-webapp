@@ -65,7 +65,7 @@ export default function Cta() {
 
       {/* Add Business Modal */}
       {openAddBusinessModal && (
-        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
+        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal}/>
       )}
 
       {openLoginModal && (

@@ -45,15 +45,15 @@ export default function Citiesslider() {
   }, []);
 
   const fetchCities = async () => {
-    
+
     try {
       setLoading(true);
       const response = await fetch('https://staging-api.qtpack.co.uk/accessible-city/list');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch cities');
       }
-      
+
       const data = await response.json();
       setCities(data.items || []);
     } catch (err) {
@@ -80,7 +80,7 @@ export default function Citiesslider() {
     const handleResize = () => {
       setVisibleCards(getVisibleCards());
     };
-    
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -98,7 +98,7 @@ export default function Citiesslider() {
   // Auto-slide effect (optional)
   useEffect(() => {
     if (cities.length <= visibleCards) return;
-    
+
     const interval = setInterval(() => {
       setCurrentIndex(prev => {
         if (prev >= maxIndex) return 0;
@@ -120,7 +120,7 @@ export default function Citiesslider() {
           Finding Accessibility-Transparent Cities and Businesses
         </p>
       </div>
-      
+
       {/* RIGHT SIDE */}
       <div className="relative w-full lg:w-3/4 flex-2">
         {loading ? (
@@ -135,7 +135,7 @@ export default function Citiesslider() {
           <div className="relative">
             {/* SLIDER WRAPPER */}
             <div className="overflow-hidden pb-4" ref={sliderRef}>
-              <div 
+              <div
                 className="flex gap-4 transition-transform duration-500 ease-in-out"
                 style={{
                   transform: `translateX(-${currentIndex * (100 / visibleCards)}%)`
@@ -151,11 +151,14 @@ export default function Citiesslider() {
                     }}
                   >
                     <img
-                      src={city.picture_url || DEFAULT_IMAGE}
+                      src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/af-city/${city?.id}.png`}
                       alt={city.city_name}
                       className="rounded-t-[20px] w-full h-40 object-cover"
-                      
+                      onError={(e) => {
+                        e.currentTarget.src = DEFAULT_IMAGE;
+                      }}
                     />
+
                     <div className="p-4 text-center">
                       <h3 className="font-semibold text-lg text-gray-900">{city.city_name}</h3>
                       <p className="text-sm text-gray-600">{city.businessCount} Businesses</p>
@@ -176,7 +179,7 @@ export default function Citiesslider() {
                 >
                   <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
-                
+
                 <button
                   onClick={handleNext}
                   disabled={currentIndex >= maxIndex}
@@ -195,11 +198,10 @@ export default function Citiesslider() {
                   <button
                     key={idx}
                     onClick={() => setCurrentIndex(idx)}
-                    className={`w-2 h-2 rounded-full transition-all ${
-                      idx === currentIndex 
-                        ? 'bg-gray-700 w-6' 
-                        : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
+                    className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex
+                      ? 'bg-gray-700 w-6'
+                      : 'bg-gray-300 hover:bg-gray-400'
+                      }`}
                     aria-label={`Go to slide ${idx + 1}`}
                   />
                 ))}

@@ -12,12 +12,21 @@ interface User {
   paid_contributor: boolean;
   email: string;
   profile_picture_url?: string;
-
 }
 
+// Helper function to decode JWT and check expiration
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const expiry = payload.exp * 1000; // Convert to milliseconds
+    return Date.now() >= expiry;
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return true; // Treat invalid tokens as expired
+  }
+};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-
-
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,17 +35,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
 
-
-
+  const handleLogout = () => {
+    setLoading(true);
+    localStorage.removeItem("access_token");
+    sessionStorage.clear();
+    router.push("/");
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    console.log('Token from localStorage:', token); // Log the token value
+    console.log('Token from localStorage:', token);
 
     if (!token) {
       setError('Please log in to continue.');
       setLoading(false);
       router.push('/');
+      return;
+    }
+
+    // Check if token is expired before making the API call
+    if (isTokenExpired(token)) {
+      console.log('Token expired, logging out...');
+      handleLogout();
       return;
     }
 
@@ -47,9 +67,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         'Authorization': `Bearer ${token}`,
       }
     })
-      .then(response => response.json())
+      .then(response => {
+        // Check if response indicates token expiration (401 Unauthorized)
+        if (response.status === 401) {
+          console.log('Token invalid or expired (401), logging out...');
+          handleLogout();
+          return null;
+        }
+        return response.json();
+      })
       .then(data => {
-        // console.log('API response:', data);
+        if (!data) return; // Skip if we got a 401
 
         setUser(data);
         saveUserToSession(data);
@@ -68,45 +96,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           return;
         }
 
-        setLoading(false); // Set loading to false after fetch is done
+        setLoading(false);
       })
       .catch(error => {
         console.error('Error fetching data:', error);
         setError('Failed to fetch user data.');
         setLoading(false);
       });
-  }, []);
 
+    // Set up periodic token check (every minute)
+    const tokenCheckInterval = setInterval(() => {
+      const currentToken = localStorage.getItem('access_token');
+      if (!currentToken || isTokenExpired(currentToken)) {
+        console.log('Token expired during session, logging out...');
+        clearInterval(tokenCheckInterval);
+        handleLogout();
+      }
+    }, 60000); // Check every 60 seconds
+
+    // Cleanup interval on unmount
+    return () => clearInterval(tokenCheckInterval);
+  }, []);
 
   const saveUserToSession = (user: User) => {
     sessionStorage.setItem('user', JSON.stringify(user));
   };
 
-
-
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
- const handleLogout = () => {
-    setLoading(true);
-    localStorage.removeItem("access_token");
-    sessionStorage.clear(); // Clears all session storage data
-    router.push("/");
-};
-
-
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+      </div>
+    );
   }
+
   if (error) {
-    return <div className="flex justify-center items-center h-screen">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+      </div>
+    );
   }
-
-
 
 
   return (
@@ -250,8 +283,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           ? "bg-blue-700 text-white font-semibold"
                           : "text-gray-700 hover:bg-gray-100"
                           }`}>
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c4.418 0 8 3.582 8 8s-3.582 8-8 8-8-3.582-8-8 3.582-8 8-8zm0 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-4 4a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2h-1.5l1.2 4.8a1 1 0 0 1-1.94.485L12 14.236l-.765 3.049a1 1 0 0 1-1.94-.485L10.5 12H9a1 1 0 0 1-1-1z" />
                         </svg>
                         Features type
                       </Link>
@@ -261,8 +294,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           ? "bg-blue-700 text-white font-semibold"
                           : "text-gray-700 hover:bg-gray-100"
                           }`}>
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-7 9H5V9h8v2zm4-4H5V5h12v2z" />
+                          <path d="M19 14.5l-1.41-1.41-2.09 2.09-1.5-1.5-1.41 1.41 2.91 2.91z" />
                         </svg>
                         Review Type
                       </Link>
@@ -285,10 +319,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       : "text-gray-700 hover:bg-gray-100"
                       }`}>
 
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {/* <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="10" />
                       <path d="M12 6v12M6 12h12" />
                       <circle cx="12" cy="12" r="3" />
+                    </svg> */}
+
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c4.418 0 8 3.582 8 8s-3.582 8-8 8-8-3.582-8-8 3.582-8 8-8zm0 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-4 4a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2h-1.5l1.2 4.8a1 1 0 0 1-1.94.485L12 14.236l-.765 3.049a1 1 0 0 1-1.94-.485L10.5 12H9a1 1 0 0 1-1-1z" />
                     </svg>
 
 
@@ -892,15 +930,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                 {user ? (
-               
+
                   <img
                     src={user.profile_picture_url}
                     alt={user.first_name}
                     className=""
                     onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/assets/images/profile.png";
+                      (e.target as HTMLImageElement).src = "/assets/images/profile.png";
                     }}
-                />
+                  />
                 ) : (
                   <div>Loading...</div> // Show loading message until user data is fetched
                 )}

@@ -23,6 +23,7 @@ interface Business {
   email: string | null;
   logo_url: string | null;
   marker_image_url: string | null;
+  business_status: string | null;
 }
 
 interface ApiResponse {
@@ -38,13 +39,11 @@ const validateCoordinates = (lat: any, lng: any): { lat: number; lng: number } |
   const latitude = typeof lat === 'string' ? parseFloat(lat) : lat;
   const longitude = typeof lng === 'string' ? parseFloat(lng) : lng;
   
-  // Check if coordinates are valid numbers
   if (isNaN(latitude) || isNaN(longitude)) {
     console.warn('Invalid coordinates - not numbers:', { lat, lng });
     return null;
   }
   
-  // Check if coordinates are in valid range
   if (latitude < -90 || latitude > 90) {
     console.warn('Invalid latitude (should be -90 to 90):', latitude);
     return null;
@@ -55,11 +54,8 @@ const validateCoordinates = (lat: any, lng: any): { lat: number; lng: number } |
     return null;
   }
   
-  // Check if coordinates might be swapped (common issue)
-  // If latitude is in longitude range but longitude is in latitude range, they might be swapped
   if (Math.abs(latitude) > 90 && Math.abs(longitude) <= 90) {
     console.warn('Coordinates might be swapped!', { lat: latitude, lng: longitude });
-    // Optionally auto-swap them
     return { lat: longitude, lng: latitude };
   }
   
@@ -76,21 +72,39 @@ export default function Mapsections() {
   const [MapComponent, setMapComponent] = useState<any>(null);
   const [shouldFitBounds, setShouldFitBounds] = useState<boolean>(true);
 
-  // Dynamically load the map component only on client side
   useEffect(() => {
     const loadMap = async () => {
       if (typeof window !== 'undefined') {
         const L = (await import('leaflet')).default;
         const { MapContainer, TileLayer, Marker, Popup, useMap } = await import('react-leaflet');
         
-        // Fix marker icons
+        // Fix default marker icons
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
           iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
         });
-        
+
+        // Create custom red lock icon for "approved" status
+        const approvedIcon = new L.Icon({
+          iconUrl: 'data:image/svg+xml;base64,' + btoa(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+              <path fill="#DC2626" stroke="#991B1B" stroke-width="2" d="M16 0C10.5 0 6 4.5 6 10v4H4c-1.1 0-2 0.9-2 2v20c0 1.1 0.9 2 2 2h24c1.1 0 2-0.9 2-2V16c0-1.1-0.9-2-2-2h-2v-4c0-5.5-4.5-10-10-10zm0 4c3.3 0 6 2.7 6 6v4H10v-4c0-3.3 2.7-6 6-6zm0 16c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3z"/>
+              <path fill="none" stroke="#991B1B" stroke-width="1.5" d="M16 40L16 38"/>
+            </svg>
+          `),
+          iconSize: [32, 42],
+          iconAnchor: [16, 42],
+          popupAnchor: [0, -42],
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+          shadowSize: [41, 41],
+          shadowAnchor: [12, 41]
+        });
+
+        // Default blue marker for "claimed" status
+        const claimedIcon = new L.Icon.Default();
+
         console.log('Map library loaded successfully');
 
         // Create Map Controller component
@@ -109,7 +123,6 @@ export default function Mapsections() {
           
           React.useEffect(() => {
             if (shouldFitBounds && businesses.length > 0) {
-              // Calculate bounds to fit all markers
               const validBusinesses = businesses.filter(b => {
                 const coords = validateCoordinates(b.latitude, b.longitude);
                 return coords !== null;
@@ -137,6 +150,17 @@ export default function Mapsections() {
           
           return null;
         }
+
+        // Helper function to get marker icon based on business status
+        const getMarkerIcon = (status: string | null) => {
+          const normalizedStatus = status?.toLowerCase();
+          
+          if (normalizedStatus === 'approved') {
+            return approvedIcon;
+          }
+          // Default to claimed icon for "claimed" status or any other status
+          return claimedIcon;
+        };
 
         // Create the map component
         const Map = ({ businesses, center, zoom, shouldFitBounds }: any) => (
@@ -171,10 +195,20 @@ export default function Mapsections() {
                 <Marker
                   key={business.id}
                   position={[coords.lat, coords.lng]}
+                  icon={getMarkerIcon(business.business_status)}
                 >
                   <Popup>
                     <div className="p-2">
                       <h3 className="font-bold text-base mb-1">{business.name}</h3>
+                      {business.business_status && (
+                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${
+                          business.business_status.toLowerCase() === 'approved' 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {business.business_status.toUpperCase()}
+                        </span>
+                      )}
                       <p className="text-sm text-gray-600 mb-2">{business.address}</p>
                       <p className="text-xs text-gray-400 mb-2">
                         Coords: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
@@ -225,24 +259,21 @@ export default function Mapsections() {
 
       const result: ApiResponse = await response.json();
       
-      // Debug: Log ALL business coordinates
+      // Debug: Log business status information
       if (result.data && result.data.length > 0) {
         console.log('=== API Response Debug ===');
         console.log('Total businesses:', result.data.length);
         result.data.forEach((business, index) => {
           console.log(`Business ${index + 1}: ${business.name}`);
+          console.log('  Status:', business.business_status);
           console.log('  Latitude:', business.latitude, `(type: ${typeof business.latitude})`);
           console.log('  Longitude:', business.longitude, `(type: ${typeof business.longitude})`);
-          console.log('  Address:', business.address);
         });
         console.log('======================');
       }
       
       setBusinesses(result.data || []);
-      
-      // Enable fit bounds for initial load
       setShouldFitBounds(true);
-
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -321,7 +352,7 @@ export default function Mapsections() {
           </div>
 
           {/* Location List */}
-          <div className="space-y-4 overflow-y-auto max-h-[360px] pr-2">
+          <div className="space-y-4 overflow-y-auto pr-2">
             {loading ? (
               <p className="text-center text-gray-500 py-4">Loading businesses...</p>
             ) : error ? (
@@ -342,7 +373,18 @@ export default function Mapsections() {
                     className="rounded-lg object-cover w-20 h-16"
                   />
                   <div className="pe-2 flex-1">
-                    <h3 className="font-semibold text-lg">{business.name}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-lg">{business.name}</h3>
+                      {business.business_status && (
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
+                          business.business_status.toLowerCase() === 'approved' 
+                            ? 'bg-red-100 text-red-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {business.business_status}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-start">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
