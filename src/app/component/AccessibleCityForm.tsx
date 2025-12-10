@@ -18,6 +18,9 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [cityId, setCityId] = useState<string>("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   const radius = 150; 
 
@@ -92,6 +95,51 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
 
     setFilteredBusinesses(filtered);
   }, [latitude, longitude, businessList]);
+
+  // Handle image selection and preview
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ["image/svg+xml", "image/png", "image/jpeg", "image/jpg", "image/gif"];
+      if (!validTypes.includes(file.type)) {
+        setError("Please select a valid image file (SVG, PNG, JPG, or GIF)");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size should be less than 5MB");
+        return;
+      }
+
+      setSelectedImage(file);
+      setError("");
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Remove selected image
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview("");
+  };
+
+  // Convert image to base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cityName || !latitude || !longitude || selectedBusinesses.length === 0) {
@@ -107,9 +155,10 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
       business_Ids: selectedBusinesses.map((b) => b.id),
     };
 
-
     try {
       const token = localStorage.getItem("access_token");
+      
+      // STEP 1: CREATE CITY FIRST
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-city/create`, {
         method: "POST",
         headers: {
@@ -122,12 +171,49 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
       const result = await res.json();
 
       if (res.ok) {
+        // GET CITY ID FROM RESPONSE
+        const createdCityId = result.id;
+        setCityId(createdCityId);
+
+        console.log("City created with ID:", createdCityId);
+
+        // STEP 2: UPLOAD IMAGE IF SELECTED
+        if (selectedImage && createdCityId) {
+          console.log("Uploading image for city ID:", createdCityId);
+
+          const base64Data = await convertToBase64(selectedImage);
+
+          const imagePayload = {
+            data: base64Data,
+            folder: "city",
+            fileName: createdCityId,
+          };
+
+          const imageRes = await fetch("https://staging-api.qtpack.co.uk/images/upload-base64", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(imagePayload),
+          });
+
+          const imageResult = await imageRes.json();
+          console.log("Image upload response:", imageResult);
+
+          if (!imageRes.ok) {
+            console.error("Image upload failed:", imageResult);
+          }
+        }
+
         setSuccess("Accessible city created successfully!");
         setError("");
         setSelectedBusinesses([]);
         setCityName("");
         setLatitude(null);
         setLongitude(null);
+        setSelectedImage(null);
+        setImagePreview("");
         if (onSuccess) onSuccess();
       } else {
         const errorMsg = "Failed to create Accessible City";
@@ -135,18 +221,11 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
         setSuccess(null);
       }
     } catch (err) {
+      console.error("Error:", err);
       setError("Error creating Accessible City");
       setSuccess(null);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[400px]">
-        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-      </div>
-    );
-  }
 
   return (
     <>
@@ -172,14 +251,53 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
             <div>
               <label className="block text-md font-medium text-gray-700 mb-2">Upload Picture</label>
               <div className="relative">
-                <input type="file" accept=".svg,.png,.jpg,.gif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
-                  <img src="/assets/images/upload-icon.avif" alt="upload-icon" className="w-10 h-10" />
-                  <p className="text-[#0519CE] font-semibold text-sm">
-                    Click to upload <span className="text-gray-500 text-xs">or drag and drop</span>
-                  </p>
-                  <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
-                </div>
+                {!imagePreview ? (
+                  <>
+                    <input 
+                      type="file" 
+                      accept=".svg,.png,.jpg,.gif" 
+                      onChange={handleImageSelect}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                    />
+                    <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
+                      <img src="/assets/images/upload-icon.avif" alt="upload-icon" className="w-10 h-10" />
+                      <p className="text-[#0519CE] font-semibold text-sm">
+                        Click to upload <span className="text-gray-500 text-xs">or drag and drop</span>
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="relative border border-gray-200 rounded-lg p-4">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-40 object-contain rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                    <p className="text-sm text-gray-600 mt-2 text-center">
+                      {selectedImage?.name}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
             <div>

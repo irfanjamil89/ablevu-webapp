@@ -34,6 +34,12 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
   const [error, setError] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [Success, setSuccess] = useState("");
+  
+  // Image states
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [currentImage, setCurrentImage] = useState<string>(selectedCity?.picture_url || "");
 
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -101,7 +107,6 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
     });
   }, [inputRef.current]);
 
-  // Filter businesses within radius
   useEffect(() => {
     if (latitude === null || longitude === null || businessList.length === 0) {
       setFilteredBusinesses([]);
@@ -116,6 +121,50 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
 
     setFilteredBusinesses(filtered);
   }, [latitude, longitude, businessList]);
+
+  // Handle image selection and preview
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ["image/svg+xml", "image/png", "image/jpeg", "image/jpg", "image/gif"];
+      if (!validTypes.includes(file.type)) {
+        setError("Please select a valid image file (SVG, PNG, JPG, or GIF)");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size should be less than 5MB");
+        return;
+      }
+
+      setSelectedImage(file);
+      setError(null);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Remove selected image
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview("");
+  };
+
+  // Convert image to base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Update city
   const handleUpdate = async (e: React.FormEvent) => {
@@ -134,6 +183,8 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
 
     try {
       const token = localStorage.getItem("access_token");
+      
+      // STEP 1: Update city details
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-city/update/${selectedCity?.id}`, {
         method: "PATCH",
         headers: {
@@ -142,15 +193,63 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
         },
         body: JSON.stringify(payload),
       });
+      
       const result = await res.json();
+      
       if (res.ok) {
-        if (onSuccess) onSuccess();
-        closeModal();
+        // STEP 2: Upload new image if selected
+        if (selectedImage && selectedCity?.id) {
+          console.log("Uploading new image for city ID:", selectedCity.id);
+
+          try {
+            const base64Data = await convertToBase64(selectedImage);
+
+            const imagePayload = {
+              data: base64Data,
+              folder: "af-city",
+              fileName: selectedCity.id,
+            };
+
+            console.log("Image upload payload:", {
+              folder: imagePayload.folder,
+              fileName: imagePayload.fileName,
+              dataLength: base64Data.length
+            });
+
+            const imageRes = await fetch("https://staging-api.qtpack.co.uk/images/upload-base64", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(imagePayload),
+            });
+
+            console.log("Image upload status:", imageRes.status);
+            
+            const imageResult = await imageRes.json();
+            console.log("Image upload response:", imageResult);
+
+            if (!imageRes.ok) {
+              console.error("Image upload failed:", imageResult);
+              setError(`Image upload failed: ${imageResult.message || "Unknown error"}`);
+            } else {
+              setSuccess("Image uploaded successfully!");
+            }
+          } catch (imgErr: any) {
+            console.error("Image upload error:", imgErr);
+            setError(`Image upload error: ${imgErr.message}`);
+          }
+        }
+
+       
       } else {
         console.error(result);
+        setError("Failed to update city");
       }
     } catch (err) {
       console.error(err);
+      setError("Error updating city");
     } finally {
       setUpdating(false);
     }
@@ -168,26 +267,95 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
     <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50 overflow-auto">
       <div className="bg-white rounded-3xl shadow-2xl w-11/12 sm:w-[550px] p-8 relative">
         {updating && (
-          <div className="absolute inset-0 bg-transparent bg-opacity-40 flex items-center justify-center z-50 rounded-3xl">
+          <div className="absolute inset-0 bg-white bg-opacity-40 flex items-center justify-center z-50 rounded-3xl">
             <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Loading" />
           </div>
         )}
         <button onClick={closeModal} className="absolute top-5 right-5 text-gray-500 hover:text-gray-800 text-2xl font-bold p-10">×</button>
         <h2 className="text-lg font-bold text-gray-700 mb-4 pt-6">Update Accessibility City</h2>
         <form className="space-y-6" onSubmit={handleUpdate}>
+          {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
+          {Success && <div className="text-green-500 text-sm bg-green-50 p-3 rounded-lg">{Success}</div>}
+
+
           {/* Upload Section */}
           <div>
-            <label className="block text-md font-medium text-gray-700 mb-2">Upload Logo</label>
+            <label className="block text-md font-medium text-gray-700 mb-2">Upload Picture</label>
             <div className="relative">
-              <input type="file" accept=".svg,.png,.jpg,.gif" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
-                <img src="/assets/images/upload-icon.avif" alt="upload-icon" className="w-10 h-10" />
-                <p className="text-[#0519CE] font-semibold text-sm">
-                  Click to upload <span className="text-gray-500 text-xs">or drag and drop</span>
-                </p>
-                <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
-              </div>
-              <img src="/assets/images/tower 2.jpg" alt="Uploaded" className="mt-3 h-40" />
+              {/* Show current image or new preview */}
+              {imagePreview || currentImage ? (
+                <div className="relative border border-gray-200 rounded-lg p-4 mb-3">
+                  <img
+                    src={imagePreview || currentImage}
+                    alt="City"
+                    className="w-full h-40 object-contain rounded-lg"
+                  />
+                  {imagePreview && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                  {imagePreview && (
+                    <p className="text-sm text-gray-600 mt-2 text-center">
+                      {selectedImage?.name}
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              {/* Upload area - show only if no preview */}
+              {!imagePreview && (
+                <>
+                  <input 
+                    type="file" 
+                    accept=".svg,.png,.jpg,.jpeg,.gif" 
+                    onChange={handleImageSelect}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                  />
+                  <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
+                    <img src="/assets/images/upload-icon.avif" alt="upload-icon" className="w-10 h-10" />
+                    <p className="text-[#0519CE] font-semibold text-sm">
+                      Click to upload <span className="text-gray-500 text-xs">or drag and drop</span>
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
+                  </div>
+                </>
+              )}
+
+              {/* Change image button if image exists */}
+              {(imagePreview || currentImage) && !imagePreview && (
+                <div className="mt-2">
+                  <input 
+                    type="file" 
+                    accept=".svg,.png,.jpg,.jpeg,.gif" 
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="changeImage"
+                  />
+                  <label 
+                    htmlFor="changeImage"
+                    className="text-sm text-[#0519CE] cursor-pointer hover:underline"
+                  >
+                    Change Image
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 

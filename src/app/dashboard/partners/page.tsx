@@ -48,12 +48,12 @@ export default function Page() {
     // ✅ FIX 3: Handle delete function properly
     const handleDeletePartner = async () => {
         if (!partnerToDelete) return;
-        
+
         setLoadingDelete(true);
         try {
             // Check if token exists
             const token = typeof window !== 'undefined' ? localStorage.getItem("access_token") : null;
-            
+
             if (!token) {
                 alert("Authentication required. Please log in.");
                 return;
@@ -67,14 +67,14 @@ export default function Page() {
                     },
                 }
             );
-            
+
             setOpenDeleteModal(false);
             setPartnerToDelete(null);
             setOpenSuccessModal(true);
-            
+
             // Reload partners after successful delete
             await loadPartners();
-            
+
         } catch (error: any) {
             console.error("Delete error:", error);
             const errorMessage = error.response?.data?.message || "Failed to delete partner.";
@@ -97,7 +97,7 @@ export default function Page() {
             <div className="flex items-center justify-between border-b border-gray-200 bg-white">
                 <div className="w-full min-h-screen bg-white">
                     <div className="w-full min-h-screen bg-white px-6 py-5">
-                        
+
                         {/* Header */}
                         <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
                             <h1 className="text-2xl font-semibold text-gray-900">
@@ -105,7 +105,7 @@ export default function Page() {
                             </h1>
 
                             <div className="flex items-center gap-3">
-                                <button 
+                                <button
                                     onClick={() => setOpenFormModal(true)}
                                     className="px-5 py-2.5 text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700 transition"
                                 >
@@ -154,10 +154,10 @@ export default function Page() {
                                                     stroke="currentColor"
                                                     strokeWidth={2}
                                                 >
-                                                    <path 
-                                                        strokeLinecap="round" 
-                                                        strokeLinejoin="round" 
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" 
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                                     />
                                                 </svg>
                                             </button>
@@ -165,11 +165,11 @@ export default function Page() {
 
                                         <div className="flex flex-col items-start">
                                             <img
-                                                src={partner.image_url || "/assets/images/HDS_RGB-2048x610.png.svg"}
+                                                src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/partner/${partner.id}.png`}
                                                 alt={`${partner.name} logo`}
                                                 className="h-12 object-contain mb-6"
                                                 onError={(e) => {
-                                                    e.currentTarget.src = "/assets/images/HDS_RGB-2048x610.png.svg";
+                                                    e.currentTarget.src = "/assets/images/HDS_RGB-2048x610.png"; // fallback
                                                 }}
                                             />
                                             <p className="text-gray-800 font-medium">{partner.name}</p>

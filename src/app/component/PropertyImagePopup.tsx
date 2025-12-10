@@ -33,7 +33,10 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
   const [description, setDescription] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
+
+  
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -89,6 +92,7 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
       }
 
       const data = await response.json();
+      console.log('Create business image response:', data); // Debug log
       
       // Return the ID of the created business image
       if (data.id) {
@@ -97,13 +101,16 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
         throw new Error('No ID returned from business image creation');
       }
     } catch (err) {
+      console.error('Error creating business image record:', err); // Debug log
       throw new Error(err instanceof Error ? err.message : 'Failed to create business image record');
     }
   };
 
-  // Step 2: Upload image as base64 using the business image ID as fileName
+  // Step 2: Upload image as base64 using the businessImageId as fileName
   const uploadImageBase64 = async (businessImageId: string): Promise<string> => {
     try {
+      console.log('Uploading image with businessImageId:', businessImageId); // Debug log
+      
       const response = await fetch('https://staging-api.qtpack.co.uk/images/upload-base64', {
         method: 'POST',
         headers: {
@@ -113,16 +120,18 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
         body: JSON.stringify({
           data: base64Data,
           folder: "business-images",
-          fileName: businessImageId, // Use the business image ID as fileName
+          fileName: businessImageId, // Use the businessImageId from step 1 as fileName
         }),
       });
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Upload image error response:', errorData); // Debug log
         throw new Error(errorData.message || 'Failed to upload image');
       }
       
       const data = await response.json();
+      console.log('Upload image response:', data); // Debug log
       
       // Return the URL from the response
       if (data.ok && data.url) {
@@ -131,37 +140,8 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
         throw new Error('Invalid response from image upload');
       }
     } catch (err) {
+      console.error('Error uploading image:', err); // Debug log
       throw new Error(err instanceof Error ? err.message : 'Failed to upload image');
-    }
-  };
-
-  // Step 3: Update business image record with the image URL
-  const updateBusinessImageWithUrl = async (businessImageId: string, imageUrl: string): Promise<void> => {
-    try {
-      const response = await fetch(`https://staging-api.qtpack.co.uk/business-images/${businessImageId}`, {
-        method: 'PUT', // or PATCH depending on your API
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-        body: JSON.stringify({
-          image_url: imageUrl,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update property image with URL');
-      }
-
-      const data = await response.json();
-      
-      // Call onUpdated callback if provided
-      if (onUpdated && data.business) {
-        onUpdated(data.business);
-      }
-    } catch (err) {
-      throw new Error(err instanceof Error ? err.message : 'Failed to update business image with URL');
     }
   };
 
@@ -184,20 +164,27 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
 
     setIsLoading(true);
     setError("");
+    setSuccessMessage("");
 
     try {
-      // Step 1: Create business image record and get the ID
+      // Step 1: Create business image record and get the businessImageId
       const businessImageId = await createBusinessImageRecord();
+      console.log('Business Image ID received:', businessImageId); // Debug log
 
-      // Step 2: Upload image using the business image ID as fileName
+      // Step 2: Upload image using the businessImageId as fileName
       const imageUrl = await uploadImageBase64(businessImageId);
+      console.log('Image URL received:', imageUrl); // Debug log
 
-      // Step 3: Update the business image record with the image URL
-      await updateBusinessImageWithUrl(businessImageId, imageUrl);
-
-      // Close the popup on success
-      setOpenPropertyImagePopup(false);
+      // Show success message
+      setSuccessMessage('Property image created successfully!');
+      
+      // Close the popup after a short delay to show success message
+      setTimeout(() => {
+        setOpenPropertyImagePopup(false);
+      }, 1500);
+      
     } catch (err) {
+      console.error('Submit error:', err); // Debug log
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
@@ -250,6 +237,13 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+            {successMessage}
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (

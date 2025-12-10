@@ -167,15 +167,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
               </label>
             </div>
 
-            {/* Forgot Password link */}
-            <div>
-              <button
-                onClick={() => { setOpenForgotPasswordModal(true), setOpenLoginModal(false) }}
-                className="text-sm text-[#0519CE] hover:underline cursor-pointer"
-              >
-                Forgot Password?
-              </button>
-            </div>
+            
           </div>
 
           <button
@@ -185,6 +177,16 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
           >
             Log In
           </button>
+
+          {/* Forgot Password link */}
+            <div className="text-center">
+              <button
+                onClick={() => { setOpenForgotPasswordModal(true), setOpenLoginModal(false) }}
+                className="text-sm text-[#0519CE] hover:underline cursor-pointer text-center mx-auto"
+              >
+                Forgot Password?
+              </button>
+            </div>
         </form>
 
         {/* Footer */}

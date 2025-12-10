@@ -230,11 +230,14 @@ export default function CitiesMap() {
                   className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-4 transition hover:bg-gray-50 text-left"
                 >
                   <div className="w-[128px] rounded-2xl">
+                   
                     <img
-                      src={DEFAULT_IMAGE}
-                      alt={city.city_name}
-                      className="w-[128px] h-[96px] rounded-2xl object-cover"
-                    />
+                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/af-city/${city?.id}.png`}
+                    alt={city.city_name}
+                    className="w-[128px] h-[96px] rounded-2xl object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src =DEFAULT_IMAGE;
+                    }} />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">

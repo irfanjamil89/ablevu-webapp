@@ -136,6 +136,21 @@ type BusinessScheduleItem = {
   modified_at: string;
 };
 
+type BusinessImage = {
+  id: string;
+  name: string;
+  description: string;
+  tags: string | null;
+  image_url: string | null;
+  business_id: string;
+  active: boolean;
+  created_by: string;
+  modified_by: string;
+  created_at: string;
+  modified_at: string;
+};
+
+
 // ⭐ feature-type list ka type (API: accessible-feature-types/list)
 type AccessibleFeatureTypeMaster = {
   id: string;
@@ -203,6 +218,7 @@ type BusinessProfile = {
 
 interface MaincontentProps {
   business: BusinessProfile | null;
+  businessImages: BusinessImage[];
   loading: boolean;
   error: string | null;
 
@@ -251,7 +267,9 @@ interface MaincontentProps {
     resource: AdditionalAccessibilityResource
   ) => void;
   onDeleteBusinessMedia?: (media: any) => void;
+
   onEditBusinessMedia?: (media: any) => void;
+  onDeleteBusinessImage?: (image: BusinessImage) => void;
 
   // ⭐⭐ Global feedback handlers from Page
   showSuccess: (title: string, message: string, onClose?: () => void) => void;
@@ -260,6 +278,7 @@ interface MaincontentProps {
 
 export default function Maincontent({
   business,
+  businessImages,
   loading,
   error,
   setOpenVirtualTour,
@@ -283,7 +302,8 @@ export default function Maincontent({
   onEditAdditionalResource,
   onDeleteBusinessMedia,
   onEditBusinessMedia,
-  // abhi direct use nahi kar rahe, lekin props aa rahe hain:
+  onDeleteBusinessImage,
+
   showSuccess,
   showError,
 }: MaincontentProps) {
@@ -394,6 +414,12 @@ export default function Maincontent({
       ?.map((m: any) => m.image_url || m.media_url || m.url)
       .filter(Boolean) || [];
 
+  const currentBusinessImages = businessImages.filter(
+    (img) => img.business_id === business?.id && img.active
+  );
+
+
+  console.log(currentBusinessImages);
   // ⭐ groups pre-compute (same typeId -> same group)
   const featureGroups: AccessibilityFeatureGroup[] =
     business?.accessibilityFeatures && business.accessibilityFeatures.length > 0
@@ -562,16 +588,16 @@ export default function Maincontent({
           </div>
         </div>
 
-        {propertyImages.length > 0 ? (
-          <div className="flex flex-wrap gap-3 items-center">
-            {propertyImages.map((src, index) => (
+        {currentBusinessImages.length > 0 ? (
+          <div className="flex flex-wrap gap-2 items-center">
+            {currentBusinessImages.map((image, index) => (
               <div
-                key={index}
-                className="relative box-content overflow-hidden w-1/4"
+                key={image.id || index}
+                className="relative box-content overflow-hidden w-[24%]"
               >
                 <img
-                  src={src}
-                  alt={`Property image ${index + 1}`}
+                  src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/business-images/${image.id}.png`}
+                  alt={image.name || `Property image ${index + 1}`}
                   className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
                 />
                 <div className="absolute top-2 right-2 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
@@ -589,6 +615,7 @@ export default function Maincontent({
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
+                    onClick={() => onDeleteBusinessImage?.(image)}
                   />
                 </div>
               </div>
@@ -624,7 +651,7 @@ export default function Maincontent({
         {featureGroups.length > 0 ? (
           <div className="audios py-6 rounded-xl space-y-4">
             {featureGroups.map((group) => (
-              <div key={group.typeId} className="box flex items-start gap-3">
+              <div key={group.typeId} className="box flex items-center gap-3">
                 {/* left icons */}
                 <div className="w-[120px]">
                   <div className="icon-box flex items-center gap-2 box-content w-full">
@@ -645,7 +672,7 @@ export default function Maincontent({
                 </div>
 
                 {/* type name: Physical, Sensory, ... */}
-                <div className="heading box-content w-[120px]">
+                <div className="heading box-content ">
                   <h3 className="text-md text-gray-700 font-semibold">
                     {group.typeName}
                   </h3>
@@ -970,7 +997,7 @@ export default function Maincontent({
         </div>
 
         {business.additionalaccessibilityresources &&
-        business.additionalaccessibilityresources.length > 0 ? (
+          business.additionalaccessibilityresources.length > 0 ? (
           <div className="pr-2 flex flex-wrap justify-between gap-3">
             {business.additionalaccessibilityresources.map((r) => (
               <div
@@ -1125,7 +1152,7 @@ export default function Maincontent({
         </div>
 
         {business.businessCustomSections &&
-        business.businessCustomSections.length > 0 ? (
+          business.businessCustomSections.length > 0 ? (
           <ul className="space-y-2 text-sm text-gray-700">
             {business.businessCustomSections.map((s: any) => (
               <li key={s.id} className="border-b pb-2">
