@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import Link from 'next/link';
+import Link from "next/link";
 
 // ---------- Types ----------
 
@@ -58,12 +58,7 @@ type FeatureType = {
   slug?: string;
 };
 
-type SortOption =
-  | ""
-  | "name-asc"
-  | "name-desc"
-  | "created-asc"
-  | "created-desc";
+type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
 
 // 🔹 Business Schedule types
 type BusinessSchedule = {
@@ -120,6 +115,7 @@ type Partner = {
   web_url: string;
   active: boolean;
 };
+
 // ---------- Helpers ----------
 
 const formatFullAddress = (b: Business) => {
@@ -138,8 +134,13 @@ const formatFullAddress = (b: Business) => {
   return parts.join(", ");
 };
 
+// 🔹 same normalize logic jaisa BusinessSidebar mein
+const normalizeStatus = (status?: string | null) =>
+  (status || "").toLowerCase().trim().replace(/[\s_-]+/g, " ");
+
+// 🔹 status badge info – updated to use new statuses
 const getStatusInfo = (b: Business) => {
-  const raw = (b.business_status || "").toLowerCase().trim();
+  const raw = normalizeStatus(b.business_status);
   let label = "";
   let bg = "";
   let text = "";
@@ -148,15 +149,17 @@ const getStatusInfo = (b: Business) => {
     label = "Draft";
     bg = "#FFF3CD";
     text = "#C28A00";
-  } else if (raw === "pending" || raw === "pending_approval") {
-    label = "Pending Approval";
+  } else if (raw === "pending approved") {
+    // backend: "pending approved" / "pending_approved" → normalize ho kar aa jayega
+    label = "Pending Approved";
     bg = "#FFEFD5";
     text = "#B46A00";
   } else if (raw === "claimed") {
     label = "Claimed";
     bg = "#E0F7FF";
     text = "#0369A1";
-  } else if (b.active && !b.blocked) {
+  } else if (raw === "approved" || (b.active && !b.blocked)) {
+    // explicit approved + fallback on active+not blocked
     label = "Approved";
     bg = "#ECFDF3";
     text = "#039855";
@@ -253,97 +256,97 @@ export default function Page() {
   // ---------- Fetch data (admin = all businesses) ----------
 
   useEffect(() => {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("access_token")
-      : null;
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
 
-  const headers: Record<string, string> = {};
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
 
-  const load = async () => {
-    try {
-      setLoading(true);
+    const load = async () => {
+      try {
+        setLoading(true);
 
-      // 🔹 Business types
-      const btRes = await fetch(
-        `${base}/business-type/list?page=1&limit=1000`,
-        { headers }
-      );
-      const btJson = await btRes.json();
-      setBusinessTypes(btJson.data || []);
+        // 🔹 Business types
+        const btRes = await fetch(
+          `${base}/business-type/list?page=1&limit=1000`,
+          { headers }
+        );
+        const btJson = await btRes.json();
+        setBusinessTypes(btJson.data || []);
 
-      // 🔹 Accessible features
-      const fRes = await fetch(
-        `${base}/accessible-feature/list?page=1&limit=1000`
-      );
-      const fJson = await fRes.json();
-      setFeatures(fJson.items || []);
+        // 🔹 Accessible features
+        const fRes = await fetch(
+          `${base}/accessible-feature/list?page=1&limit=1000`
+        );
+        const fJson = await fRes.json();
+        setFeatures(fJson.items || []);
 
-      // 🔹 Businesses (admin sees all)
-      const bRes = await fetch(`${base}/business/list?page=1&limit=1000`, {
-        headers,
-      });
-      const bJson = await bRes.json();
-      setBusinesses(bJson.data || []);
+        // 🔹 Businesses (admin sees all)
+        const bRes = await fetch(`${base}/business/list?page=1&limit=1000`, {
+          headers,
+        });
+        const bJson = await bRes.json();
+        setBusinesses(bJson.data || []);
 
-      // 🔹 Accessible cities
-      const acRes = await fetch(
-        `${base}/accessible-city/list?page=1&limit=1000`,
-        { headers }
-      );
-      const acJson = await acRes.json();
-      setAccessibleCityTotal(acJson.total ?? (acJson.items?.length || 0));
+        // 🔹 Accessible cities
+        const acRes = await fetch(
+          `${base}/accessible-city/list?page=1&limit=1000`,
+          { headers }
+        );
+        const acJson = await acRes.json();
+        setAccessibleCityTotal(acJson.total ?? (acJson.items?.length || 0));
 
-      // 🔹 Users
-      const uRes = await fetch(`${base}/users`, { headers });
-      if (!uRes.ok) {
-        console.error("Users fetch failed:", uRes.status, uRes.statusText);
-      } else {
-        const uJson = await uRes.json();
-        console.log("USERS RESPONSE >>>", uJson);
+        // 🔹 Users
+        const uRes = await fetch(`${base}/users`, { headers });
+        if (!uRes.ok) {
+          console.error("Users fetch failed:", uRes.status, uRes.statusText);
+        } else {
+          const uJson = await uRes.json();
+          console.log("USERS RESPONSE >>>", uJson);
 
-        let usersArr: User[] = [];
+          let usersArr: User[] = [];
 
-        if (Array.isArray(uJson)) {
-          usersArr = uJson;
-        } else if (Array.isArray(uJson.data)) {
-          usersArr = uJson.data;
-        } else if (Array.isArray(uJson.items)) {
-          usersArr = uJson.items;
+          if (Array.isArray(uJson)) {
+            usersArr = uJson;
+          } else if (Array.isArray(uJson.data)) {
+            usersArr = uJson.data;
+          } else if (Array.isArray(uJson.items)) {
+            usersArr = uJson.items;
+          }
+
+          setUsers(usersArr);
         }
 
-        setUsers(usersArr);
+        // 🔹 Partners
+        const pRes = await fetch(`${base}/partner/list?page=1&limit=1000`, {
+          headers,
+        });
+        const pJson = await pRes.json();
+        const partnersArr: Partner[] = pJson.items || [];
+        const totalPartners = pJson.total ?? partnersArr.length;
+        setPartnerTotal(totalPartners);
+
+        // 🔹 Business schedules
+        const sRes = await fetch(
+          `${base}/business-schedules/list?page=1&limit=1000`,
+          { headers }
+        );
+        const sJson: ScheduleListResponse = await sRes.json();
+        setSchedules(sJson.data || []);
+      } catch (e) {
+        console.error("Error loading admin dashboard data:", e);
+      } finally {
+        setLoading(false);
       }
-
-      // 🔹 Partners
-      const pRes = await fetch(`${base}/partner/list?page=1&limit=1000`, {
-        headers,
-      });
-      const pJson = await pRes.json();
-      const partnersArr: Partner[] = pJson.items || [];
-      const totalPartners = pJson.total ?? partnersArr.length;
-      setPartnerTotal(totalPartners);
-
-      // 🔹 Business schedules
-      const sRes = await fetch(
-        `${base}/business-schedules/list?page=1&limit=1000`,
-        { headers }
-      );
-      const sJson: ScheduleListResponse = await sRes.json();
-      setSchedules(sJson.data || []);
-    } catch (e) {
-      console.error("Error loading admin dashboard data:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-  load();
-}, []);
+    };
+    load();
+  }, []);
 
   // ---------- Schedules map: businessId -> schedules[] ----------
 
@@ -429,7 +432,8 @@ export default function Page() {
       case "created-asc":
         arr.sort(
           (a, b) =>
-            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            new Date(a.created_at).getTime() -
+            new Date(b.created_at).getTime()
         );
         break;
 
@@ -437,7 +441,8 @@ export default function Page() {
       default:
         arr.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
         );
         break;
     }
@@ -462,10 +467,16 @@ export default function Page() {
   }, [sortedBusinesses, searchTerm, businessTypesMap]);
 
   if (loading) {
-    return <div className="flex w-full justify-center items-center h-[400px]">
-        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>; // Show loading message while the data is being fetched
-  }
+    return (
+      <div className="flex w-full justify-center items-center h-[400px]">
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
+      </div>
+    ); // Show loading message while the data is being fetched
+  }
   return (
     <div className="w-full  overflow-y-auto">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
@@ -582,7 +593,7 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`
+                          backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`,
                         }}
                       >
                         {statusInfo.label && (
