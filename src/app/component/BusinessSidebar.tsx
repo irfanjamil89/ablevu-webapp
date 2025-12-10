@@ -138,58 +138,73 @@ export default function BusinessSidebar({
 
   // ⭐ JWT se userId nikalna
   function getUserIdFromToken(token: string | null): string | null {
-    if (!token) return null;
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const payload = JSON.parse(atob(base64));
-      return payload?.sub || payload?.id || null;
-    } catch (e) {
-      console.error("Failed to decode token", e);
+  if (!token || token === "null" || token === "undefined") return null;
+
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) {
+      // valid JWT nahi hai
+      console.warn("Invalid token format, no payload part");
       return null;
     }
+
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const json = atob(base64);
+    const payload = JSON.parse(json);
+
+    return payload?.sub || payload?.id || null;
+  } catch (e) {
+    console.error("Failed to decode token", e);
+    return null;
   }
+}
 
   // ⭐ User role fetch from /users/me/:id
   useEffect(() => {
-    const fetchUserRole = async () => {
-      try {
-        const token =
-          typeof window !== "undefined"
-            ? window.localStorage.getItem("access_token")
-            : null;
+  const fetchUserRole = async () => {
+    try {
+      if (typeof window === "undefined") return;
 
-        const userId = getUserIdFromToken(token);
+      const token = window.localStorage.getItem("access_token");
+      const userId = getUserIdFromToken(token);
 
-        if (!userId) {
-          console.error("User ID not found in token");
-          return;
-        }
-
-        const res = await fetch(
-          `http://localhost:3006/users/me/${userId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-        if (data?.user_role) {
-          setUserRole(data.user_role);
-        }
-      } catch (err) {
-        console.error("Failed to fetch user role", err);
+      if (!token || !userId) {
+        console.warn("No valid token / userId found, skipping user role fetch");
+        return;
       }
-    };
 
-    fetchUserRole();
-  }, []);
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!base) {
+        console.error("API base URL is not configured");
+        return;
+      }
+
+      const res = await fetch(`${base}/users/me/${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.warn("User role fetch failed with status", res.status);
+        return;
+      }
+
+      const data = await res.json();
+      if (data?.user_role) {
+        setUserRole(data.user_role);
+      }
+    } catch (err) {
+      console.error("Failed to fetch user role", err);
+    }
+  };
+
+  fetchUserRole();
+}, []);
+
 
   // ✅ Sync status with business data whenever it changes
   useEffect(() => {
