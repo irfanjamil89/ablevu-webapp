@@ -76,7 +76,7 @@ export default function Header() {
       if (!token) return;
 
       const res = await fetch(
-        "http://localhost:3006/notifications/getnotification",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}notifications/getnotification`,
         {
           method: "GET",
           headers: {
@@ -100,7 +100,7 @@ export default function Header() {
       const token = localStorage.getItem("access_token");
 
       const res = await fetch(
-        `http://localhost:3006/notifications/read/${id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}notifications/read/${id}`,
         {
           method: "PATCH",
           headers: {
@@ -120,6 +120,19 @@ export default function Header() {
     }
   };
 
+  const handleNotificationClick = (item: any) => {
+    if (!item.meta) return;
+    const meta = typeof item.meta === 'string' ? JSON.parse(item.meta) : item.meta;
+
+    switch (meta.type) {
+      case 'business-created':
+        window.location.href = `/business-profile/${meta.id}`;
+        break;
+      default:
+        console.log("Unhandled notification type:", meta.type);
+    }
+    markAsRead(item.id);
+  };
 
   useEffect(() => {
     if (!isLoggedIn) return;
@@ -267,6 +280,7 @@ export default function Header() {
                                   <li
                                     key={item.id}
                                     className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => handleNotificationClick(item)}
                                   >
                                     <div className="w-full pr-2">
                                       <p className="text-sm font-medium">{item.content}</p>
