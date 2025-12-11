@@ -138,7 +138,6 @@ export default function BusinessSidebar({
       showError("Share Failed", "Unable to copy link.");
     }
   };
-<<<<<<< Updated upstream
 
   // ⭐ JWT se userId nikalna
   function getUserIdFromToken(token: string | null): string | null {
@@ -209,8 +208,6 @@ export default function BusinessSidebar({
   fetchUserRole();
 }, []);
 
-=======
->>>>>>> Stashed changes
 
   // ✅ Sync status with business data whenever it changes
   useEffect(() => {
