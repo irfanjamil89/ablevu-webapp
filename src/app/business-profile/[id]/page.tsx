@@ -16,6 +16,7 @@ import AccessibilityResourcesPopup from "@/app/component/AccessibilityResourcesP
 import QuestionPopup from "@/app/component/QuestionPopup";
 import WriteReviewsPopup from "@/app/component/WriteReviewsPopup";
 import PartnerCertificationPopup from "@/app/component/PartnerCertificationPopup";
+import EditPropertyImagePopup from "@/app/component/EditPropertyImagePopup";
 
 type BusinessProfile = any;
 type BusinessType = any;
@@ -91,6 +92,10 @@ export default function Page({
     const [editFeatureIds, setEditFeatureIds] = useState<string[]>([]);
 
     const [OpenPropertyImagePopup, setOpenPropertyImagePopup] = useState(false);
+    const [OpenEditPropertyImagePopup, setOpenEditPropertyImagePopup] = useState(false);
+    const [SelectedImageId, setSelectedImageId] = useState<string>("");
+
+
     const [OpenCustonSectionPopup, setOpenCustonSectionPopup] = useState(false);
 
     // ⭐ Accessibility Media: popup + selected media (for edit)
@@ -804,6 +809,7 @@ export default function Page({
                     // ⭐ New props for popup
                     showSuccess={showSuccess}
                     showError={showError}
+                    refetchBusiness={fetchAllData}
                 />
 
                 <Maincontent
@@ -816,6 +822,8 @@ export default function Page({
                         handleSetOpenAccessibilityFeaturePopup
                     }
                     setOpenPropertyImagePopup={setOpenPropertyImagePopup}
+                    setOpenEditPropertyImagePopup={setOpenEditPropertyImagePopup}
+                    setSelectedImageId={setSelectedImageId}
                     setOpenCustonSectionPopup={setOpenCustonSectionPopup}
                     setOpenAccessibilityMediaPopup={
                         handleSetOpenAccessibilityMediaPopup
@@ -947,6 +955,20 @@ export default function Page({
                 <PropertyImagePopup
                     businessId={business.id}
                     setOpenPropertyImagePopup={setOpenPropertyImagePopup}
+                    onUpdated={async (updated) => {
+                        setBusiness(updated);
+                        await fetchAllData();
+                        showSuccess(
+                            "Images Updated",
+                            "Property images updated successfully."
+                        );
+                    }}
+                />
+            )}
+            {OpenEditPropertyImagePopup && business && (
+                <EditPropertyImagePopup
+                    businessImageId={SelectedImageId}
+                    setOpenEditPropertyImagePopup={setOpenEditPropertyImagePopup}
                     onUpdated={async (updated) => {
                         setBusiness(updated);
                         await fetchAllData();

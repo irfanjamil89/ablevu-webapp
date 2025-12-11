@@ -237,6 +237,8 @@ interface MaincontentProps {
     group: AccessibilityFeatureGroup
   ) => void;
   setOpenPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenEditPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedImageId:React.Dispatch<React.SetStateAction<string>>;
   setOpenCustonSectionPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAccessibilityMediaPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAccessibilityResourcesPopup: React.Dispatch<
@@ -286,6 +288,8 @@ export default function Maincontent({
   onEditAccessibilityFeatureGroup,
   onDeleteAccessibilityFeatureGroup,
   setOpenPropertyImagePopup,
+  setOpenEditPropertyImagePopup,
+  setSelectedImageId,
   setOpenCustonSectionPopup,
   setOpenAccessibilityMediaPopup,
   setOpenAccessibilityResourcesPopup,
@@ -417,6 +421,11 @@ export default function Maincontent({
   const currentBusinessImages = businessImages.filter(
     (img) => img.business_id === business?.id && img.active
   );
+
+  const handleEditClick = (imageId: string) => {
+    setSelectedImageId(imageId); // Store which image to edit
+    setOpenEditPropertyImagePopup(true); // Open popup
+  };
 
 
   console.log(currentBusinessImages);
@@ -596,7 +605,7 @@ export default function Maincontent({
                 className="relative box-content overflow-hidden w-[24%]"
               >
                 <img
-                  src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/business-images/${image.id}.png`}
+                  src={image.image_url || ""}
                   alt={image.name || `Property image ${index + 1}`}
                   className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
                 />
@@ -610,12 +619,13 @@ export default function Maincontent({
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
                     className="w-5 h-5 cursor-pointer"
+                    onClick={() => handleEditClick(image.id)}
                   />
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
-                    onClick={() => onDeleteBusinessImage?.(image)}
+                    onClick={() => onDeleteBusinessImage?.(image)} 
                   />
                 </div>
               </div>

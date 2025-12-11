@@ -593,7 +593,11 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
+<<<<<<< Updated upstream
                           backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`,
+=======
+                          backgroundImage: `url(${business?.logo_url})`,
+>>>>>>> Stashed changes
                         }}
                       >
                         {statusInfo.label && (

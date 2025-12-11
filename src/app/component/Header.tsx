@@ -7,6 +7,7 @@ import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
 import Feedback from "./Feedback";
 import AddBusinessModal from "./AddBusinessModal";
+import { User } from "lucide-react";
 
 interface User {
   id: string;
@@ -15,6 +16,7 @@ interface User {
   user_role: string;
   paid_contributor: boolean;
   email: string;
+  profile_picture_url:string;
 }
 
 export default function Header() {
@@ -357,6 +359,7 @@ export default function Header() {
                               stroke="currentColor"
                               strokeWidth={2}
                             >
+<<<<<<< Updated upstream
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -372,6 +375,31 @@ export default function Header() {
                         <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
                           <img
                             src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+=======
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-5 h-5 transition-transform group-hover:translate-x-1"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                                />
+                              </svg>
+                              Log In
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="relative user-dropdown">
+                          <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                            <img
+                            src={user?.profile_picture_url}
+>>>>>>> Stashed changes
                             alt="User"
                             className="cursor-pointer h-10 w-10 mr-1"
                             onError={(e) => {

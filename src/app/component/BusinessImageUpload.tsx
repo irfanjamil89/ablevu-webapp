@@ -1,44 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 interface BusinessImageUploadProps {
   businessId: string;
   businessName: string;
   initialImageUrl?: string | null;
-  onImageUpdate?: (newUrl: string) => void;
+  onUploadSuccess?: () => void; // Callback to refresh parent data
 }
 
 const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
   businessId,
   businessName,
   initialImageUrl,
-  onImageUpdate,
+  onUploadSuccess,
 }) => {
-  const [imageUrl, setImageUrl] = useState<string | null>(initialImageUrl || null);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-
-  const [ImageExists, setImageExists] = useState(false);
-  const [imageChecked, setImageChecked] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-
-  useEffect(() => {
-    const checkImage = () => {
-      const img = new Image();
-      img.onload = () => {
-        setImageExists(true);
-        setImageChecked(true);
-      };
-      img.onerror = () => {
-        setImageExists(false);
-        setImageChecked(true);
-      };
-      img.src = `https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${businessId}.png?v=${refreshKey}`;
-    };
-
-    checkImage();
-  }, [businessId, refreshKey]);
-
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleFileUpload = async (file: File) => {
     if (!file) return;
@@ -46,18 +24,17 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
     // Validate file type
     const validTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/gif'];
     if (!validTypes.includes(file.type)) {
-      alert('Please upload SVG, PNG, JPG or GIF file');
+      setError('Please upload SVG, PNG, JPG or GIF file');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size too large (max 5MB)');
+      setError('File size too large (max 5MB)');
       return;
     }
 
     setUploading(true);
-
 
     try {
       // Convert file to base64
@@ -84,34 +61,29 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
 
         const result = await response.json();
 
-        // Get the URL from API response
-        if (result.ok && result.url) {
-          const newImageUrl = result.url;
-          setImageUrl(newImageUrl);
-
-          // Refresh component to show new image
-          setRefreshKey(prev => prev + 1);
-
-          // Call parent callback to update business profile
-          if (onImageUpdate) {
-            onImageUpdate(newImageUrl);
-          }
-        } else {
-          throw new Error('Failed to get image URL from response');
+        if (!result.ok) {
+          throw new Error('Failed to upload image');
         }
 
         setUploading(false);
+
+        // Call parent callback to refresh business data
+        if (onUploadSuccess) {
+          onUploadSuccess();
+        }
+
+        setSuccess('Image uploaded successfully!');
       };
 
       reader.onerror = () => {
-        alert('Error reading file');
+        setError('Error reading file');
         setUploading(false);
       };
 
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload image');
+      setError('Failed to upload image');
       setUploading(false);
     }
   };
@@ -149,14 +121,15 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
 
   return (
     <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
-      {imageChecked && ImageExists ? (
-        <div className=" flex justify-center p-6">
-          <img onClick={handleClick}
-            src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${businessId}.png?v=${refreshKey}`}
+      {initialImageUrl ? (
+        // Show existing image from business.logo_url
+        <div className="flex justify-center p-6">
+          <img
+            onClick={handleClick}
+            src={initialImageUrl}
             alt={businessName}
-            className="w-80 object-contain cursor-pointer"
+            className="w-80 object-contain cursor-pointer hover:opacity-80 transition-opacity"
           />
-
         </div>
       ) : (
         // Show upload area if no image
@@ -206,8 +179,36 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
 
       {/* Loading overlay */}
       {uploading && (
-        <div className="absolute inset-0 bg-white w-full h-full flex justify-center items-center">
-          <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+        <div className="absolute inset-0 bg-white bg-opacity-90 flex justify-center items-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      )}
+      {success && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#0519CE] rounded-full p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-bold mb-2">Success</h2>
+            <p className="mb-4">{success}</p>
+            <button
+              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
+              onClick={() => setSuccess("")}
+            >
+              OK
+            </button>
+          </div>
         </div>
       )}
     </div>

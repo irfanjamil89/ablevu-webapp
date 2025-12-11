@@ -151,8 +151,8 @@ export default function Citiesslider() {
                     }}
                   >
                     <img
-                      src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/af-city/${city?.id}.png`}
-                      alt={city.city_name}
+                      src={city?.picture_url || DEFAULT_IMAGE}
+                      alt={city?.city_name || 'City'}
                       className="rounded-t-[20px] w-full h-40 object-cover"
                       onError={(e) => {
                         e.currentTarget.src = DEFAULT_IMAGE;

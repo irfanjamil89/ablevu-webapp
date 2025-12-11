@@ -206,7 +206,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
 
             const imagePayload = {
               data: base64Data,
-              folder: "af-city",
+              folder: "accessible-city",
               fileName: selectedCity.id,
             };
 

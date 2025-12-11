@@ -38,27 +38,27 @@ interface ApiResponse {
 const validateCoordinates = (lat: any, lng: any): { lat: number; lng: number } | null => {
   const latitude = typeof lat === 'string' ? parseFloat(lat) : lat;
   const longitude = typeof lng === 'string' ? parseFloat(lng) : lng;
-  
+
   if (isNaN(latitude) || isNaN(longitude)) {
     console.warn('Invalid coordinates - not numbers:', { lat, lng });
     return null;
   }
-  
+
   if (latitude < -90 || latitude > 90) {
     console.warn('Invalid latitude (should be -90 to 90):', latitude);
     return null;
   }
-  
+
   if (longitude < -180 || longitude > 180) {
     console.warn('Invalid longitude (should be -180 to 180):', longitude);
     return null;
   }
-  
+
   if (Math.abs(latitude) > 90 && Math.abs(longitude) <= 90) {
     console.warn('Coordinates might be swapped!', { lat: latitude, lng: longitude });
     return { lat: longitude, lng: latitude };
   }
-  
+
   return { lat: latitude, lng: longitude };
 };
 
@@ -77,7 +77,7 @@ export default function Mapsections() {
       if (typeof window !== 'undefined') {
         const L = (await import('leaflet')).default;
         const { MapContainer, TileLayer, Marker, Popup, useMap } = await import('react-leaflet');
-        
+
         // Fix default marker icons
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
@@ -108,28 +108,28 @@ export default function Mapsections() {
         console.log('Map library loaded successfully');
 
         // Create Map Controller component
-        function MapController({ 
-          center, 
-          zoom, 
-          businesses, 
-          shouldFitBounds 
-        }: { 
-          center: [number, number]; 
-          zoom: number; 
+        function MapController({
+          center,
+          zoom,
+          businesses,
+          shouldFitBounds
+        }: {
+          center: [number, number];
+          zoom: number;
           businesses: Business[];
           shouldFitBounds: boolean;
         }) {
           const map = useMap();
-          
+
           React.useEffect(() => {
             if (shouldFitBounds && businesses.length > 0) {
               const validBusinesses = businesses.filter(b => {
                 const coords = validateCoordinates(b.latitude, b.longitude);
                 return coords !== null;
               });
-              
+
               console.log('Valid businesses for bounds:', validBusinesses.length);
-              
+
               if (validBusinesses.length > 0) {
                 const bounds = L.latLngBounds(
                   validBusinesses.map(b => {
@@ -138,7 +138,7 @@ export default function Mapsections() {
                     return [coords.lat, coords.lng] as [number, number];
                   })
                 );
-                
+
                 console.log('Fitting map to bounds:', bounds);
                 map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
               }
@@ -147,14 +147,14 @@ export default function Mapsections() {
               map.setView(center, zoom);
             }
           }, [center, zoom, map, businesses, shouldFitBounds]);
-          
+
           return null;
         }
 
         // Helper function to get marker icon based on business status
         const getMarkerIcon = (status: string | null) => {
           const normalizedStatus = status?.toLowerCase();
-          
+
           if (normalizedStatus === 'approved') {
             return approvedIcon;
           }
@@ -174,15 +174,15 @@ export default function Mapsections() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <MapController 
-              center={center} 
-              zoom={zoom} 
+            <MapController
+              center={center}
+              zoom={zoom}
               businesses={businesses}
               shouldFitBounds={shouldFitBounds}
             />
             {businesses.map((business: Business) => {
               const coords = validateCoordinates(business.latitude, business.longitude);
-              
+
               if (!coords) {
                 console.warn(`Invalid coordinates for business ${business.name}:`, {
                   lat: business.latitude,
@@ -190,7 +190,18 @@ export default function Mapsections() {
                 });
                 return null;
               }
-              
+
+              // Store validated coords in a const to ensure TypeScript knows it's not null
+              const validLat = coords.lat;
+              const validLng = coords.lng;
+
+
+              // Extra safety check
+              if (validLat == null || validLng == null || isNaN(validLat) || isNaN(validLng)) {
+                console.error(`Coords became null after validation for ${business.name}`);
+                return null;
+              }
+
               return (
                 <Marker
                   key={business.id}
@@ -201,25 +212,24 @@ export default function Mapsections() {
                     <div className="p-2">
                       <h3 className="font-bold text-base mb-1">{business.name}</h3>
                       {business.business_status && (
-                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${
-                          business.business_status.toLowerCase() === 'approved' 
-                            ? 'bg-red-100 text-red-800' 
+                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${business.business_status.toLowerCase() === 'approved'
+                            ? 'bg-red-100 text-red-800'
                             : 'bg-blue-100 text-blue-800'
-                        }`}>
+                          }`}>
                           {business.business_status.toUpperCase()}
                         </span>
                       )}
                       <p className="text-sm text-gray-600 mb-2">{business.address}</p>
                       <p className="text-xs text-gray-400 mb-2">
-                        Coords: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                        Coords: {validLat.toFixed(6)}, {validLng.toFixed(6)}
                       </p>
                       {business.phone_number && (
                         <p className="text-sm text-gray-600"> {business.phone_number}</p>
                       )}
                       {business.website && (
-                        
+
                         <a
-                          
+
                           target="_blank"
                           rel="noopener noreferrer"
                           className="bg-red-700 rounded cursor-pointer hover:bg-red-800 transition-all ease-in-out text-sm block text-center p-4 redd"
@@ -259,7 +269,7 @@ export default function Mapsections() {
       }
 
       const result: ApiResponse = await response.json();
-      
+
       // Debug: Log business status information
       if (result.data && result.data.length > 0) {
         console.log('=== API Response Debug ===');
@@ -272,7 +282,7 @@ export default function Mapsections() {
         });
         console.log('======================');
       }
-      
+
       setBusinesses(result.data || []);
       setShouldFitBounds(true);
       setError(null);
@@ -369,19 +379,19 @@ export default function Mapsections() {
                   className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition hover:bg-gray-50 text-left"
                 >
                   <img
-                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png`}
+                    src={business?.logo_url || "assets/images/b-img.png"}
                     alt={business.name}
                     className="rounded-lg object-cover w-20 h-16"
                   />
+                 
                   <div className="pe-2 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-lg">{business.name}</h3>
                       {business.business_status && (
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                          business.business_status.toLowerCase() === 'approved' 
-                            ? 'bg-red-100 text-red-800' 
+                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${business.business_status.toLowerCase() === 'approved'
+                            ? 'bg-red-100 text-red-800'
                             : 'bg-blue-100 text-blue-800'
-                        }`}>
+                          }`}>
                           {business.business_status}
                         </span>
                       )}

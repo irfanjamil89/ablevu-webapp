@@ -22,6 +22,7 @@ export default function Page() {
     const [selectedPartnerId, setSelectedPartnerId] = useState("");
     const [selectedPartnerName, setSelectedPartnerName] = useState("");
     const [selectedPartnerWebsite, setSelectedPartnerWebsite] = useState("");
+    const [selectedPartnerImage, setselectedPartnerImage] = useState("");
 
     const [partnerToDelete, setPartnerToDelete] = useState<string | null>(null);
     const [loadingDelete, setLoadingDelete] = useState(false);
@@ -132,6 +133,7 @@ export default function Page() {
                                                     setSelectedPartnerId(partner.id);
                                                     setSelectedPartnerName(partner.name);
                                                     setSelectedPartnerWebsite(partner.web_url);
+                                                    setselectedPartnerImage(partner.image_url);
                                                     setOpenEditModal(true);
                                                 }}
                                                 className="text-sm text-gray-800 underline cursor-pointer font-bold hover:text-blue-600"
@@ -165,7 +167,7 @@ export default function Page() {
 
                                         <div className="flex flex-col items-start">
                                             <img
-                                                src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/partner/${partner.id}.png`}
+                                                src={partner.image_url}
                                                 alt={`${partner.name} logo`}
                                                 className="h-12 object-contain mb-6"
                                                 onError={(e) => {
@@ -189,6 +191,7 @@ export default function Page() {
                     partnerId={selectedPartnerId}
                     partnerName={selectedPartnerName}
                     partnerWebsite={selectedPartnerWebsite}
+                    PartnerImage={selectedPartnerImage}
                 />
             )}
 

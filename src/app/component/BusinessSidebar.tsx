@@ -80,6 +80,8 @@ interface BusinessSidebarProps {
   setOpenAboutModal: React.Dispatch<React.SetStateAction<boolean>>;
   showSuccess: (title: string, message: string, onClose?: () => void) => void;
   showError: (title: string, message: string, onClose?: () => void) => void;
+
+  refetchBusiness: () => void;
 }
 
 // ---------- Status helper ----------
@@ -112,6 +114,7 @@ export default function BusinessSidebar({
   setOpenAboutModal,
   showSuccess,
   showError,
+  refetchBusiness,
 }: BusinessSidebarProps) {
   const router = useRouter();
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -135,6 +138,7 @@ export default function BusinessSidebar({
       showError("Share Failed", "Unable to copy link.");
     }
   };
+<<<<<<< Updated upstream
 
   // ⭐ JWT se userId nikalna
   function getUserIdFromToken(token: string | null): string | null {
@@ -205,6 +209,8 @@ export default function BusinessSidebar({
   fetchUserRole();
 }, []);
 
+=======
+>>>>>>> Stashed changes
 
   // ✅ Sync status with business data whenever it changes
   useEffect(() => {
@@ -464,12 +470,10 @@ export default function BusinessSidebar({
         businessId={business.id}
         businessName={business.name}
         initialImageUrl={business.logo_url}
-        onImageUpdate={(newUrl) => {
-          console.log("New image uploaded:", newUrl);
-          showSuccess(
-            "Logo Updated",
-            "Business logo has been updated successfully."
-          );
+        onUploadSuccess={() => {
+       
+          refetchBusiness();
+
         }}
       />
 

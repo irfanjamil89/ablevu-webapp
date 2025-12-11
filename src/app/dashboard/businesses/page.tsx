@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
 import Link from "next/link";
+import AddBusinessModal from "@/app/component/AddBusinessModal";
 
 // ---------- Types ----------
 
@@ -133,6 +134,7 @@ export default function Page() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("");
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
+  const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
   const [newBusiness, setNewBusiness] = useState<NewBusinessForm>({
     name: "",
     fullAddress: "",
@@ -295,105 +297,105 @@ export default function Page() {
   // ---------- Status badge (business.business_status) ----------
 
   const getStatusInfo = (b: Business) => {
-  const raw = (b.business_status || "").toLowerCase().trim();
-  const status = normalizeStatus(raw);
+    const raw = (b.business_status || "").toLowerCase().trim();
+    const status = normalizeStatus(raw);
 
-  let label = "";
-  let bg = "";
-  let text = "";
+    let label = "";
+    let bg = "";
+    let text = "";
 
-  if (status === "draft") {
-    label = "Draft";
-    bg = "#FFF3CD";
-    text = "#C28A00";
-  } else if (status === "pending approved") {
-    label = "Pending Approved";
-    bg = "#FFEFD5";
-    text = "#B46A00";
-  } else if (status === "claimed") {
-    label = "Claimed";
-    bg = "#E0F7FF";
-    text = "#0369A1";
-  } else if (status === "approved") {
-    label = "Approved";
-    bg = "#D1FAE5";
-    text = "#065F46";
-  } else {
-    label = "";
-    bg = "";
-    text = "";
-  }
+    if (status === "draft") {
+      label = "Draft";
+      bg = "#FFF3CD";
+      text = "#C28A00";
+    } else if (status === "pending approved") {
+      label = "Pending Approved";
+      bg = "#FFEFD5";
+      text = "#B46A00";
+    } else if (status === "claimed") {
+      label = "Claimed";
+      bg = "#E0F7FF";
+      text = "#0369A1";
+    } else if (status === "approved") {
+      label = "Approved";
+      bg = "#D1FAE5";
+      text = "#065F46";
+    } else {
+      label = "";
+      bg = "";
+      text = "";
+    }
 
-  return { label, bg, text };
-};
+    return { label, bg, text };
+  };
 
 
   // ---------- Sorting + Status filter ----------
 
   const sortedBusinesses = useMemo(() => {
-  let arr = [...businesses];
+    let arr = [...businesses];
 
-  if (statusFilter) {
-    const normalizedFilter = normalizeStatus(statusFilter); // 👈 value from STATUS_OPTIONS
+    if (statusFilter) {
+      const normalizedFilter = normalizeStatus(statusFilter); // 👈 value from STATUS_OPTIONS
 
-    arr = arr.filter((b) => {
-      const raw = (b.business_status || "").toLowerCase().trim();
-      const status = normalizeStatus(raw);
+      arr = arr.filter((b) => {
+        const raw = (b.business_status || "").toLowerCase().trim();
+        const status = normalizeStatus(raw);
 
-      switch (normalizedFilter) {
-        case "draft":
-          return status === "draft";
+        switch (normalizedFilter) {
+          case "draft":
+            return status === "draft";
 
-        case "approved":
-          return (
-            status === "approved" ||
-            (!status && b.active === true && !b.blocked) // same fallback as getStatusInfo
-          );
+          case "approved":
+            return (
+              status === "approved" ||
+              (!status && b.active === true && !b.blocked) // same fallback as getStatusInfo
+            );
 
-        case "pending approved":
-          return (
-            status === "pending" ||
-            status === "pending approval" ||
-            status === "pending approved"
-          );
+          case "pending approved":
+            return (
+              status === "pending" ||
+              status === "pending approval" ||
+              status === "pending approved"
+            );
 
-        case "claimed":
-          return status === "claimed";
+          case "claimed":
+            return status === "claimed";
 
-        default:
-          return true;
-      }
-    });
-  }
+          default:
+            return true;
+        }
+      });
+    }
 
-  // baki tumhara sort waala code as-is ↓
-  switch (sortOption) {
-    case "name-asc":
-      arr.sort((a, b) => a.name.localeCompare(b.name));
-      break;
-    case "name-desc":
-      arr.sort((a, b) => b.name.localeCompare(a.name));
-      break;
-    case "created-asc":
-      arr.sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() -
-          new Date(b.created_at).getTime()
-      );
-      break;
-    case "created-desc":
-      arr.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-      );
-      break;
-    default:
-      break;
-  }
+    // baki tumhara sort waala code as-is ↓
+    switch (sortOption) {
+      case "name-asc":
+        arr.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        arr.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "created-asc":
+        arr.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() -
+            new Date(b.created_at).getTime()
+        );
+        break;
+      case "created-desc":
+        arr.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        );
+        break;
+      default:
+        break;
+    }
 
-  return arr;
-}, [businesses, sortOption, statusFilter]);
+    return arr;
+  }, [businesses, sortOption, statusFilter]);
 
   // Schedule Helper
   const dayOrder = [
@@ -896,17 +898,17 @@ export default function Page() {
                 </div>
 
                 {/* Modal toggle */}
-                <input
+                {/* <input
                   type="checkbox"
                   id="business-toggle"
                   className="hidden peer"
-                />
-                <label
-                  htmlFor="business-toggle"
+                /> */}
+                <button
+                  onClick={()=> setOpenAddBusinessModal(true)}
                   className="px-4 py-3 text-sm font-bold bg-[#0519CE] text-white rounded-lg cursor-pointer hover:bg-blue-700 transition"
                 >
                   Add Business
-                </label>
+                </button>
 
                 {/* Modal */}
                 <div className="fixed inset-0 bg-[#000000b4] hidden peer-checked:flex items-center justify-center z-50">
@@ -1093,9 +1095,9 @@ export default function Page() {
               <div>
                 {currentbusiness.map((business) => {
                   const statusInfo = getStatusInfo(business);
-                   const allFeatures = business.accessibilityFeatures || [];
-                    const visibleFeatures = allFeatures.slice(0, 2); 
-                    const extraFeaturesCount = allFeatures.length - visibleFeatures.length;
+                  const allFeatures = business.accessibilityFeatures || [];
+                  const visibleFeatures = allFeatures.slice(0, 2);
+                  const extraFeaturesCount = allFeatures.length - visibleFeatures.length;
 
                   return (
                     <Link
@@ -1107,7 +1109,7 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`
+                          backgroundImage: `url(${business?.logo_url})`,
                         }}
                       >
                         {statusInfo.label && (
@@ -1325,6 +1327,10 @@ export default function Page() {
           </div>
         </div>
       </div>
+
+      {OpenAddBusinessModal && (
+        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
+      )}
     </div>
   );
 }

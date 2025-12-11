@@ -131,7 +131,7 @@ const AccessibleCityTable = forwardRef<{ fetchCities: () => void }, Props>(
               <tr key={city.id} className="border-b border-gray-200">
                 <td className="px-4 py-3 flex items-center gap-2 font-semibold">
                   <img
-                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/af-city/${city?.id}.png`}
+                    src={city.picture_url}
                     alt={city.city_name}
                     className="rounded-full w-12 h-12"
                     onError={(e) => {
@@ -139,6 +139,7 @@ const AccessibleCityTable = forwardRef<{ fetchCities: () => void }, Props>(
                     }}
 
                   />
+                  <p>{city.city_name}</p>
 
                 </td>
                 <td className="px-4 py-3 text-center">

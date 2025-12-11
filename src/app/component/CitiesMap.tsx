@@ -232,12 +232,13 @@ export default function CitiesMap() {
                   <div className="w-[128px] rounded-2xl">
                    
                     <img
-                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/af-city/${city?.id}.png`}
-                    alt={city.city_name}
+                    src={city?.picture_url || DEFAULT_IMAGE}
+                      alt={city?.city_name || 'City'}
                     className="w-[128px] h-[96px] rounded-2xl object-cover"
                     onError={(e) => {
                       e.currentTarget.src =DEFAULT_IMAGE;
                     }} />
+
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">

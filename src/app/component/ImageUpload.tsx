@@ -7,14 +7,14 @@ interface User {
     last_name: string;
     user_role: string;
     email: string;
-    profile_image_url?: string;
+    profile_picture_url?: string;
 }
 
 export default function ImageUpload() {
     const [openEditModal, setOpenEditModal] = useState(false);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [currentImage, setCurrentImage] = useState("/assets/images/profile.png");
+    const [currentImage, setCurrentImage] = useState<string>("");
     const [editLoading, setEditLoading] = useState(false);
     const [editMessage, setEditMessage] = useState("");
     const [user, setUser] = useState<User | null>(null);
@@ -25,7 +25,7 @@ export default function ImageUpload() {
         if (userData) {
             const parsedUser = JSON.parse(userData);
             setUser(parsedUser);
-            
+            setCurrentImage(parsedUser.profile_picture_url || "/assets/images/profile.png");
         }
     }, []);
 
@@ -79,8 +79,6 @@ export default function ImageUpload() {
                 reader.onerror = reject;
             });
 
-            
-
             console.log("DATA SENDING TO API:", {
                 data: base64Data,
                 folder: "user",
@@ -110,6 +108,7 @@ export default function ImageUpload() {
                 result = JSON.parse(text);
             } catch {
                 console.error("Error: Response was not JSON.");
+                setEditMessage("Upload failed. Invalid response.");
                 return;
             }
 
@@ -119,8 +118,8 @@ export default function ImageUpload() {
             if (newImageUrl) {
                 setCurrentImage(newImageUrl + '?t=' + Date.now());
 
-                // Update session
-                const updatedUser = { ...user, profile_image_url: newImageUrl };
+                // Update session with correct property name
+                const updatedUser = { ...user, profile_picture_url: newImageUrl };
                 sessionStorage.setItem('user', JSON.stringify(updatedUser));
                 setUser(updatedUser);
             }
@@ -152,17 +151,15 @@ export default function ImageUpload() {
     return (
         <div>
             <div className="flex flex-col justify-baseline items-center mb-6 w-auto md:w-[170px] mr-4">
-
                 <img
                     key={currentImage}
-                    src={currentImage}
+                    src={currentImage || "/assets/images/profile.png"}
                     alt="Profile Picture"
                     className="rounded-full w-30 h-30 object-cover"
                     onError={(e) => {
                         (e.target as HTMLImageElement).src = "/assets/images/profile.png";
                     }}
                 />
-
 
                 <button
                     type="button"
@@ -191,11 +188,10 @@ export default function ImageUpload() {
                         <div className="flex justify-center mb-6">
                             <label htmlFor="profileUpload" className="cursor-pointer">
                                 <img
-                                    src={previewImage || currentImage}
+                                    src={previewImage || currentImage || "/assets/images/profile.png"}
                                     alt="Profile"
                                     className="w-40 h-40 rounded-full object-cover shadow-md hover:opacity-80 transition"
                                 />
-
                             </label>
                         </div>
 
