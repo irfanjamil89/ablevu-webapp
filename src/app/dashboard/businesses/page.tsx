@@ -536,7 +536,7 @@ export default function Page() {
       setIsCreating(true);
 
       const res = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
+        "http://localhost:3006/business/create",
         {
           method: "POST",
           headers: {
