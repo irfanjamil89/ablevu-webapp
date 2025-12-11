@@ -119,6 +119,10 @@ function extractAddressParts(result: { address_components?: any[] }) {
   return { city, state, country, zipcode };
 }
 
+// 🔹 status normalize helper (same across app)
+const normalizeStatus = (status?: string | null) =>
+  (status || "").toLowerCase().trim().replace(/[\s_-]+/g, " ");
+
 // ---------- Component ----------
 
 export default function Page() {
@@ -147,25 +151,20 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-
-
-
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
-
-
 
   const statusFilterLabel =
     statusFilter === "draft"
       ? "Draft"
       : statusFilter === "pending"
-        ? "Pending Approved"
-        : statusFilter === "approved"
-          ? "Approved"
-          : statusFilter === "claimed"
-            ? "Claimed"
-            : "";
+      ? "Approval Request"
+      : statusFilter === "approved"
+      ? "Approved"
+      : statusFilter === "claimed"
+      ? "Claimed"
+      : "";
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -293,7 +292,7 @@ export default function Page() {
   // ---------- Status badge (business.business_status) ----------
 
   const getStatusInfo = (b: Business) => {
-    const raw = (b.business_status || "").toLowerCase().trim();
+    const raw = normalizeStatus(b.business_status);
     let label = "";
     let bg = "";
     let text = "";
@@ -302,15 +301,16 @@ export default function Page() {
       label = "Draft";
       bg = "#FFF3CD";
       text = "#C28A00";
-    } else if (raw === "pending" || raw === "pending_approval") {
-      label = "Pending Approval";
+    } else if (raw === "pending approved") {
+      // contributor view → show "Approval Request"
+      label = "Approval Request";
       bg = "#FFEFD5";
       text = "#B46A00";
     } else if (raw === "claimed") {
       label = "Claimed";
       bg = "#E0F7FF";
       text = "#0369A1";
-    } else if (b.active && !b.blocked) {
+    } else if (raw === "approved" || (!raw && b.active && !b.blocked)) {
       label = "Approved";
       bg = "#D1FAE5";
       text = "#065F46";
@@ -326,7 +326,7 @@ export default function Page() {
 
     if (statusFilter) {
       arr = arr.filter((b) => {
-        const status = (b.business_status || "").toLowerCase();
+        const status = normalizeStatus(b.business_status);
 
         switch (statusFilter) {
           case "draft":
@@ -334,16 +334,13 @@ export default function Page() {
 
           case "approved":
             return (
-              b.active === true &&
-              !b.blocked &&
-              status !== "pending" &&
-              status !== "pending_approval" &&
-              status !== "claimed" &&
-              status !== "draft"
+              status === "approved" ||
+              (!status && b.active === true && !b.blocked)
             );
 
           case "pending":
-            return status === "pending" || status === "pending_approval";
+            // filter "Approval Request" → backend "pending approved"
+            return status === "pending approved";
 
           case "claimed":
             return status === "claimed";
@@ -582,11 +579,16 @@ export default function Page() {
   // ---------- Loading state ----------
 
   if (loading) {
-    return <div className=" w-full flex justify-center items-center h-[400px]">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>;
+    return (
+      <div className=" w-full flex justify-center items-center h-[400px]">
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
+      </div>
+    );
   }
-
 
   const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -609,10 +611,8 @@ export default function Page() {
     }
   };
 
-
-
   const getPageNumbers = () => {
-    const pages = [];
+    const pages: (number | string)[] = [];
     const maxVisiblePages = 5;
 
     if (totalPages <= maxVisiblePages) {
@@ -624,28 +624,27 @@ export default function Page() {
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         pages.push(currentPage - 1);
         pages.push(currentPage);
         pages.push(currentPage + 1);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
 
     return pages;
   };
-
 
   // ---------- UI ----------
 
@@ -697,10 +696,10 @@ export default function Page() {
                           {sortOption === "name-asc"
                             ? "Name A–Z"
                             : sortOption === "name-desc"
-                              ? "Name Z–A"
-                              : sortOption === "created-asc"
-                                ? "Oldest First"
-                                : "Newest First"}
+                            ? "Name Z–A"
+                            : sortOption === "created-asc"
+                            ? "Oldest First"
+                            : "Newest First"}
                           )
                         </span>
                       )}
@@ -768,8 +767,8 @@ export default function Page() {
                   </div>
                 </div>
 
-                {/* Business Status */}
-                {/* <div className="relative inline-block text-left w-[290px]">
+                {/* Business Status (agar chahiye to uncomment kar sakte ho, logic ab same hai)
+                <div className="relative inline-block text-left w-[290px]">
                   <input
                     type="checkbox"
                     id="business-status-toggle"
@@ -827,7 +826,7 @@ export default function Page() {
                           onClick={() => setStatusFilter("pending")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
-                          Pending Approved
+                          Approval Request
                         </button>
                       </li>
                       <li>
@@ -850,7 +849,8 @@ export default function Page() {
                       </li>
                     </ul>
                   </div>
-                </div> */}
+                </div>
+                */}
 
                 {/* Search */}
                 <div className="flex items-center border border-gray-300 rounded-md px-3 py-3 w-auto lg:w-[200px] md:w-[150px]">
@@ -1091,7 +1091,7 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`
+                          backgroundImage: `url(https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png)`,
                         }}
                       >
                         {statusInfo.label && (
@@ -1247,7 +1247,9 @@ export default function Page() {
                 <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
                   {/* Left side: Entry counter */}
                   <div className="text-sm text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, sortedBusinesses.length)} of {sortedBusinesses.length} entries
+                    Showing {startIndex + 1} to{" "}
+                    {Math.min(endIndex, sortedBusinesses.length)} of{" "}
+                    {sortedBusinesses.length} entries
                   </div>
 
                   {/* Right side: Pagination buttons */}
@@ -1256,10 +1258,11 @@ export default function Page() {
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
-                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                        currentPage === 1
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                      }`}
                     >
                       Previous
                     </button>
@@ -1268,15 +1271,18 @@ export default function Page() {
                     <div className="flex items-center gap-1">
                       {getPageNumbers().map((page, idx) => (
                         <React.Fragment key={idx}>
-                          {page === '...' ? (
-                            <span className="px-3 py-1 text-gray-500">...</span>
+                          {page === "..." ? (
+                            <span className="px-3 py-1 text-gray-500">
+                              ...
+                            </span>
                           ) : (
                             <button
                               onClick={() => goToPage(page as number)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
-                                ? "bg-[#0519CE] text-white"
-                                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                }`}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                                currentPage === page
+                                  ? "bg-[#0519CE] text-white"
+                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                              }`}
                             >
                               {page}
                             </button>
@@ -1289,10 +1295,11 @@ export default function Page() {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
-                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                        currentPage === totalPages
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                      }`}
                     >
                       Next
                     </button>
