@@ -143,7 +143,7 @@ export default function BusinessSidebar({
         ? window.localStorage.getItem("access_token")
         : null;
 
-    const res = await fetch("http://localhost:3006/business-recomendations/create", {
+    const res = await fetch(`${API_BASE_URL}/business-recomendations/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
