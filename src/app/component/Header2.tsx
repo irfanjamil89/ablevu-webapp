@@ -226,8 +226,16 @@ const [user, setUser] = useState<User | null>(null);
                     ) : (
                       <div className="relative user-dropdown">
                         <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
-                          <img
+                          {/* <img
                             src={user?.profile_picture_url}
+                            alt="User"
+                            className="cursor-pointer h-10 w-10 mr-1"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/assets/images/profile.png";
+                            }}
+                          /> */}
+                          <img
+                            src={user?.profile_picture_url || "/assets/images/profile.png"}
                             alt="User"
                             className="cursor-pointer h-10 w-10 mr-1"
                             onError={(e) => {

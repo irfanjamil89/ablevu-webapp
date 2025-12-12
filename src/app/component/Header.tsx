@@ -374,7 +374,7 @@ export default function Header() {
                       <div className="relative user-dropdown">
                         <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
                           <img
-                            src={user?.profile_picture_url}
+                            src={user?.profile_picture_url || "/assets/images/profile.png"}
                             alt="User"
                             className="cursor-pointer h-10 w-10 mr-1"
                             onError={(e) => {
