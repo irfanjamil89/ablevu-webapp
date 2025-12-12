@@ -707,15 +707,36 @@ export default function Page() {
                               Accessible Features
                             </span>
                             <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                              {business.accessibilityFeatures.map((feature) => (
-                                <li
-                                  key={feature.id}
-                                  className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
-                                >
-                                  {getFeatureName(feature)}
-                                </li>
-                              ))}
-                            </ul>
+                          {(() => {
+                            const list = business.accessibilityFeatures || [];
+                            const count = list.length;
+
+                            if (count === 0) return <li>No features</li>;
+
+                            // Only first 2 items
+                            const firstTwo = list.slice(0, 2);
+
+                            return (
+                              <>
+                                {firstTwo.map((feature) => (
+                                  <li
+                                    key={feature.id}
+                                    className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
+                                  >
+                                    {getFeatureName(feature)}
+                                  </li>
+                                ))}
+
+                                {count > 2 && (
+                                  <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
+                                    +{count - 2}
+                                  </li>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </ul>
+
                           </div>
                         </div>
 

@@ -125,6 +125,61 @@ export default function BusinessSidebar({
 
   // ⭐ current logged-in user role
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [likeCount, setLikeCount] = useState<number>(0);
+
+
+  const handleRecommendClick = async () => {
+  if (!business) return;
+  if (!API_BASE_URL) {
+    showError("Error", "API base URL is not configured.");
+    return;
+  }
+
+  try {
+    setLikeLoading(true);
+
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("access_token")
+        : null;
+
+    const res = await fetch(`${API_BASE_URL}/business-recomendations/create`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        businessId: business.id, 
+        label: "like",          
+        active: true,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      const msg =
+        (body as { message?: string })?.message ||
+        `Failed to create recommendation (${res.status})`;
+      throw new Error(msg);
+    }
+
+    setLikeCount((prev) => prev + 1);
+
+    showSuccess(
+      "Thank you!",
+      "Your recommendation has been submitted."
+    );
+  } catch (err) {
+    console.error(err);
+    const msg =
+      err instanceof Error ? err.message : "Failed to submit recommendation.";
+    showError("Error", msg);
+  } finally {
+    setLikeLoading(false);
+  }
+};
 
   const handleShare = async () => {
     try {
@@ -136,14 +191,12 @@ export default function BusinessSidebar({
     }
   };
 
-  // ⭐ JWT se userId nikalna
   function getUserIdFromToken(token: string | null): string | null {
   if (!token || token === "null" || token === "undefined") return null;
 
   try {
     const parts = token.split(".");
     if (parts.length < 2) {
-      // valid JWT nahi hai
       console.warn("Invalid token format, no payload part");
       return null;
     }
@@ -160,7 +213,6 @@ export default function BusinessSidebar({
   }
 }
 
-  // ⭐ User role fetch from /users/me/:id
   useEffect(() => {
   const fetchUserRole = async () => {
     try {
@@ -206,7 +258,6 @@ export default function BusinessSidebar({
 }, []);
 
 
-  // ✅ Sync status with business data whenever it changes
   useEffect(() => {
     if (business?.business_status) {
       setStatus(normalizeStatus(business.business_status));
@@ -245,14 +296,12 @@ export default function BusinessSidebar({
 
       setStatus(normalized);
 
-      // ✅ global success popup
       showSuccess(
         "Status Updated",
         "Business status has been updated successfully."
       );
     } catch (err) {
       setStatusError("Failed to update status");
-      // ❌ global error popup
       showError(
         "Status Update Failed",
         "There was a problem updating the business status. Please try again."
@@ -309,7 +358,6 @@ export default function BusinessSidebar({
 
       setOpenDeleteModal(false);
 
-      // ✅ global success popup + redirect on close
       showSuccess(
         "Deleted Successfully!",
         "The business has been removed.",
@@ -366,17 +414,14 @@ export default function BusinessSidebar({
       .sort((a, b) => getDayOrder(a.day) - getDayOrder(b.day));
   }, [business?.businessSchedule]);
 
-  // ⭐ role-based status options
   const statusOptions = useMemo(() => {
     if (!userRole) return [];
 
     const normalizedStatus = normalizeStatus(status);
 
-    // base options with backend values
     const base = [
       { label: "Draft", value: "draft" },
       {
-        // Admin ko "Pending Approved", others ko "Approval Request"
         label: userRole === "Admin" ? "Pending Approved" : "Approval Request",
         value: "pending approved",
       },
@@ -385,25 +430,19 @@ export default function BusinessSidebar({
     ];
 
     if (userRole === "Admin") {
-      // Admin → 4 options
       return base;
     }
 
     if (userRole === "Business" || userRole === "Contributor") {
-      // ✅ agar abhi tak approve nahi hua
       if (normalizedStatus !== "approved") {
-        // Business / Contributor → sirf Draft + Approval Request choose kar sakta
         return base.filter((opt) =>
           ["draft", "pending approved"].includes(opt.value)
         );
       }
 
-      // ✅ agar Admin ne approve kar diya ho
-      // Business Owner ko dropdown me sirf Approved dikhana (read-only feel)
       return [{ label: "Approved", value: "approved" }];
     }
 
-    // User ya koi aur → status mat dikhayo
     return [];
   }, [userRole, status]);
 
@@ -476,15 +515,20 @@ export default function BusinessSidebar({
       {/* Info */}
       <div className="py-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold">{business.name}</h3>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]">
-              <AiOutlineLike className="w-5 h-5" />
-              <span>0</span>
-            </button>
-            <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+            <h3 className="text-2xl font-semibold">{business.name}</h3>
+            <div className="flex items-center gap-3">
+              <button
+                className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]"
+                onClick={handleRecommendClick}
+                disabled={likeLoading}
+              >
+                <AiOutlineLike className="w-5 h-5" />
+                <span>{likeCount}</span>
+              </button>
+              <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+            </div>
           </div>
-        </div>
+
 
         {/* Categories */}
         <div className="flex items-start mt-4 border-b border-[#e5e5e7] pb-6">
