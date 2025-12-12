@@ -125,6 +125,61 @@ export default function BusinessSidebar({
 
   // ⭐ current logged-in user role
   const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [likeLoading, setLikeLoading] = useState(false);
+  const [likeCount, setLikeCount] = useState<number>(0);
+
+  const handleRecommendClick = async () => {
+  if (!business) return;
+  if (!API_BASE_URL) {
+    showError("Error", "API base URL is not configured.");
+    return;
+  }
+
+  try {
+    setLikeLoading(true);
+
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("access_token")
+        : null;
+
+    const res = await fetch("http://localhost:3006/business-recomendations/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        businessId: business.id, // DTO ka field name
+        label: "like",          // optional hai, chahe to remove bhi kar sakte ho
+        active: true,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => null);
+      const msg =
+        (body as { message?: string })?.message ||
+        `Failed to create recommendation (${res.status})`;
+      throw new Error(msg);
+    }
+
+    // agar sirf 1 like per user chahiye to yahan disable logic bhi kar sakte ho
+    setLikeCount((prev) => prev + 1);
+
+    showSuccess(
+      "Thank you!",
+      "Your recommendation has been submitted."
+    );
+  } catch (err) {
+    console.error(err);
+    const msg =
+      err instanceof Error ? err.message : "Failed to submit recommendation.";
+    showError("Error", msg);
+  } finally {
+    setLikeLoading(false);
+  }
+};
 
   const handleShare = async () => {
     try {
@@ -476,15 +531,20 @@ export default function BusinessSidebar({
       {/* Info */}
       <div className="py-8">
         <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold">{business.name}</h3>
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]">
-              <AiOutlineLike className="w-5 h-5" />
-              <span>0</span>
-            </button>
-            <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+            <h3 className="text-2xl font-semibold">{business.name}</h3>
+            <div className="flex items-center gap-3">
+              <button
+                className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]"
+                onClick={handleRecommendClick}
+                disabled={likeLoading}
+              >
+                <AiOutlineLike className="w-5 h-5" />
+                <span>{likeCount}</span>
+              </button>
+              <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+            </div>
           </div>
-        </div>
+
 
         {/* Categories */}
         <div className="flex items-start mt-4 border-b border-[#e5e5e7] pb-6">
