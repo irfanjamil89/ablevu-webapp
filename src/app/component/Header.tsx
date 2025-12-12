@@ -7,6 +7,7 @@ import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
 import Feedback from "./Feedback";
 import AddBusinessModal from "./AddBusinessModal";
+import { User } from "lucide-react";
 
 interface User {
   id: string;
@@ -15,6 +16,7 @@ interface User {
   user_role: string;
   paid_contributor: boolean;
   email: string;
+  profile_picture_url: string;
 }
 
 export default function Header() {
@@ -349,6 +351,7 @@ export default function Header() {
                             onClick={() => setOpenLoginModal(true)}
                             className="group relative flex items-center gap-2 rounded-full cursor-pointer bg-gradient-to-r from-[#0519ce] to-[#0414a8] hover:bg-gradient-to-r hover:from-[#0519ce] hover:to-[#0414a8] py-2.5 px-7 text-white font-semibold transition-all duration-300 "
                           >
+
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               className="w-5 h-5 transition-transform group-hover:translate-x-1"
@@ -371,7 +374,7 @@ export default function Header() {
                       <div className="relative user-dropdown">
                         <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
                           <img
-                            src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+                            src={user?.profile_picture_url || "/assets/images/profile.png"}
                             alt="User"
                             className="cursor-pointer h-10 w-10 mr-1"
                             onError={(e) => {

@@ -43,6 +43,21 @@ function extractAddressParts(result: { address_components?: any[] }) {
   return { city, state, country, zipcode };
 }
 
+// ---------- Helper to convert file to base64 ----------
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      // Remove the data:image/...;base64, prefix
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 // ---------- Component ----------
 interface AddBusinessProps {
   setOpenAddBusinessModal: React.Dispatch<React.SetStateAction<boolean>>;
@@ -66,6 +81,8 @@ export default function AddBusinessModal({
   });
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -86,10 +103,24 @@ export default function AddBusinessModal({
       });
   }, []);
 
+  // ---------- Handle image selection ----------
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   // ---------- Create business handler ----------
 
-  const handleCreateBusiness = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateBusiness = async () => {
     setCreateError(null);
     setSuccessMessage(null);
 
@@ -138,6 +169,7 @@ export default function AddBusinessModal({
     try {
       setIsCreating(true);
 
+      // Step 1: Create business
       const res = await fetch(
         process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
         {
@@ -161,8 +193,52 @@ export default function AddBusinessModal({
       const responseData = await res.json();
       console.log("Business created successfully:", responseData);
 
-      // Show success message
-      setSuccessMessage("Business created successfully!");
+      const businessId = responseData.id;
+
+      // Step 2: Upload image if selected
+      if (selectedImage && businessId) {
+        try {
+          const base64Image = await fileToBase64(selectedImage);
+
+          const imageUploadPayload = {
+            data: base64Image,
+            folder: "business",
+            fileName: businessId,
+          };
+
+          const imageRes = await fetch(
+            "https://staging-api.qtpack.co.uk/images/upload-base64",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(imageUploadPayload),
+            }
+          );
+
+          console.log("Image upload – status:", imageRes.status);
+
+          if (!imageRes.ok) {
+            const imageError = await imageRes.json().catch(() => ({}));
+            console.error("Image upload error:", imageError);
+            throw new Error(imageError.message || "Failed to upload image");
+          }
+
+          const imageResponse = await imageRes.json();
+          console.log("Image uploaded successfully:", imageResponse);
+        } catch (imageErr: any) {
+          throw new Error(`Business created but image upload failed: ${imageErr.message}`);
+        }
+      }
+
+      // Show success message only after both operations complete
+      setSuccessMessage(
+        selectedImage 
+          ? "Business and logo uploaded successfully!" 
+          : "Business created successfully!"
+      );
 
       // Reset form
       setNewBusiness({
@@ -178,6 +254,8 @@ export default function AddBusinessModal({
         zipcode: "",
       });
       setSelectedCategoryId("");
+      setSelectedImage(null);
+      setImagePreview(null);
 
       // Clear success message after 3 seconds
       setTimeout(() => {
@@ -189,7 +267,6 @@ export default function AddBusinessModal({
       setIsCreating(false);
     }
   };
-
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -241,7 +318,7 @@ export default function AddBusinessModal({
               </div>
             )}
 
-            <form className="space-y-4" onSubmit={handleCreateBusiness}>
+            <div className="space-y-4">
               {/* Business Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -314,25 +391,41 @@ export default function AddBusinessModal({
                 <div className="relative">
                   <input
                     type="file"
-                    accept=".svg,.png,.jpg,.gif"
+                    accept=".svg,.png,.jpg,.jpeg,.gif"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    onChange={(e) => {
-                      console.log("logo file selected", e.target.files?.[0]);
-                    }}
+                    onChange={handleImageChange}
                   />
                   <div className="flex flex-col items-center border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer transition">
-                    <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="text-blue-600 font-semibold text-sm">
-                      Click to upload{" "}
-                      <span className="text-gray-500 text-xs font-normal">
-                        or drag and drop
-                      </span>
-                    </p>
-                    <p className="text-gray-500 text-xs mt-1">
-                      SVG, PNG, JPG or GIF (max. 800×400px)
-                    </p>
+                    {imagePreview ? (
+                      <div className="w-full">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="max-h-40 mx-auto rounded mb-2 object-contain"
+                        />
+                        <p className="text-green-600 font-semibold text-sm">
+                          {selectedImage?.name}
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Click to change image
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p className="text-blue-600 font-semibold text-sm">
+                          Click to upload{" "}
+                          <span className="text-gray-500 text-xs font-normal">
+                            or drag and drop
+                          </span>
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          SVG, PNG, JPG or GIF (max. 800×400px)
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -378,14 +471,14 @@ export default function AddBusinessModal({
               {/* Submit Button */}
               <div className="pt-2">
                 <button
-                  type="submit"
+                  onClick={handleCreateBusiness}
                   disabled={isCreating}
                   className="w-full px-5 py-3 text-center text-sm font-bold bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
                 >
                   {isCreating ? "Creating..." : "Create Business"}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>

@@ -18,6 +18,7 @@ interface User {
   user_role: string;
   paid_contributor: boolean;
   email: string;
+  profile_picture_url: string;
 }
 
 
@@ -225,14 +226,23 @@ const [user, setUser] = useState<User | null>(null);
                     ) : (
                       <div className="relative user-dropdown">
                         <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                          {/* <img
+                            src={user?.profile_picture_url}
+                            alt="User"
+                            className="cursor-pointer h-10 w-10 mr-1"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = "/assets/images/profile.png";
+                            }}
+                          /> */}
                           <img
-                            src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/user/${user?.id}.png`}
+                            src={user?.profile_picture_url || "/assets/images/profile.png"}
                             alt="User"
                             className="cursor-pointer h-10 w-10 mr-1"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src = "/assets/images/profile.png";
                             }}
                           />
+                          
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"

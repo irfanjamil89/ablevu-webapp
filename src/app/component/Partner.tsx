@@ -96,7 +96,7 @@ export default function Partner() {
             className=" w-[19%] "
           >
             <img
-              src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/partner/${partner.id}.png`}
+              src={partner?.image_url || "/assets/images/HDS_RGB-2048x610.png"}
               alt={`${partner.name} logo`}
               className=" object-contain w-[140px]"
               onError={(e) => {

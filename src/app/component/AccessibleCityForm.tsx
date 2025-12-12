@@ -185,7 +185,7 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
 
           const imagePayload = {
             data: base64Data,
-            folder: "city",
+            folder: "accessible-city",
             fileName: createdCityId,
           };
 

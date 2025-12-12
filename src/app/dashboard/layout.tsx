@@ -932,13 +932,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {user ? (
 
                   <img
-                    src={user.profile_picture_url}
+                    src={user.profile_picture_url || "/assets/images/profile.png" }
                     alt={user.first_name}
                     className=""
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = "/assets/images/profile.png";
                     }}
                   />
+
+                  
                 ) : (
                   <div>Loading...</div> // Show loading message until user data is fetched
                 )}

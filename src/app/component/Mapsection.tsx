@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import 'leaflet/dist/leaflet.css';
 import Link from "next/link";
+import Login from './Login';
+import Signup from './Signup';
+import ForgotPassword from './Forgotpassword';
+import Successmodal from './Successmodal';
 
 // TypeScript Interfaces
 interface Business {
@@ -38,27 +42,27 @@ interface ApiResponse {
 const validateCoordinates = (lat: any, lng: any): { lat: number; lng: number } | null => {
   const latitude = typeof lat === 'string' ? parseFloat(lat) : lat;
   const longitude = typeof lng === 'string' ? parseFloat(lng) : lng;
-  
+
   if (isNaN(latitude) || isNaN(longitude)) {
     console.warn('Invalid coordinates - not numbers:', { lat, lng });
     return null;
   }
-  
+
   if (latitude < -90 || latitude > 90) {
     console.warn('Invalid latitude (should be -90 to 90):', latitude);
     return null;
   }
-  
+
   if (longitude < -180 || longitude > 180) {
     console.warn('Invalid longitude (should be -180 to 180):', longitude);
     return null;
   }
-  
+
   if (Math.abs(latitude) > 90 && Math.abs(longitude) <= 90) {
     console.warn('Coordinates might be swapped!', { lat: latitude, lng: longitude });
     return { lat: longitude, lng: latitude };
   }
-  
+
   return { lat: latitude, lng: longitude };
 };
 
@@ -71,13 +75,19 @@ export default function Mapsections() {
   const [mapZoom, setMapZoom] = useState<number>(10);
   const [MapComponent, setMapComponent] = useState<any>(null);
   const [shouldFitBounds, setShouldFitBounds] = useState<boolean>(true);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+
+  const [openLoginModal, setOpenLoginModal] = useState(false);
+  const [openSignupModal, setOpenSignupModal] = useState(false);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [OpenForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
 
   useEffect(() => {
     const loadMap = async () => {
       if (typeof window !== 'undefined') {
         const L = (await import('leaflet')).default;
         const { MapContainer, TileLayer, Marker, Popup, useMap } = await import('react-leaflet');
-        
+
         // Fix default marker icons
         delete (L.Icon.Default.prototype as any)._getIconUrl;
         L.Icon.Default.mergeOptions({
@@ -105,60 +115,51 @@ export default function Mapsections() {
         // Default blue marker for "claimed" status
         const claimedIcon = new L.Icon.Default();
 
-        console.log('Map library loaded successfully');
-
         // Create Map Controller component
-        function MapController({ 
-          center, 
-          zoom, 
-          businesses, 
-          shouldFitBounds 
-        }: { 
-          center: [number, number]; 
-          zoom: number; 
+        function MapController({
+          center,
+          zoom,
+          businesses,
+          shouldFitBounds
+        }: {
+          center: [number, number];
+          zoom: number;
           businesses: Business[];
           shouldFitBounds: boolean;
         }) {
           const map = useMap();
-          
+
           React.useEffect(() => {
             if (shouldFitBounds && businesses.length > 0) {
               const validBusinesses = businesses.filter(b => {
                 const coords = validateCoordinates(b.latitude, b.longitude);
                 return coords !== null;
               });
-              
-              console.log('Valid businesses for bounds:', validBusinesses.length);
-              
+
               if (validBusinesses.length > 0) {
                 const bounds = L.latLngBounds(
                   validBusinesses.map(b => {
                     const coords = validateCoordinates(b.latitude, b.longitude)!;
-                    console.log(`Fitting bounds for ${b.name}:`, coords);
                     return [coords.lat, coords.lng] as [number, number];
                   })
                 );
-                
-                console.log('Fitting map to bounds:', bounds);
+
                 map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
               }
             } else if (center && !shouldFitBounds) {
-              console.log('Setting view to:', center, 'zoom:', zoom);
               map.setView(center, zoom);
             }
           }, [center, zoom, map, businesses, shouldFitBounds]);
-          
+
           return null;
         }
 
         // Helper function to get marker icon based on business status
         const getMarkerIcon = (status: string | null) => {
           const normalizedStatus = status?.toLowerCase();
-          
           if (normalizedStatus === 'approved') {
             return approvedIcon;
           }
-          // Default to claimed icon for "claimed" status or any other status
           return claimedIcon;
         };
 
@@ -174,23 +175,26 @@ export default function Mapsections() {
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <MapController 
-              center={center} 
-              zoom={zoom} 
+            <MapController
+              center={center}
+              zoom={zoom}
               businesses={businesses}
               shouldFitBounds={shouldFitBounds}
             />
             {businesses.map((business: Business) => {
               const coords = validateCoordinates(business.latitude, business.longitude);
-              
+
               if (!coords) {
-                console.warn(`Invalid coordinates for business ${business.name}:`, {
-                  lat: business.latitude,
-                  lng: business.longitude
-                });
                 return null;
               }
-              
+
+              const validLat = coords.lat;
+              const validLng = coords.lng;
+
+              if (validLat == null || validLng == null || isNaN(validLat) || isNaN(validLng)) {
+                return null;
+              }
+
               return (
                 <Marker
                   key={business.id}
@@ -201,31 +205,27 @@ export default function Mapsections() {
                     <div className="p-2">
                       <h3 className="font-bold text-base mb-1">{business.name}</h3>
                       {business.business_status && (
-                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${
-                          business.business_status.toLowerCase() === 'approved' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
+                        <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${business.business_status.toLowerCase() === 'approved'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-blue-100 text-blue-800'
+                          }`}>
                           {business.business_status.toUpperCase()}
                         </span>
                       )}
                       <p className="text-sm text-gray-600 mb-2">{business.address}</p>
                       <p className="text-xs text-gray-400 mb-2">
-                        Coords: {coords.lat.toFixed(6)}, {coords.lng.toFixed(6)}
+                        Coords: {validLat.toFixed(6)}, {validLng.toFixed(6)}
                       </p>
                       {business.phone_number && (
-                        <p className="text-sm text-gray-600"> {business.phone_number}</p>
+                        <p className="text-sm text-gray-600">{business.phone_number}</p>
                       )}
-                      {business.website && (
-                        
-                        <a
-                          
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="bg-red-700 rounded cursor-pointer hover:bg-red-800 transition-all ease-in-out text-sm block text-center p-4 redd"
+                      {business.business_status?.toLowerCase() === 'approved' && (
+                        <button
+                          onClick={() => setSelectedBusiness(business)}
+                          className="bg-red-700 rounded cursor-pointer hover:bg-red-800 transition-all ease-in-out text-sm block text-center p-4 text-white w-full mt-2"
                         >
                           Claim Business
-                        </a>
+                        </button>
                       )}
                     </div>
                   </Popup>
@@ -259,20 +259,7 @@ export default function Mapsections() {
       }
 
       const result: ApiResponse = await response.json();
-      
-      // Debug: Log business status information
-      if (result.data && result.data.length > 0) {
-        console.log('=== API Response Debug ===');
-        console.log('Total businesses:', result.data.length);
-        result.data.forEach((business, index) => {
-          console.log(`Business ${index + 1}: ${business.name}`);
-          console.log('  Status:', business.business_status);
-          console.log('  Latitude:', business.latitude, `(type: ${typeof business.latitude})`);
-          console.log('  Longitude:', business.longitude, `(type: ${typeof business.longitude})`);
-        });
-        console.log('======================');
-      }
-      
+
       setBusinesses(result.data || []);
       setShouldFitBounds(true);
       setError(null);
@@ -361,60 +348,225 @@ export default function Mapsections() {
             ) : filteredBusinesses.length === 0 ? (
               <p className="text-center text-gray-500 py-4">No businesses found</p>
             ) : (
-              filteredBusinesses.map((business) => (
-                <Link
-                  key={business.id}
-                  onClick={() => handleBusinessClick(business)}
-                  href={`/business-profile/${business.id}`}
-                  className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition hover:bg-gray-50 text-left"
-                >
-                  <img
-                    src={`https://ablevu-storage.s3.us-east-1.amazonaws.com/business/${business.id}.png`}
-                    alt={business.name}
-                    className="rounded-lg object-cover w-20 h-16"
-                  />
-                  <div className="pe-2 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg">{business.name}</h3>
-                      {business.business_status && (
-                        <span className={`px-2 py-0.5 text-xs font-semibold rounded ${
-                          business.business_status.toLowerCase() === 'approved' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {business.business_status}
-                        </span>
-                      )}
+              filteredBusinesses.map((business) => {
+                const isApproved = business.business_status?.toLowerCase() === 'approved';
+                
+                // For approved businesses, render a div that opens modal
+                if (isApproved) {
+                  return (
+                    <div
+                      key={business.id}
+                      onClick={() => setSelectedBusiness(business)}
+                      className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition hover:bg-gray-50 text-left cursor-pointer"
+                    >
+                      <img
+                        src={business?.logo_url || "assets/images/b-img.png"}
+                        alt={business.name}
+                        className="rounded-lg object-cover w-20 h-16"
+                      />
+
+                      <div className="pe-2 flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-lg">{business.name}</h3>
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded bg-red-100 text-red-800">
+                            {business.business_status}
+                          </span>
+                        </div>
+                        <div className="flex items-start">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="1.5"
+                            stroke="currentColor"
+                            className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0 mt-0.5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+                            />
+                          </svg>
+                          <p className="text-sm text-gray-600">{business.address}</p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-start">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0 mt-0.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
-                        />
-                      </svg>
-                      <p className="text-sm text-gray-600">{business.address}</p>
+                  );
+                }
+
+                // For claimed businesses, render Link as usual
+                return (
+                  <Link
+                    key={business.id}
+                    onClick={() => handleBusinessClick(business)}
+                    href={`/business-profile/${business.id}`}
+                    className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition hover:bg-gray-50 text-left"
+                  >
+                    <img
+                      src={business?.logo_url || "assets/images/b-img.png"}
+                      alt={business.name}
+                      className="rounded-lg object-cover w-20 h-16"
+                    />
+
+                    <div className="pe-2 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg">{business.name}</h3>
+                        {business.business_status && (
+                          <span className="px-2 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-800">
+                            {business.business_status}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-start">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="1.5"
+                          stroke="currentColor"
+                          className="w-5 h-5 text-gray-500 mr-2 flex-shrink-0 mt-0.5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
+                          />
+                        </svg>
+                        <p className="text-sm text-gray-600">{business.address}</p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>
       </div>
+
+      {/* Business Details Modal - MOVED OUTSIDE THE MAP LOOP */}
+      {selectedBusiness && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-8 relative shadow-2xl mx-4">
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedBusiness(null)}
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2"
+                stroke="currentColor"
+                className="w-7 h-7"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
+            {/* Header */}
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">
+              Business Details
+            </h2>
+
+            {/* Business Info */}
+            <div className="flex gap-6 mb-6">
+              <img
+                src={selectedBusiness?.logo_url || "assets/images/b-img.png"}
+                alt={selectedBusiness?.name}
+                className="w-32 h-32 rounded-lg object-cover flex-shrink-0"
+              />
+              <div className="flex-1">
+                <div className="mb-3">
+                  <span className="text-gray-600 font-semibold">Business Name: </span>
+                  <span className="text-gray-900">{selectedBusiness?.name}</span>
+                </div>
+                <div className="mb-3">
+                  <span className="text-gray-600 font-semibold">Business Address: </span>
+                  <span className="text-gray-900">{selectedBusiness?.address}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600 font-semibold">Business Category: </span>
+                  <span className="text-gray-900">Church</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lock Message Box */}
+            <div className="bg-[#f0f1ff] border-2 border-blue-200 rounded-lg p-5 mb-6">
+              <p className="text-gray-700 text-base leading-relaxed">
+                This profile is currently locked while we wait for the business to verify their accessibility details and claim it. If you are the business owner, please sign up or log in to claim this profile.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4 justify-center">
+              <button 
+                onClick={() => {
+                  setOpenLoginModal(true);
+                  setSelectedBusiness(null);
+                }}
+                className="px-8 py-3 border-2 border-[#0519ce] text-[#0519ce] rounded-full font-semibold hover:bg-blue-50 transition-all text-base min-w-[140px]"
+              >
+                Log in
+              </button>
+              <button 
+                onClick={() => {
+                  setOpenSignupModal(true);
+                  setSelectedBusiness(null);
+                }}
+                className="px-8 py-3 bg-[#0519ce] text-white rounded-full font-semibold hover:bg-[#0519ce] transition-all text-base min-w-[140px]"
+              >
+                Sign up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Modals */}
+      {openLoginModal && (
+        <Login
+          setOpenLoginModal={setOpenLoginModal}
+          setOpenSignupModal={setOpenSignupModal}
+          setOpenForgotPasswordModal={setOpenForgotPasswordModal}
+        />
+      )}
+      {openSignupModal && (
+        <Signup
+          setOpenSignupModal={setOpenSignupModal}
+          setOpenLoginModal={setOpenLoginModal}
+          setOpenSuccessModal={setOpenSuccessModal}
+        />
+      )}
+      {OpenForgotPasswordModal && (
+        <ForgotPassword
+          setOpenForgotPasswordModal={setOpenForgotPasswordModal}
+          setOpenLoginModal={setOpenLoginModal}
+          setOpenSuccessModal={setOpenSuccessModal}
+        />
+      )}
+      {openSuccessModal && (
+        <Successmodal
+          setOpenSuccessModal={setOpenSuccessModal}
+          setOpenLoginModal={setOpenLoginModal}
+          setOpenSignupModal={setOpenSignupModal}
+        />
+      )}
     </section>
   );
 }
