@@ -238,7 +238,7 @@ interface MaincontentProps {
   ) => void;
   setOpenPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenEditPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
-  setSelectedImageId:React.Dispatch<React.SetStateAction<string>>;
+  setSelectedImageId: React.Dispatch<React.SetStateAction<string>>;
   setOpenCustonSectionPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAccessibilityMediaPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAccessibilityResourcesPopup: React.Dispatch<
@@ -433,30 +433,30 @@ export default function Maincontent({
   const featureGroups: AccessibilityFeatureGroup[] =
     business?.accessibilityFeatures && business.accessibilityFeatures.length > 0
       ? Object.values(
-          (business.accessibilityFeatures || []).reduce(
-            (
-              acc: Record<string, AccessibilityFeatureGroup>,
-              f: AccessibilityFeature
-            ) => {
-              // is business feature ka type id master list se
-              const typeId =
-                featureIdToTypeId[f.accessible_feature_id] ||
-                f.featureType?.id ||
-                f.accessible_feature_type_id ||
-                "other";
+        (business.accessibilityFeatures || []).reduce(
+          (
+            acc: Record<string, AccessibilityFeatureGroup>,
+            f: AccessibilityFeature
+          ) => {
+            // is business feature ka type id master list se
+            const typeId =
+              featureIdToTypeId[f.accessible_feature_id] ||
+              f.featureType?.id ||
+              f.accessible_feature_type_id ||
+              "other";
 
-              const safeTypeId = typeId || "other";
-              const typeName = getTypeNameFromId(safeTypeId);
+            const safeTypeId = typeId || "other";
+            const typeName = getTypeNameFromId(safeTypeId);
 
-              if (!acc[safeTypeId]) {
-                acc[safeTypeId] = { typeId: safeTypeId, typeName, items: [] };
-              }
-              acc[safeTypeId].items.push(f);
-              return acc;
-            },
-            {}
-          )
+            if (!acc[safeTypeId]) {
+              acc[safeTypeId] = { typeId: safeTypeId, typeName, items: [] };
+            }
+            acc[safeTypeId].items.push(f);
+            return acc;
+          },
+          {}
         )
+      )
       : [];
 
   // ---------- Loading / Error ----------
@@ -605,7 +605,7 @@ export default function Maincontent({
                 className="relative box-content overflow-hidden w-[24%]"
               >
                 <img
-                  src={image.image_url || ""}
+                  src={image.image_url || undefined}
                   alt={image.name || `Property image ${index + 1}`}
                   className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
                 />
@@ -625,7 +625,7 @@ export default function Maincontent({
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
-                    onClick={() => onDeleteBusinessImage?.(image)} 
+                    onClick={() => onDeleteBusinessImage?.(image)}
                   />
                 </div>
               </div>

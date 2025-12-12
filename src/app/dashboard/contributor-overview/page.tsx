@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
 import Link from "next/link";
+import AddBusinessModal from "@/app/component/AddBusinessModal";
 
 // ---------- Types ----------
 
@@ -150,6 +151,9 @@ export default function Page() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+    const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
+  
 
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -798,17 +802,17 @@ export default function Page() {
                 </div>
 
                 {/* Modal toggle */}
-                <input
+                {/* <input
                   type="checkbox"
                   id="business-toggle"
                   className="hidden peer"
-                />
-                <label
-                  htmlFor="business-toggle"
+                /> */}
+               <button
+                  onClick={()=> setOpenAddBusinessModal(true)}
                   className="px-4 py-3 text-sm font-bold bg-[#0519CE] text-white rounded-lg cursor-pointer hover:bg-blue-700 transition"
                 >
                   Add Business
-                </label>
+                </button>
 
                 {/* Modal */}
                 <div className="fixed inset-0 bg-[#000000b4] hidden peer-checked:flex items-center justify-center z-50">
@@ -1317,6 +1321,9 @@ export default function Page() {
           </div>
         </div>
       </div>
+      {OpenAddBusinessModal && (
+                    <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
+                  )}
     </div>
   );
 }
