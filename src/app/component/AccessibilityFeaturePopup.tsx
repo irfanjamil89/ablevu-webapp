@@ -212,11 +212,21 @@ const handleSubmit: React.FormEventHandler = async (e) => {
     return;
   }
 
+  const alreadyAddedIds = initialFeatureIds || [];
+
+  const newFeatureIds = selectedFeatureIds.filter(
+    (id) => !alreadyAddedIds.includes(id)
+  );
+
+  if (newFeatureIds.length === 0) {
+    setError("This accessibility feature is already added.");
+    return;
+  }
+
   try {
     setSaving(true);
     setError(null);
 
-    // 🔹 EXACTLY same payload jaisa Postman me hai
     const res = await fetch(
       `${API_BASE_URL}/business-accessible-feature/create`,
       {
@@ -227,7 +237,7 @@ const handleSubmit: React.FormEventHandler = async (e) => {
         },
         body: JSON.stringify({
           business_id: businessId,
-          accessible_feature_ids: selectedFeatureIds,
+          accessible_feature_ids: newFeatureIds, 
         }),
       }
     );
@@ -242,12 +252,11 @@ const handleSubmit: React.FormEventHandler = async (e) => {
             : body.message;
         }
       } catch {
-        // ignore JSON parse error
+        
       }
       throw new Error(msg);
     }
 
-    // 🔁 business ko refresh karne ke liye profile dubara fetch
     if (onUpdated) {
       const profileRes = await fetch(
         `${API_BASE_URL}/business/business-profile/${businessId}`,
@@ -262,7 +271,6 @@ const handleSubmit: React.FormEventHandler = async (e) => {
       onUpdated(updatedBusiness);
     }
 
-    // modal close
     setOpenAccessibilityFeaturePopup(false);
   } catch (err: any) {
     console.error(err);
