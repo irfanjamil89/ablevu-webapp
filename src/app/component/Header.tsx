@@ -128,6 +128,9 @@ export default function Header() {
       case 'business-created':
         window.location.href = `/business-profile/${meta.id}`;
         break;
+      case 'business-status':
+        window.location.href = `/business-profile/${meta.businessId}`;
+        break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
