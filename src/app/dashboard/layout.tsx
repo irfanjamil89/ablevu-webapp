@@ -185,7 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       case 'business-created':
         window.location.href = `/business-profile/${meta.id}`;
         break;
-      case 'business-updated':
+      case 'business-status':
         window.location.href = `/business-profile/${meta.id}`;
         break;
       default:
