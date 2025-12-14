@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AiOutlineLike } from "react-icons/ai";
 import {
   BsBookmark,
+  BsBookmarkFill,
   BsArrowLeft,
   BsLink,
   BsEnvelope,
@@ -60,6 +61,7 @@ type BusinessProfile = {
   linkedTypes: LinkedTypeItem[];
   businessSchedule: BusinessScheduleItem[];
   business_status?: string;
+  businessRecomendations?: any[];
 };
 
 type BusinessType = {
@@ -130,7 +132,73 @@ export default function BusinessSidebar({
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [likeLoading, setLikeLoading] = useState(false);
   const [likeCount, setLikeCount] = useState<number>(0);
+  
 
+  const [saved, setSaved] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveId, setSaveId] = useState<string | null>(null);
+
+  const handleSaveToggle = async () => {
+  if (!business || saveLoading) return;
+
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    showError("Login Required", "Please login to save businesses.");
+    return;
+  }
+
+  try {
+    setSaveLoading(true);
+
+    // 🔴 UNSAVE
+    if (saved && saveId) {
+      const res = await fetch(
+        `${API_BASE_URL}/business-save/delete/${saveId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to remove save");
+
+      setSaved(false);
+      setSaveId(null);
+      showSuccess("Removed", "Business removed from saved list.");
+      return;
+    }
+
+    // 🟢 SAVE
+    const res = await fetch(
+      `${API_BASE_URL}/business-save/create`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          business_id: business.id,
+          note: "Save Business",
+        }),
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed to save");
+
+    const data = await res.json();
+    setSaved(true);
+    setSaveId(data.id);
+
+    showSuccess("Saved", "Business added to your saved list.");
+  } catch (err: any) {
+    showError("Error", err.message || "Save failed");
+  } finally {
+    setSaveLoading(false);
+  }
+};
 
   const handleRecommendClick = async () => {
   if (!business) return;
@@ -215,6 +283,22 @@ export default function BusinessSidebar({
     return null;
   }
 }
+
+  useEffect(() => {
+  if (!business?.businessRecomendations) {
+    setLikeCount(0);
+    return;
+  }
+
+  const count = business.businessRecomendations.filter((rec: any) => {
+    const label = (rec.label || "").toLowerCase().trim();
+    const isActive = rec.active !== false;
+    return label === "like" && isActive;
+  }).length;
+
+  setLikeCount(count);
+}, [business?.businessRecomendations]);
+
 
   useEffect(() => {
   const fetchUserRole = async () => {
@@ -518,6 +602,7 @@ export default function BusinessSidebar({
         <div className="flex items-center justify-between">
             <h3 className="text-2xl font-semibold">{business.name}</h3>
             <div className="flex items-center gap-3">
+              {/* LIKE BUTTON */}
               <button
                 className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]"
                 onClick={handleRecommendClick}
@@ -526,7 +611,19 @@ export default function BusinessSidebar({
                 <AiOutlineLike className="w-5 h-5" />
                 <span>{likeCount}</span>
               </button>
-              <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+
+              {/* SAVE / BOOKMARK BUTTON */}
+              <button
+                onClick={handleSaveToggle}
+                disabled={saveLoading}
+                className="flex items-center"
+              >
+                {saved ? (
+                  <BsBookmarkFill className="w-5 h-5 text-[#0205d3]" />
+                ) : (
+                  <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+                )}
+              </button>
             </div>
           </div>
 
