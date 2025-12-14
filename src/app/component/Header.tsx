@@ -41,6 +41,11 @@ export default function Header() {
     return userData ? JSON.parse(userData) : null;
   };
 
+  const handleBusinessCreated = () => {
+    setOpenAddBusinessModal(false);
+
+  };
+
 
   useEffect(() => {
     const storedUser = getUserFromSession();
@@ -49,6 +54,7 @@ export default function Header() {
     }
   }, []);
 
+  
 
 
   // Run only after client-side hydration
@@ -479,7 +485,8 @@ export default function Header() {
       )}
 
       {OpenAddBusinessModal && (
-        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
+        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal}
+        onBusinessCreated={handleBusinessCreated} />
       )}
 
 

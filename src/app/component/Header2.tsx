@@ -41,7 +41,11 @@ const [user, setUser] = useState<User | null>(null);
     return userData ? JSON.parse(userData) : null;
   };
 
+  const handleBusinessCreated = () => {
+    setOpenAddBusinessModal(false);
 
+  };
+  
   useEffect(() => {
     const storedUser = getUserFromSession();
     if (storedUser) {
@@ -338,7 +342,8 @@ const [user, setUser] = useState<User | null>(null);
       )}
 
       {OpenAddBusinessModal && (
-        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
+        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal}
+        onBusinessCreated={handleBusinessCreated} />
       )}
 
 
