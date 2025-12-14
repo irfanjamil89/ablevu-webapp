@@ -71,6 +71,16 @@ type BusinessType = {
 
 type UserRole = "Admin" | "Business" | "Contributor" | "User" | string;
 
+// ⭐ NEW: SavedBusiness type
+type SavedBusiness = {
+  id: string;
+  business_id: string;
+  user_id: string;
+  note?: string;
+  created_at: string;
+  updated_at: string;
+};
+
 interface BusinessSidebarProps {
   business: BusinessProfile | null;
   businessTypes: BusinessType[];
@@ -82,7 +92,6 @@ interface BusinessSidebarProps {
   setOpenAboutModal: React.Dispatch<React.SetStateAction<boolean>>;
   showSuccess: (title: string, message: string, onClose?: () => void) => void;
   showError: (title: string, message: string, onClose?: () => void) => void;
-
   refetchBusiness: () => void;
 }
 
@@ -128,52 +137,77 @@ export default function BusinessSidebar({
   const [openDeleteModal, setOpenDeleteModal] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  // ⭐ current logged-in user role
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [likeLoading, setLikeLoading] = useState(false);
   const [likeCount, setLikeCount] = useState<number>(0);
-  
 
+  // ⭐ SAVE STATE
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveId, setSaveId] = useState<string | null>(null);
 
-  const handleSaveToggle = async () => {
-  if (!business || saveLoading) return;
+  // ---------- TOKEN HELPER ----------
+  function getUserIdFromToken(token: string | null): string | null {
+    if (!token || token === "null" || token === "undefined") return null;
 
-  const token = localStorage.getItem("access_token");
-  if (!token) {
-    showError("Login Required", "Please login to save businesses.");
-    return;
+    try {
+      const parts = token.split(".");
+      if (parts.length < 2) {
+        console.warn("Invalid token format, no payload part");
+        return null;
+      }
+
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const json = atob(base64);
+      const payload = JSON.parse(json);
+
+      return payload?.sub || payload?.id || null;
+    } catch (e) {
+      console.error("Failed to decode token", e);
+      return null;
+    }
   }
 
-  try {
-    setSaveLoading(true);
+  // ⭐ SAVE TOGGLE (same as before, with small tweak)
+  const handleSaveToggle = async () => {
+    if (!business || saveLoading) return;
 
-    // 🔴 UNSAVE
-    if (saved && saveId) {
-      const res = await fetch(
-        `${API_BASE_URL}/business-save/delete/${saveId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("access_token")
+        : null;
 
-      if (!res.ok) throw new Error("Failed to remove save");
-
-      setSaved(false);
-      setSaveId(null);
-      showSuccess("Removed", "Business removed from saved list.");
+    if (!token) {
+      showError("Login Required", "Please login to save businesses.");
       return;
     }
 
-    // 🟢 SAVE
-    const res = await fetch(
-      `${API_BASE_URL}/business-save/create`,
-      {
+    try {
+      setSaveLoading(true);
+
+      // 🔴 UNSAVE
+      if (saved && saveId) {
+        const res = await fetch(
+          `${API_BASE_URL}/business-save/delete/${saveId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to remove save");
+
+        setSaved(false);
+        setSaveId(null);
+        showSuccess("Removed", "Business removed from saved list.");
+        return;
+      }
+
+      // 🟢 SAVE
+      const res = await fetch(`${API_BASE_URL}/business-save/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -183,74 +217,134 @@ export default function BusinessSidebar({
           business_id: business.id,
           note: "Save Business",
         }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save");
+
+      const resData = await res.json();
+      const created = (resData?.data || resData) as { id?: string };
+
+      setSaved(true);
+      if (created?.id) {
+        setSaveId(created.id);
       }
-    );
 
-    if (!res.ok) throw new Error("Failed to save");
+      showSuccess("Saved", "Business added to your saved list.");
+    } catch (err: any) {
+      showError("Error", err.message || "Save failed");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
 
-    const data = await res.json();
-    setSaved(true);
-    setSaveId(data.id);
+  // ⭐ ON LOAD -> CHECK IF THIS BUSINESS IS ALREADY SAVED
+  useEffect(() => {
+    const checkSaved = async () => {
+      if (!business || !API_BASE_URL) return;
 
-    showSuccess("Saved", "Business added to your saved list.");
-  } catch (err: any) {
-    showError("Error", err.message || "Save failed");
-  } finally {
-    setSaveLoading(false);
-  }
-};
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("access_token")
+          : null;
+      const userId = getUserIdFromToken(token);
+
+      if (!token || !userId) {
+        setSaved(false);
+        setSaveId(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/business-save/list?page=1&limit=100`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) {
+          console.warn("Failed to fetch saved list", res.status);
+          return;
+        }
+
+        const body = await res.json();
+        const items: SavedBusiness[] = body.data || body.items || [];
+
+        const match = items.find(
+          (s) =>
+            s.business_id === business.id &&
+            (!s.user_id || s.user_id === userId)
+        );
+
+        if (match) {
+          setSaved(true);
+          setSaveId(match.id);
+        } else {
+          setSaved(false);
+          setSaveId(null);
+        }
+      } catch (err) {
+        console.error("Failed to check saved status", err);
+      }
+    };
+
+    checkSaved();
+  }, [business?.id, API_BASE_URL]);
 
   const handleRecommendClick = async () => {
-  if (!business) return;
-  if (!API_BASE_URL) {
-    showError("Error", "API base URL is not configured.");
-    return;
-  }
-
-  try {
-    setLikeLoading(true);
-
-    const token =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("access_token")
-        : null;
-
-    const res = await fetch(`${API_BASE_URL}/business-recomendations/create`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({
-        businessId: business.id, 
-        label: "like",          
-        active: true,
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.json().catch(() => null);
-      const msg =
-        (body as { message?: string })?.message ||
-        `Failed to create recommendation (${res.status})`;
-      throw new Error(msg);
+    if (!business) return;
+    if (!API_BASE_URL) {
+      showError("Error", "API base URL is not configured.");
+      return;
     }
 
-    setLikeCount((prev) => prev + 1);
+    try {
+      setLikeLoading(true);
 
-    showSuccess(
-      "Thank you!",
-      "Your recommendation has been submitted."
-    );
-  } catch (err) {
-    console.error(err);
-    const msg =
-      err instanceof Error ? err.message : "Failed to submit recommendation.";
-    showError("Error", msg);
-  } finally {
-    setLikeLoading(false);
-  }
-};
+      const token =
+        typeof window !== "undefined"
+          ? window.localStorage.getItem("access_token")
+          : null;
+
+      const res = await fetch(
+        `${API_BASE_URL}/business-recomendations/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            businessId: business.id,
+            label: "like",
+            active: true,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const msg =
+          (body as { message?: string })?.message ||
+          `Failed to create recommendation (${res.status})`;
+        throw new Error(msg);
+      }
+
+      setLikeCount((prev) => prev + 1);
+
+      showSuccess("Thank you!", "Your recommendation has been submitted.");
+    } catch (err) {
+      console.error(err);
+      const msg =
+        err instanceof Error ? err.message : "Failed to submit recommendation.";
+      showError("Error", msg);
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -262,88 +356,64 @@ export default function BusinessSidebar({
     }
   };
 
-  function getUserIdFromToken(token: string | null): string | null {
-  if (!token || token === "null" || token === "undefined") return null;
-
-  try {
-    const parts = token.split(".");
-    if (parts.length < 2) {
-      console.warn("Invalid token format, no payload part");
-      return null;
+  useEffect(() => {
+    if (!business?.businessRecomendations) {
+      setLikeCount(0);
+      return;
     }
 
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const json = atob(base64);
-    const payload = JSON.parse(json);
+    const count = business.businessRecomendations.filter((rec: any) => {
+      const label = (rec.label || "").toLowerCase().trim();
+      const isActive = rec.active !== false;
+      return label === "like" && isActive;
+    }).length;
 
-    return payload?.sub || payload?.id || null;
-  } catch (e) {
-    console.error("Failed to decode token", e);
-    return null;
-  }
-}
+    setLikeCount(count);
+  }, [business?.businessRecomendations]);
 
   useEffect(() => {
-  if (!business?.businessRecomendations) {
-    setLikeCount(0);
-    return;
-  }
+    const fetchUserRole = async () => {
+      try {
+        if (typeof window === "undefined") return;
 
-  const count = business.businessRecomendations.filter((rec: any) => {
-    const label = (rec.label || "").toLowerCase().trim();
-    const isActive = rec.active !== false;
-    return label === "like" && isActive;
-  }).length;
+        const token = window.localStorage.getItem("access_token");
+        const userId = getUserIdFromToken(token);
 
-  setLikeCount(count);
-}, [business?.businessRecomendations]);
+        if (!token || !userId) {
+          console.warn("No valid token / userId found, skipping user role fetch");
+          return;
+        }
 
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (!base) {
+          console.error("API base URL is not configured");
+          return;
+        }
 
-  useEffect(() => {
-  const fetchUserRole = async () => {
-    try {
-      if (typeof window === "undefined") return;
+        const res = await fetch(`${base}/users/me/${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const token = window.localStorage.getItem("access_token");
-      const userId = getUserIdFromToken(token);
+        if (!res.ok) {
+          console.warn("User role fetch failed with status", res.status);
+          return;
+        }
 
-      if (!token || !userId) {
-        console.warn("No valid token / userId found, skipping user role fetch");
-        return;
+        const data = await res.json();
+        if (data?.user_role) {
+          setUserRole(data.user_role);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user role", err);
       }
+    };
 
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      if (!base) {
-        console.error("API base URL is not configured");
-        return;
-      }
-
-      const res = await fetch(`${base}/users/me/${userId}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        console.warn("User role fetch failed with status", res.status);
-        return;
-      }
-
-      const data = await res.json();
-      if (data?.user_role) {
-        setUserRole(data.user_role);
-      }
-    } catch (err) {
-      console.error("Failed to fetch user role", err);
-    }
-  };
-
-  fetchUserRole();
-}, []);
-
+    fetchUserRole();
+  }, []);
 
   useEffect(() => {
     if (business?.business_status) {
@@ -445,13 +515,9 @@ export default function BusinessSidebar({
 
       setOpenDeleteModal(false);
 
-      showSuccess(
-        "Deleted Successfully!",
-        "The business has been removed.",
-        () => {
-          router.push("/dashboard/businesses");
-        }
-      );
+      showSuccess("Deleted Successfully!", "The business has been removed.", () => {
+        router.push("/dashboard/businesses");
+      });
     } catch (err: unknown) {
       console.error(err);
       const msg =
@@ -591,42 +657,40 @@ export default function BusinessSidebar({
         businessName={business.name}
         initialImageUrl={business.logo_url}
         onUploadSuccess={() => {
-       
           refetchBusiness();
-
         }}
       />
 
       {/* Info */}
       <div className="py-8">
         <div className="flex items-center justify-between">
-            <h3 className="text-2xl font-semibold">{business.name}</h3>
-            <div className="flex items-center gap-3">
-              {/* LIKE BUTTON */}
-              <button
-                className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]"
-                onClick={handleRecommendClick}
-                disabled={likeLoading}
-              >
-                <AiOutlineLike className="w-5 h-5" />
-                <span>{likeCount}</span>
-              </button>
+          <h3 className="text-2xl font-semibold">{business.name}</h3>
 
-              {/* SAVE / BOOKMARK BUTTON */}
-              <button
-                onClick={handleSaveToggle}
-                disabled={saveLoading}
-                className="flex items-center"
-              >
-                {saved ? (
-                  <BsBookmarkFill className="w-5 h-5 text-[#0205d3]" />
-                ) : (
-                  <BsBookmark className="w-5 h-5 text-[#0205d3]" />
-                )}
-              </button>
-            </div>
+          <div className="flex items-center gap-3">
+            {/* LIKE BUTTON */}
+            <button
+              className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]"
+              onClick={handleRecommendClick}
+              disabled={likeLoading}
+            >
+              <AiOutlineLike className="w-5 h-5" />
+              <span>{likeCount}</span>
+            </button>
+
+            {/* SAVE / BOOKMARK BUTTON */}
+            <button
+              onClick={handleSaveToggle}
+              disabled={saveLoading}
+              className="flex items-center"
+            >
+              {saved ? (
+                <BsBookmarkFill className="w-5 h-5 text-[#0205d3]" />
+              ) : (
+                <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+              )}
+            </button>
           </div>
-
+        </div>
 
         {/* Categories */}
         <div className="flex items-start mt-4 border-b border-[#e5e5e7] pb-6">
@@ -648,7 +712,6 @@ export default function BusinessSidebar({
           )}
         </div>
       </div>
-
       {/* Details */}
       <div>
         <div className="flex justify-between items-center">

@@ -6,7 +6,7 @@ type GoogleAddressResult = {
   place_id?: string;
   lat?: number;
   lng?: number;
-  address_components?: any[];   // ⭐ added for city/state/country/zipcode
+  address_components?: any[];
 };
 
 type GoogleAddressInputProps = {
@@ -28,6 +28,11 @@ export default function GoogleAddressInput({
 }: GoogleAddressInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const onSelectRef = useRef(onSelect);
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
+
   useEffect(() => {
     if (!window.google || !inputRef.current) return;
 
@@ -40,7 +45,7 @@ export default function GoogleAddressInput({
           "place_id",
           "address_components",
           "geometry",
-        ], // ⭐ ensures Google returns full data
+        ],
       }
     );
 
@@ -52,17 +57,20 @@ export default function GoogleAddressInput({
         place_id: place.place_id,
         lat: place.geometry?.location?.lat(),
         lng: place.geometry?.location?.lng(),
-        address_components: place.address_components || [], // ⭐ IMPORTANT
+        address_components: place.address_components || [],
       };
 
-      onSelect(result);
+      onSelectRef.current(result);
+
+      if (onChangeText) {
+        onChangeText(result.formatted_address || "");
+      }
     });
 
-    // Cleanup
     return () => {
       window.google.maps.event.clearInstanceListeners(autocomplete);
     };
-  }, [onSelect]);
+  }, []); 
 
   return (
     <input

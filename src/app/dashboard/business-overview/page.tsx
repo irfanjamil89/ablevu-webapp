@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
 import Link from "next/link";
 import AddBusinessModal from "@/app/component/AddBusinessModal";
@@ -243,6 +243,52 @@ export default function Page() {
         setLoading(false);
       });
   }, [appliedSearch]);
+
+  const fetchBusinesses = useCallback(async (search: string) => {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+        let url = base + "/business/list";
+    
+        if (search) {
+          url += `?search=${encodeURIComponent(search)}`;
+        }
+    
+        const token =
+          typeof window !== "undefined"
+            ? localStorage.getItem("access_token")
+            : null;
+    
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+    
+        setLoading(true);
+    
+        try {
+          const response = await fetch(url, { headers });
+          const data = await response.json();
+          console.log("Business list API:", data);
+          const list: Business[] = data.data || [];
+          setBusinesses(list);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        } finally {
+          setLoading(false);
+        }
+      }, []);
+    
+      // fetch on first load + whenever appliedSearch changes
+      useEffect(() => {
+        fetchBusinesses(appliedSearch);
+      }, [appliedSearch, fetchBusinesses]);
+    
+      // ---------- Callback for modal to refresh list ----------
+    
+      const handleBusinessCreated = () => {
+        // re-fetch businesses with current search filter
+        fetchBusinesses(appliedSearch);
+      };
+  
 
   // ---------- Maps (ID -> Name) ----------
 
@@ -1337,8 +1383,11 @@ export default function Page() {
         </div>
       </div>
       {OpenAddBusinessModal && (
-              <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
-            )}
+                    <AddBusinessModal
+                      setOpenAddBusinessModal={setOpenAddBusinessModal}
+                      onBusinessCreated={handleBusinessCreated} // ✅ refresh on create
+                    />
+                  )}
     </div>
   );
 }

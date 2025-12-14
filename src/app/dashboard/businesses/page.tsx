@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
 import Link from "next/link";
 import AddBusinessModal from "@/app/component/AddBusinessModal";
@@ -47,19 +47,6 @@ type Business = {
   creator?: { id: string };
 };
 
-type NewBusinessForm = {
-  name: string;
-  fullAddress: string;
-  description: string;
-  place_id?: string;
-  latitude?: number;
-  longitude?: number;
-  city: string;
-  state: string;
-  country: string;
-  zipcode: string;
-};
-
 type BusinessType = {
   id: string;
   name: string;
@@ -98,6 +85,7 @@ type ScheduleListResponse = {
   limit: number;
   totalPages: number;
 };
+
 const normalizeStatus = (status: string) =>
   status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
 
@@ -135,41 +123,22 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
-  const [newBusiness, setNewBusiness] = useState<NewBusinessForm>({
-    name: "",
-    fullAddress: "",
-    description: "",
-    place_id: undefined,
-    latitude: undefined,
-    longitude: undefined,
-    city: "",
-    state: "",
-    country: "",
-    zipcode: "",
-  });
+
+  const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-
-
-
-
-  const [isCreating, setIsCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
-
-
 
   const statusFilterLabel =
     statusFilter === "draft"
       ? "Draft"
       : statusFilter === "pending approved"
-        ? "Pending Approved"
-        : statusFilter === "approved"
-          ? "Approved"
-          : statusFilter === "claimed"
-            ? "Claimed"
-            : "";
+      ? "Pending Approved"
+      : statusFilter === "approved"
+      ? "Approved"
+      : statusFilter === "claimed"
+      ? "Claimed"
+      : "";
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -207,14 +176,14 @@ export default function Page() {
       });
   }, []);
 
-  // ---------- Fetch businesses (role-based filter backend pe) ----------
+  // ---------- Fetch businesses (shared function) ----------
 
-  useEffect(() => {
+  const fetchBusinesses = useCallback(async (search: string) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
     let url = base + "/business/list";
 
-    if (appliedSearch) {
-      url += `?search=${encodeURIComponent(appliedSearch)}`;
+    if (search) {
+      url += `?search=${encodeURIComponent(search)}`;
     }
 
     const token =
@@ -229,20 +198,30 @@ export default function Page() {
 
     setLoading(true);
 
-    fetch(url, { headers })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Business list API:", data);
-        const list: Business[] = data.data || [];
-        setBusinesses(list);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [appliedSearch]);
+    try {
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+      console.log("Business list API:", data);
+      const list: Business[] = data.data || [];
+      setBusinesses(list);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // fetch on first load + whenever appliedSearch changes
+  useEffect(() => {
+    fetchBusinesses(appliedSearch);
+  }, [appliedSearch, fetchBusinesses]);
+
+  // ---------- Callback for modal to refresh list ----------
+
+  const handleBusinessCreated = () => {
+    // re-fetch businesses with current search filter
+    fetchBusinesses(appliedSearch);
+  };
 
   // ---------- Maps (ID -> Name) ----------
 
@@ -329,14 +308,13 @@ export default function Page() {
     return { label, bg, text };
   };
 
-
   // ---------- Sorting + Status filter ----------
 
   const sortedBusinesses = useMemo(() => {
     let arr = [...businesses];
 
     if (statusFilter) {
-      const normalizedFilter = normalizeStatus(statusFilter); // 👈 value from STATUS_OPTIONS
+      const normalizedFilter = normalizeStatus(statusFilter);
 
       arr = arr.filter((b) => {
         const raw = (b.business_status || "").toLowerCase().trim();
@@ -349,7 +327,7 @@ export default function Page() {
           case "approved":
             return (
               status === "approved" ||
-              (!status && b.active === true && !b.blocked) // same fallback as getStatusInfo
+              (!status && b.active === true && !b.blocked)
             );
 
           case "pending approved":
@@ -368,7 +346,6 @@ export default function Page() {
       });
     }
 
-    // baki tumhara sort waala code as-is ↓
     switch (sortOption) {
       case "name-asc":
         arr.sort((a, b) => a.name.localeCompare(b.name));
@@ -486,122 +463,19 @@ export default function Page() {
     return key || "Unknown feature";
   };
 
-  // ---------- Create business ----------
-
-  const handleCreateBusiness = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setCreateError(null);
-
-    if (!newBusiness.name.trim()) {
-      setCreateError("Business name is required.");
-      return;
-    }
-    if (!selectedCategoryId) {
-      setCreateError("Please select a business category.");
-      return;
-    }
-    if (!newBusiness.fullAddress.trim()) {
-      setCreateError("Please select address using Google search.");
-      return;
-    }
-
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
-
-    if (!token) {
-      setCreateError("You must be logged in before creating a business.");
-      return;
-    }
-
-    const payload = {
-      name: newBusiness.name.trim(),
-      business_type: [selectedCategoryId],
-      description: newBusiness.description || "",
-
-      address: newBusiness.fullAddress,
-      place_id: newBusiness.place_id,
-      latitude: newBusiness.latitude,
-      longitude: newBusiness.longitude,
-
-      city: newBusiness.city || "",
-      state: newBusiness.state || "",
-      country: newBusiness.country || "",
-      zipcode: newBusiness.zipcode || "",
-
-      active: false,
-      business_status: "draft",
-    };
-
-    try {
-      setIsCreating(true);
-
-      const res = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      console.log("Create business – status:", res.status);
-
-      if (!res.ok) {
-        const errorBody = await res.json().catch(() => ({}));
-        console.error("Create business error:", errorBody);
-        throw new Error(errorBody.message || "Failed to create business");
-      }
-
-      const listRes = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/list",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      const listData = await listRes.json();
-      const list: Business[] = listData.data || [];
-      setBusinesses(list);
-
-      setNewBusiness({
-        name: "",
-        fullAddress: "",
-        description: "",
-        place_id: undefined,
-        latitude: undefined,
-        longitude: undefined,
-        city: "",
-        state: "",
-        country: "",
-        zipcode: "",
-      });
-      setSelectedCategoryId("");
-
-      const checkbox = document.getElementById(
-        "business-toggle"
-      ) as HTMLInputElement | null;
-      if (checkbox) checkbox.checked = false;
-    } catch (err: any) {
-      setCreateError(err.message || "Something went wrong");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
   // ---------- Loading state ----------
 
   if (loading) {
-    return <div className=" w-full flex justify-center items-center h-[400px]">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>;
+    return (
+      <div className=" w-full flex justify-center items-center h-[400px]">
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
+      </div>
+    );
   }
-
 
   const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -624,10 +498,8 @@ export default function Page() {
     }
   };
 
-
-
   const getPageNumbers = () => {
-    const pages = [];
+    const pages: (number | "...")[] = [];
     const maxVisiblePages = 5;
 
     if (totalPages <= maxVisiblePages) {
@@ -639,28 +511,27 @@ export default function Page() {
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         pages.push(currentPage - 1);
         pages.push(currentPage);
         pages.push(currentPage + 1);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
 
     return pages;
   };
-
 
   // ---------- UI ----------
 
@@ -712,10 +583,10 @@ export default function Page() {
                           {sortOption === "name-asc"
                             ? "Name A–Z"
                             : sortOption === "name-desc"
-                              ? "Name Z–A"
-                              : sortOption === "created-asc"
-                                ? "Oldest First"
-                                : "Newest First"}
+                            ? "Name Z–A"
+                            : sortOption === "created-asc"
+                            ? "Oldest First"
+                            : "Newest First"}
                           )
                         </span>
                       )}
@@ -897,196 +768,13 @@ export default function Page() {
                   />
                 </div>
 
-                {/* Modal toggle */}
-                {/* <input
-                  type="checkbox"
-                  id="business-toggle"
-                  className="hidden peer"
-                /> */}
+                {/* Add Business Button */}
                 <button
-                  onClick={()=> setOpenAddBusinessModal(true)}
+                  onClick={() => setOpenAddBusinessModal(true)}
                   className="px-4 py-3 text-sm font-bold bg-[#0519CE] text-white rounded-lg cursor-pointer hover:bg-blue-700 transition"
                 >
                   Add Business
                 </button>
-
-                {/* Modal */}
-                <div className="fixed inset-0 bg-[#000000b4] hidden peer-checked:flex items-center justify-center z-50">
-                  <div className="bg-white rounded-2xl shadow-2xl w-11/12 sm:w-[480px] p-6 relative">
-                    <label
-                      htmlFor="business-toggle"
-                      className="absolute top-3 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer"
-                    >
-                      ×
-                    </label>
-
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-1">
-                      Add New Business
-                    </h2>
-                    <p className="text-gray-600 text-sm mb-4">
-                      This business will remain locked until it has been
-                      claimed by the business. Please submit to admin for
-                      approval.
-                    </p>
-
-                    {createError && (
-                      <p className="text-red-500 text-sm mb-2">
-                        {createError}
-                      </p>
-                    )}
-
-                    <form className="space-y-4" onSubmit={handleCreateBusiness}>
-                      {/* Business Name */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Business Name <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="Sample Business Name"
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0519CE] outline-none"
-                          value={newBusiness.name}
-                          onChange={(e) =>
-                            setNewBusiness((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                        />
-                      </div>
-
-                      {/* Business Address */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Business Address{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-
-                        <GoogleAddressInput
-                          value={newBusiness.fullAddress}
-                          onChangeText={(text) =>
-                            setNewBusiness((prev) => ({
-                              ...prev,
-                              fullAddress: text,
-                            }))
-                          }
-                          onSelect={(result) => {
-                            console.log("Selected place:", result);
-
-                            const { city, state, country, zipcode } =
-                              extractAddressParts(result);
-
-                            setNewBusiness((prev) => ({
-                              ...prev,
-                              fullAddress: result.formatted_address,
-                              place_id: result.place_id,
-                              latitude: result.lat,
-                              longitude: result.lng,
-                              city,
-                              state,
-                              country,
-                              zipcode,
-                            }));
-                          }}
-                        />
-                      </div>
-
-                      {/* Logo upload (placeholder only) */}
-                      <div>
-                        <label className="block text-md font-medium text-gray-700 mb-2">
-                          Upload Business Logo/Photo
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="file"
-                            accept=".svg,.png,.jpg,.gif"
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                            onChange={(e) => {
-                              console.log(
-                                "logo file selected",
-                                e.target.files?.[0]
-                              );
-                            }}
-                          />
-                          <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text:center hover:bg-gray-50 cursor-pointer h-fit">
-                            <img
-                              src="/assets/images/upload-icon.avif"
-                              alt="upload-icon"
-                              className="w-10 h-10"
-                            />
-                            <p className="text-[#0519CE] font-semibold text-sm">
-                              Click to upload{" "}
-                              <span className="text-gray-500 text-xs">
-                                or drag and drop
-                              </span>
-                            </p>
-                            <p className="text-gray-500 text-xs mt-1">
-                              SVG, PNG, JPG or GIF (max. 800×400px)
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Business Description{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          placeholder="Write a short description..."
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0519CE] outline-none"
-                          value={newBusiness.description}
-                          onChange={(e) =>
-                            setNewBusiness((prev) => ({
-                              ...prev,
-                              description: e.target.value,
-                            }))
-                          }
-                        ></textarea>
-                      </div>
-
-                      {/* Category select */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Business Categories{" "}
-                          <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0519CE] outline-none"
-                          value={selectedCategoryId}
-                          onChange={(e) =>
-                            setSelectedCategoryId(e.target.value)
-                          }
-                        >
-                          <option value="">Select Category</option>
-                          {businessTypes.map((bt) => (
-                            <option key={bt.id} value={bt.id}>
-                              {bt.name.trim()}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Buttons */}
-                      <div className="flex justify-center gap-3 pt-2">
-                        <label
-                          htmlFor="business-toggle"
-                          className="px-5 py-3 w-full text-center text-sm font-bold border border-gray-300 text-gray-600 rounded-full cursor-pointer hover:bg-gray-100"
-                        >
-                          Cancel
-                        </label>
-                        <button
-                          type="submit"
-                          disabled={isCreating}
-                          className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700 disabled:opacity-60"
-                        >
-                          {isCreating ? "Creating..." : "Create Business"}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
               </div>
             </div>
 
@@ -1097,7 +785,8 @@ export default function Page() {
                   const statusInfo = getStatusInfo(business);
                   const allFeatures = business.accessibilityFeatures || [];
                   const visibleFeatures = allFeatures.slice(0, 2);
-                  const extraFeaturesCount = allFeatures.length - visibleFeatures.length;
+                  const extraFeaturesCount =
+                    allFeatures.length - visibleFeatures.length;
 
                   return (
                     <Link
@@ -1223,7 +912,6 @@ export default function Page() {
                               Accessible Features
                             </span>
                             <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                              {/* sirf pehle 2 features */}
                               {visibleFeatures.map((feature) => (
                                 <li
                                   key={feature.id}
@@ -1266,12 +954,15 @@ export default function Page() {
                   );
                 })}
               </div>
+
               {/* ===== PAGINATION CONTROLS ===== */}
               {!loading && sortedBusinesses.length > 0 && (
                 <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
                   {/* Left side: Entry counter */}
                   <div className="text-sm text-gray-600">
-                    Showing {startIndex + 1} to {Math.min(endIndex, sortedBusinesses.length)} of {sortedBusinesses.length} entries
+                    Showing {startIndex + 1} to{" "}
+                    {Math.min(endIndex, sortedBusinesses.length)} of{" "}
+                    {sortedBusinesses.length} entries
                   </div>
 
                   {/* Right side: Pagination buttons */}
@@ -1280,10 +971,11 @@ export default function Page() {
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
-                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                        currentPage === 1
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                      }`}
                     >
                       Previous
                     </button>
@@ -1292,15 +984,18 @@ export default function Page() {
                     <div className="flex items-center gap-1">
                       {getPageNumbers().map((page, idx) => (
                         <React.Fragment key={idx}>
-                          {page === '...' ? (
-                            <span className="px-3 py-1 text-gray-500">...</span>
+                          {page === "..." ? (
+                            <span className="px-3 py-1 text-gray-500">
+                              ...
+                            </span>
                           ) : (
                             <button
                               onClick={() => goToPage(page as number)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
-                                ? "bg-[#0519CE] text-white"
-                                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                }`}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                                currentPage === page
+                                  ? "bg-[#0519CE] text-white"
+                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                              }`}
                             >
                               {page}
                             </button>
@@ -1313,10 +1008,11 @@ export default function Page() {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
-                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                        currentPage === totalPages
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                      }`}
                     >
                       Next
                     </button>
@@ -1329,7 +1025,10 @@ export default function Page() {
       </div>
 
       {OpenAddBusinessModal && (
-        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
+        <AddBusinessModal
+          setOpenAddBusinessModal={setOpenAddBusinessModal}
+          onBusinessCreated={handleBusinessCreated} // ✅ refresh on create
+        />
       )}
     </div>
   );
