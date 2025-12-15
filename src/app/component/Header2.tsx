@@ -43,7 +43,11 @@ const [notifications, setNotifications] = useState<any[]>([]);
     return userData ? JSON.parse(userData) : null;
   };
 
+  const handleBusinessCreated = () => {
+    setOpenAddBusinessModal(false);
 
+  };
+  
   useEffect(() => {
     const storedUser = getUserFromSession();
     if (storedUser) {
@@ -496,7 +500,8 @@ const fetchNotifications = async () => {
       )}
 
       {OpenAddBusinessModal && (
-        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal} />
+        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal}
+        onBusinessCreated={handleBusinessCreated} />
       )}
 
 

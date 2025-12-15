@@ -49,8 +49,7 @@ function fileToBase64(file: File): Promise<string> {
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
-      // Remove the data:image/...;base64, prefix
-      const base64 = result.split(',')[1];
+      const base64 = result.split(",")[1];
       resolve(base64);
     };
     reader.onerror = () => reject(new Error("Failed to read file"));
@@ -61,10 +60,12 @@ function fileToBase64(file: File): Promise<string> {
 // ---------- Component ----------
 interface AddBusinessProps {
   setOpenAddBusinessModal: React.Dispatch<React.SetStateAction<boolean>>;
+  onBusinessCreated: () => void;
 }
 
 export default function AddBusinessModal({
   setOpenAddBusinessModal,
+  onBusinessCreated,
 }: AddBusinessProps) {
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [newBusiness, setNewBusiness] = useState<NewBusinessForm>({
@@ -108,8 +109,7 @@ export default function AddBusinessModal({
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-      
-      // Create preview
+
       const reader = new FileReader();
       reader.onload = () => {
         setImagePreview(reader.result as string);
@@ -229,38 +229,25 @@ export default function AddBusinessModal({
           const imageResponse = await imageRes.json();
           console.log("Image uploaded successfully:", imageResponse);
         } catch (imageErr: any) {
-          throw new Error(`Business created but image upload failed: ${imageErr.message}`);
+          throw new Error(
+            `Business created but image upload failed: ${imageErr.message}`
+          );
         }
       }
 
       // Show success message only after both operations complete
       setSuccessMessage(
-        selectedImage 
-          ? "Business and logo uploaded successfully!" 
+        selectedImage
+          ? "Business and logo uploaded successfully!"
           : "Business created successfully!"
       );
 
-      // Reset form
-      setNewBusiness({
-        name: "",
-        fullAddress: "",
-        description: "",
-        place_id: undefined,
-        latitude: undefined,
-        longitude: undefined,
-        city: "",
-        state: "",
-        country: "",
-        zipcode: "",
-      });
-      setSelectedCategoryId("");
-      setSelectedImage(null);
-      setImagePreview(null);
+        onBusinessCreated();
 
-      // Clear success message after 3 seconds
+      // ✅ Close popup shortly after success
       setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
+        setOpenAddBusinessModal(false);
+      }, 800);
     } catch (err: any) {
       setCreateError(err.message || "Something went wrong");
     } finally {
@@ -269,7 +256,7 @@ export default function AddBusinessModal({
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && !isCreating) {
       setOpenAddBusinessModal(false);
     }
   };
@@ -279,7 +266,7 @@ export default function AddBusinessModal({
   return (
     <>
       {/* Modal Backdrop - Fixed with high z-index */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
         onClick={handleBackdropClick}
       >
@@ -287,12 +274,23 @@ export default function AddBusinessModal({
         <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl z-[9999] relative">
           {/* Close Button */}
           <button
-            onClick={() => setOpenAddBusinessModal(false)}
+            onClick={() => !isCreating && setOpenAddBusinessModal(false)}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition z-10"
             type="button"
+            disabled={isCreating}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
 
@@ -338,7 +336,7 @@ export default function AddBusinessModal({
                 />
               </div>
 
-              {/* Business Address - Critical z-index fix */}
+              {/* Business Address */}
               <div className="relative z-[10000]">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Address <span className="text-red-500">*</span>
@@ -375,10 +373,22 @@ export default function AddBusinessModal({
                 {/* Show parsed address details */}
                 {newBusiness.city && (
                   <div className="mt-2 text-xs text-gray-600 space-y-1 bg-gray-50 p-2 rounded">
-                    <div><span className="font-medium">City:</span> {newBusiness.city}</div>
-                    <div><span className="font-medium">State:</span> {newBusiness.state}</div>
-                    <div><span className="font-medium">Country:</span> {newBusiness.country}</div>
-                    <div><span className="font-medium">Zipcode:</span> {newBusiness.zipcode}</div>
+                    <div>
+                      <span className="font-medium">City:</span>{" "}
+                      {newBusiness.city}
+                    </div>
+                    <div>
+                      <span className="font-medium">State:</span>{" "}
+                      {newBusiness.state}
+                    </div>
+                    <div>
+                      <span className="font-medium">Country:</span>{" "}
+                      {newBusiness.country}
+                    </div>
+                    <div>
+                      <span className="font-medium">Zipcode:</span>{" "}
+                      {newBusiness.zipcode}
+                    </div>
                   </div>
                 )}
               </div>
@@ -398,9 +408,9 @@ export default function AddBusinessModal({
                   <div className="flex flex-col items-center border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer transition">
                     {imagePreview ? (
                       <div className="w-full">
-                        <img 
-                          src={imagePreview} 
-                          alt="Preview" 
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
                           className="max-h-40 mx-auto rounded mb-2 object-contain"
                         />
                         <p className="text-green-600 font-semibold text-sm">
@@ -412,8 +422,18 @@ export default function AddBusinessModal({
                       </div>
                     ) : (
                       <>
-                        <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        <svg
+                          className="w-10 h-10 text-gray-400 mb-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
                         </svg>
                         <p className="text-blue-600 font-semibold text-sm">
                           Click to upload{" "}
