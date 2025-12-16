@@ -18,6 +18,8 @@ import WriteReviewsPopup from "@/app/component/WriteReviewsPopup";
 import PartnerCertificationPopup from "@/app/component/PartnerCertificationPopup";
 import EditPropertyImagePopup from "@/app/component/EditPropertyImagePopup";
 import AudioTourPopup from "@/app/component/AudioTourPopup";
+import CustomMediaPopup from "@/app/component/CustomMediaPopup";
+import CustomMediaModal from "@/app/component/CustomMediaPopup";
 
 type BusinessProfile = any;
 type BusinessType = any;
@@ -84,6 +86,7 @@ export default function Page({
         null
     );
     const [OpenAudioTourPopup, setOpenAudioTourPopup] = useState(false);
+    const [CustomMediaPopup, setCustomMediaPopup] = useState(false);
     
 
     // ⭐ Accessibility Feature: popup + edit state
@@ -881,6 +884,7 @@ export default function Page({
                     error={error}
                     setOpenVirtualTour={handleSetOpenVirtualTour}
                     setOpenAudioTourPopup={setOpenAudioTourPopup}
+                    setCustomMediaPopup={setCustomMediaPopup}
                     setOpenAccessibilityFeaturePopup={
                         handleSetOpenAccessibilityFeaturePopup
                     }
@@ -1013,6 +1017,8 @@ export default function Page({
 
             
 
+            
+
             {OpenAccessibilityFeaturePopup && business && (
                 <AccessibilityFeaturePopup
                     businessId={business.id}
@@ -1068,6 +1074,19 @@ export default function Page({
                         showSuccess(
                             "Custom Section Updated",
                             "Custom sections updated successfully."
+                        );
+                    }}
+                />
+            )}
+            {CustomMediaPopup && business && (
+                <CustomMediaModal
+                    businessId={business.id}
+                    setCustomMediaPopup={setCustomMediaPopup}
+                    onUpdated={async () => {
+                        await fetchAllData();
+                        showSuccess(
+                            "Custom Media Saved",
+                            "Custom Media has been saved successfully."
                         );
                     }}
                 />

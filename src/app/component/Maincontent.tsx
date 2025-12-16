@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import AudioList from "./AudioList";
+import { CheckCircle, Pencil, Trash2 } from 'lucide-react';
 
 // ---- Types ----
 type VirtualTour = {
@@ -240,6 +241,7 @@ interface MaincontentProps {
   setOpenPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenEditPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAudioTourPopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setCustomMediaPopup: React.Dispatch<React.SetStateAction<boolean>>;
 
 
   setSelectedImageId: React.Dispatch<React.SetStateAction<string>>;
@@ -312,6 +314,7 @@ export default function Maincontent({
   onEditBusinessMedia,
   onDeleteBusinessImage,
   setOpenAudioTourPopup,
+  setCustomMediaPopup,
   showSuccess,
   showError,
 }: MaincontentProps) {
@@ -595,9 +598,9 @@ export default function Maincontent({
             </div>
           </div>
         </div>
-          
-          {/* Use This Component to display Audio List */}
-         <AudioList/> 
+
+        {/* Use This Component to display Audio List */}
+        <AudioList />
 
         {/* You can use this in else part when no audio is present  */}
 
@@ -1226,7 +1229,42 @@ export default function Maincontent({
           </div>
         </div>
 
-        {business.businessCustomSections &&
+        <div className="p-6 bg-white border  rounded-3xl border-[#e5e5e7]">
+         
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Section Name</h1>
+            <a href="#" className="text-[#0519CE] text-md font-bold text-lg underline" onClick={()=> setCustomMediaPopup(true)}>
+              Add Media
+            </a>
+          </div>
+
+          {/* Card */}
+          <div className=" bg-white border p-6 rounded-3xl border-[#e5e5e7]">
+            {/* Icons Row */}
+            
+            <div className="flex justify-end gap-3 mb-4">
+              <CheckCircle className="w-6 h-6 text-green-500 cursor-pointer"  />
+              <Pencil className="w-6 h-6 text-yellow-500 cursor-pointer"  />
+              <Trash2 className="w-6 h-6 text-red-500 cursor-pointer"  />
+            </div>
+             <div className="flex justify-end">
+              <a  href="#" className="text-[#0519CE] text-md font-bold text-base underline">
+              View
+            </a>
+             </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Media Name</h2>
+
+            {/* Description */}
+            <p className="text-gray-600 text-base mb-4">Media Description</p>
+
+            {/* View Link */}
+           
+          </div>
+        </div>
+
+        {/* {business.businessCustomSections &&
           business.businessCustomSections.length > 0 ? (
           <ul className="space-y-2 text-sm text-gray-700">
             {business.businessCustomSections.map((s: any) => (
@@ -1250,7 +1288,7 @@ export default function Maincontent({
               No Custom section to show
             </p>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
