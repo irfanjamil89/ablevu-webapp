@@ -127,7 +127,7 @@ export default function Page() {
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 6;
 
   const statusFilterLabel =
     statusFilter === "draft"
@@ -536,7 +536,7 @@ export default function Page() {
   // ---------- UI ----------
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full ">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
           <div className="w-full min-h-screen bg-white px-6 py-5">

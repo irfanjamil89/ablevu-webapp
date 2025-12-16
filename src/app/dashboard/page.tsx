@@ -180,6 +180,12 @@ export default function Page() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("created-desc");
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+
+
+
   // ---------- Maps (ID -> Name) ----------
 
   const { paidContributorsCount, volunteerContributorsCount } = useMemo(() => {
@@ -477,6 +483,70 @@ export default function Page() {
       </div>
     ); // Show loading message while the data is being fetched
   }
+
+
+
+
+
+  const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentbusiness = sortedBusinesses.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
+
   return (
     <div className="w-full  overflow-y-auto">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
@@ -580,7 +650,7 @@ export default function Page() {
             {/* Business cards from DB */}
             <section className="flex-1">
               <section className="space-y-10 lg:space-y-4 md:space-y-4">
-                {filteredBusinesses.map((business) => {
+                {currentbusiness.map((business) => {
                   const statusInfo = getStatusInfo(business);
 
                   return (
@@ -769,6 +839,63 @@ export default function Page() {
                   <p className="text-gray-500 text-sm">
                     No businesses found for this search.
                   </p>
+                )}
+                {/* ===== PAGINATION CONTROLS ===== */}
+                {!loading && currentbusiness.length > 0 && (
+                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+                    {/* Left side: Entry counter */}
+                    <div className="text-sm text-gray-600">
+                      Showing {startIndex + 1} to {Math.min(endIndex, currentbusiness.length)} of {currentbusiness.length} entries
+                    </div>
+
+                    {/* Right side: Pagination buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Previous Button */}
+                      <button
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
+                      >
+                        Previous
+                      </button>
+
+                      {/* Page Numbers */}
+                      <div className="flex items-center gap-1">
+                        {getPageNumbers().map((page, idx) => (
+                          <React.Fragment key={idx}>
+                            {page === '...' ? (
+                              <span className="px-3 py-1 text-gray-500">...</span>
+                            ) : (
+                              <button
+                                onClick={() => goToPage(page as number)}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                                  ? "bg-[#0519CE] text-white"
+                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                  }`}
+                              >
+                                {page}
+                              </button>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </div>
+
+                      {/* Next Button */}
+                      <button
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </div>
                 )}
               </section>
             </section>

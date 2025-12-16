@@ -1,18 +1,11 @@
+
 "use client";
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from '../component/Header2';
-
-interface User {
-  id: string;
-  first_name: string;
-  last_name: string;
-  user_role: string;
-  paid_contributor: boolean;
-  email: string;
-  profile_picture_url?: string;
-}
+import DashboardContent from '../component/DashboardContent';
+import { useUser } from "@/app/component/UserContext";
 
 // Helper function to decode JWT and check expiration
 const isTokenExpired = (token: string): boolean => {
@@ -27,26 +20,33 @@ const isTokenExpired = (token: string): boolean => {
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now());
 
   const pathname = usePathname();
   const router = useRouter();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  // Update imageKey when user profile picture changes
+  useEffect(() => {
+    if (user?.profile_picture_url) {
+      setImageKey(Date.now());
+    }
+  }, [user?.profile_picture_url]);
+
   const handleLogout = () => {
-    setLoading(true);
     localStorage.removeItem("access_token");
-    sessionStorage.clear();
+    sessionStorage.removeItem("user");
+    setUser(null);
     router.push("/");
   };
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    console.log('Token from localStorage:', token);
 
     if (!token) {
       setError('Please log in to continue.');
@@ -62,8 +62,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
 
+    // If user is already loaded from context, skip API call
+    if (user) {
+      setLoading(false);
+      return;
+    }
+
     // Fetch user data using the token for authentication
-    fetch('https://staging-api.qtpack.co.uk/users/1', {
+    fetch('https://staging-api.qtpack.co.uk/users/me', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -82,22 +88,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         if (!data) return; // Skip if we got a 401
 
         setUser(data);
-        saveUserToSession(data);
-
-        if (data.user_role === "Business") {
-          router.push('/dashboard/business-overview');
-          setLoading(false);
-          return;
-        } else if (data.user_role === "Contributor") {
-          router.push('/dashboard/contributor-overview');
-          setLoading(false);
-          return;
-        } else if (data.user_role === "User") {
-          router.push('/dashboard/saved');
-          setLoading(false);
-          return;
-        }
-
+        sessionStorage.setItem('user', JSON.stringify(data));
         setLoading(false);
       })
       .catch(error => {
@@ -118,11 +109,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     // Cleanup interval on unmount
     return () => clearInterval(tokenCheckInterval);
-  }, []);
-
-  const saveUserToSession = (user: User) => {
-    sessionStorage.setItem('user', JSON.stringify(user));
-  };
+  }, [user]);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -203,6 +190,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return () => clearInterval(interval);
   },);
+
+  // Get profile image URL with cache busting
+  const getProfileImageUrl = () => {
+    if (!user?.profile_picture_url) {
+      return "/assets/images/profile.png";
+    }
+    const url = user.profile_picture_url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${imageKey}`;
+  };
 
   if (loading) {
     return (
@@ -364,7 +361,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       <div className="flex">
-        <div className=" w-[350px] pt-5  bg-white border-r border-gray-200 flex flex-col justify-between">
+        <div className=" w-[300px] pt-5  bg-white border-r border-gray-200 flex flex-col justify-between">
           {/* Top Navigation */}
           <div className="p-4 mb-15 sticky top-0 ">
             <ul className="space-y-4 font-medium">
@@ -1087,16 +1084,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                 {user ? (
 
+                  // <img
+                  //   src={user.profile_picture_url || "/assets/images/profile.png"}
+                  //   alt={user.first_name}
+                  //   className=""
+                  //   onError={(e) => {
+                  //     (e.target as HTMLImageElement).src = "/assets/images/profile.png";
+                  //   }}
+                  // />\
+
                   <img
-                    src={user.profile_picture_url || "/assets/images/profile.png" }
-                    alt={user.first_name}
-                    className=""
+                    key={imageKey}
+                    src={getProfileImageUrl()}
+                    alt={user?.first_name || "User"}
+                    className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/assets/images/profile.png";
+                      const target = e.currentTarget as HTMLImageElement;
+                      if (target.src !== "/assets/images/profile.png") {
+                        console.log("Header: Image load error, using fallback");
+                        target.src = "/assets/images/profile.png";
+                      }
                     }}
                   />
 
-                  
                 ) : (
                   <div>Loading...</div> // Show loading message until user data is fetched
                 )}
@@ -1119,9 +1129,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </div >
-
-        {children}
-
+        <DashboardContent>
+          {children}
+        </DashboardContent>
       </div>
     </div>
   );

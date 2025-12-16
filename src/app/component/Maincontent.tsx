@@ -313,6 +313,13 @@ export default function Maincontent({
 }: MaincontentProps) {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+
+
+  const [ImageOpenModal, setImageOpenModal] = useState<boolean>(false);
+  const [selectedPropertyImage, setSelectedPropertyImage] = useState<BusinessImage | null>(null);
+
+
+
   // ⭐ master lists
   const [featureTypes, setFeatureTypes] =
     useState<AccessibleFeatureTypeMaster[]>([]);
@@ -608,6 +615,10 @@ export default function Maincontent({
                   src={image.image_url || undefined}
                   alt={image.name || `Property image ${index + 1}`}
                   className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
+                  onClick={() => {
+                    setSelectedPropertyImage(image);
+                    setImageOpenModal(true);
+                  }}
                 />
                 <div className="absolute top-2 right-2 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
                   <img
@@ -630,6 +641,38 @@ export default function Maincontent({
                 </div>
               </div>
             ))}
+            {ImageOpenModal && selectedPropertyImage && (
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl max-w-4xl w-[500px] mx-auto  overflow-hidden shadow-2xl">
+                  {/* Close Button */}
+                  <div className="flex justify-end items-center p-4 border-b">
+                    <button
+                      onClick={() => setImageOpenModal(false)}
+                      className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Image */}
+                  <div className="p-6 flex justify-center bg-gray-50">
+                    <img
+                      src={selectedPropertyImage.image_url || ""}
+                      alt={selectedPropertyImage.name}
+                      className=" w-auto object-contain rounded-lg"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="p-6 border-t">
+                    <h4 className="font-semibold text-gray-700 mb-2">Description</h4>
+                    <p className="text-gray-600 leading-relaxed">
+                      {selectedPropertyImage.description || 'No description available'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">

@@ -614,50 +614,109 @@ export default function Page({
     }; // ← This closing brace was missing
 
     // ⭐ NEW: Business Image delete handler
-    const handleDeleteBusinessImage = async (image: BusinessImage) => {
+
+    const handleDeleteBusinessImage = (image: BusinessImage) => {
         if (!API_BASE_URL || !business) return;
 
         const token = getToken();
         if (!token) {
-            alert("No access token");
+            showError("Unauthorized", "No access token found.");
             return;
         }
 
-        const confirmDelete = window.confirm("Delete this business image?");
-        if (!confirmDelete) return;
-
-        try {
-            const res = await fetch(
-                `${API_BASE_URL}/business-images/delete/${image.id}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (!res.ok) {
-                let msg = "Failed to delete business image";
+        askConfirm(
+            "Delete Business Image?",
+            `Are you sure you want to delete "${image.name || 'this image'}"?`,
+            async () => {
                 try {
-                    const body = await res.json();
-                    if (body?.message) {
-                        msg = Array.isArray(body.message)
-                            ? body.message.join(", ")
-                            : body.message;
-                    }
-                } catch {
-                    // ignore JSON parse error
-                }
-                throw new Error(msg);
-            }
+                    const res = await fetch(
+                        `${API_BASE_URL}/business-images/delete/${image.id}`,
+                        {
+                            method: "DELETE",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
 
-            await fetchAllData();
-        } catch (err: any) {
-            console.error(err);
-            alert(err.message || "Failed to delete business image");
-        }
+                    if (!res.ok) {
+                        let msg = "Failed to delete business image";
+                        try {
+                            const body = await res.json();
+                            if (body?.message) {
+                                msg = Array.isArray(body.message)
+                                    ? body.message.join(", ")
+                                    : body.message;
+                            }
+                        } catch {
+                            // ignore JSON parse error
+                        }
+                        throw new Error(msg);
+                    }
+
+                    await fetchAllData();
+                    showSuccess(
+                        "Deleted",
+                        `Business image "${image.name || 'Image'}" has been deleted successfully.`
+                    );
+                } catch (err: any) {
+                    console.error(err);
+                    showError(
+                        "Delete Failed",
+                        err.message || "Failed to delete business image."
+                    );
+                } finally {
+                    handleCloseConfirm();
+                }
+            }
+        );
     };
+
+
+    // const handleDeleteBusinessImage = async (image: BusinessImage) => {
+    //     if (!API_BASE_URL || !business) return;
+
+    //     const token = getToken();
+    //     if (!token) {
+    //         alert("No access token");
+    //         return;
+    //     }
+
+    //     const confirmDelete = window.confirm("Delete this business image?");
+    //     if (!confirmDelete) return;
+
+    //     try {
+    //         const res = await fetch(
+    //             `${API_BASE_URL}/business-images/delete/${image.id}`,
+    //             {
+    //                 method: "DELETE",
+    //                 headers: {
+    //                     Authorization: `Bearer ${token}`,
+    //                 },
+    //             }
+    //         );
+
+    //         if (!res.ok) {
+    //             let msg = "Failed to delete business image";
+    //             try {
+    //                 const body = await res.json();
+    //                 if (body?.message) {
+    //                     msg = Array.isArray(body.message)
+    //                         ? body.message.join(", ")
+    //                         : body.message;
+    //                 }
+    //             } catch {
+    //                 // ignore JSON parse error
+    //             }
+    //             throw new Error(msg);
+    //         }
+
+    //         await fetchAllData();
+    //     } catch (err: any) {
+    //         console.error(err);
+    //         alert(err.message || "Failed to delete business image");
+    //     }
+    // };
 
     // ---- Accessibility Media: Add button popup handler ----
     const handleSetOpenAccessibilityMediaPopup: React.Dispatch<
@@ -955,8 +1014,7 @@ export default function Page({
                 <PropertyImagePopup
                     businessId={business.id}
                     setOpenPropertyImagePopup={setOpenPropertyImagePopup}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
+                    onUpdated={async () => {
                         await fetchAllData();
                         showSuccess(
                             "Images Updated",
