@@ -34,6 +34,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const pathname = usePathname();
   const router = useRouter();
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const handleLogout = () => {
     setLoading(true);
@@ -125,6 +127,83 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}notifications/getnotification`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}notifications/read/${id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        setNotifications((prev) =>
+          prev.filter((notification) => notification.id !== id)
+        );
+      }
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+    }
+  };
+
+  const handleNotificationClick = (item: any) => {
+    if (!item.meta) return;
+    const meta = typeof item.meta === 'string' ? JSON.parse(item.meta) : item.meta;
+
+    switch (meta.type) {
+      case 'business-created':
+        window.location.href = `/business-profile/${meta.id}`;
+        break;
+      case 'business-status':
+        window.location.href = `/business-profile/${meta.id}`;
+        break;
+      default:
+        console.log("Unhandled notification type:", meta.type);
+    }
+    markAsRead(item.id);
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  },);
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -177,13 +256,89 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
 
-            {/* Right side: Logout button */}
-            <div className="flex items-center">
+            {/* Right side: Notifications + Logout */}
+            <div className="flex items-center space-x-3 relative">
+              {/* Notifications Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setNotificationsOpen(!notificationsOpen);
+                    if (!notificationsOpen) fetchNotifications();
+                  }}
+                  className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M15 17h5l-1.405-1.405C18.21 14.79 18 13.918 18 13V9a6 6 0 10-12 0v4c0 .918-.21 1.79-.595 2.595L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
+                    <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                      {notifications.length === 0 && (
+                        <li className="px-4 py-6 text-gray-500 text-sm text-center">
+                          <div className="flex flex-col items-center justify-center">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-8 w-8 text-gray-400 mb-2"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM8 16a2 2 0 104 0H8z" />
+                            </svg>
+                            <p>No new notifications</p>
+                          </div>
+                        </li>
+                      )}
+
+                      {notifications.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleNotificationClick(item)}
+                        >
+                          <div className="w-full pr-2">
+                            <p className="text-sm font-medium">{item.content}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(item.id);
+                            }}
+                            className="hover:opacity-80"
+                          >
+                            <img
+                              src="https://www.svgrepo.com/show/490436/trash-can.svg"
+                              alt="Mark as read"
+                              className="w-5 h-5"
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Logout button */}
               <button
                 type="button"
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer transition"
-                onClick={handleLogout}>
-                {/* Logout Icon */}
+                onClick={handleLogout}
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   className="w-5 h-5 text-gray-500"
@@ -201,6 +356,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 Logout
               </button>
             </div>
+
           </div>
         </div>
       ) : (

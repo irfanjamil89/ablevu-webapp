@@ -10,8 +10,10 @@ interface Review {
   approved: boolean;
   feature?: string;
   recommendation?: boolean;
-  user_name?: string;
-  business_name?: string;
+  created_by_name: string;
+  business_name: string;
+  business_logo: string;
+  review_type_title: string;
   user_avatar?: string;
   business_avatar?: string;
 }
@@ -25,14 +27,6 @@ export default function Page() {
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
 
-  const decodeJWT = (token: string) => {
-    try {
-      return JSON.parse(atob(token.split(".")[1]));
-    } catch {
-      return null;
-    }
-  };
-
   const fetchReviews = async () => {
     setLoading(true);
     setError(null);
@@ -40,10 +34,6 @@ export default function Page() {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) throw new Error("No access token found");
-      const payload = decodeJWT(token);
-      const uid = payload?.sub;
-      setUserId(uid);
-
       const userRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`,
         {
@@ -71,11 +61,7 @@ export default function Page() {
       }
 
       const json = await res.json();
-      let list = Array.isArray(json.data) ? json.data : [];
-      if (userData.user_role !== "Admin") {
-        list = list.filter((r: any) => r.created_by === uid);
-      }
-
+      const list = Array.isArray(json.data) ? json.data : [];
       // Ensure reviews is always an array
       setReviews(list);
     } catch (err: any) {
@@ -94,7 +80,7 @@ export default function Page() {
       if (!token) throw new Error("No token");
 
       const res = await fetch(
-       `${process.env.NEXT_PUBLIC_API_BASE_URL}business-reviews/update/${reviewId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business-reviews/update/${reviewId}`,
         {
           method: "PATCH",
           headers: {
@@ -149,11 +135,22 @@ export default function Page() {
                   />
                 </div>
                 <div className="text-gray-700 font-semibold">
-                  {review.user_name || "Anonymous"}
+                  {review.created_by_name || "Anonymous"}
                 </div>
-              </div>
+                </div>
 
+                {/* Right: Business */}
+                <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer">
 
+                  <span className="text-gray-700 font-semibold ">{review.business_name ?? "Unknown Business"}</span>
+                  {review.business_logo && (
+                    <img
+                      src={review.business_logo}
+                      alt={review.business_name}
+                      className="w-14 h-14 rounded-full object-cover"
+                    />
+                  )}
+                </div>
             </div>
 
             {/* Question & Feature */}
@@ -161,7 +158,7 @@ export default function Page() {
               <div className="flex gap-3 items-center">
                 <h3 className="text-sm text-gray-900 mb-2">What went well?</h3>
                 <span className="text-sm text-gray-900 mb-2 bg-[#E5E5E7] px-3 py-1 rounded-full">
-                  {review.feature || "N/A"}
+                  {review.review_type_title || "N/A"}
                 </span>
               </div>
 
@@ -214,36 +211,36 @@ export default function Page() {
         <p className="text-gray-500">No reviews found.</p>
       )}
       {openSuccessModal && (
-  <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
 
-      <div className="flex justify-center mb-4">
-        <div className="bg-[#0519CE] rounded-full p-3">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-8 w-8 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#0519CE] rounded-full p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+
+            <h2 className="text-lg font-bold mb-2">Approved Successfully!</h2>
+            <p className="mb-4">The review has been approved & posted.</p>
+
+            <button
+              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
+              onClick={() => setOpenSuccessModal(false)}
+            >
+              OK
+            </button>
+          </div>
         </div>
-      </div>
-
-      <h2 className="text-lg font-bold mb-2">Approved Successfully!</h2>
-      <p className="mb-4">The review has been approved & posted.</p>
-
-      <button
-        className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
-        onClick={() => setOpenSuccessModal(false)}
-      >
-        OK
-      </button>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }
