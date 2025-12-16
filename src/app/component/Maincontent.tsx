@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import AudioList from "./AudioList";
 
 // ---- Types ----
 type VirtualTour = {
@@ -238,6 +239,9 @@ interface MaincontentProps {
   ) => void;
   setOpenPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenEditPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenAudioTourPopup: React.Dispatch<React.SetStateAction<boolean>>;
+
+
   setSelectedImageId: React.Dispatch<React.SetStateAction<string>>;
   setOpenCustonSectionPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAccessibilityMediaPopup: React.Dispatch<React.SetStateAction<boolean>>;
@@ -307,7 +311,7 @@ export default function Maincontent({
   onDeleteBusinessMedia,
   onEditBusinessMedia,
   onDeleteBusinessImage,
-
+  setOpenAudioTourPopup,
   showSuccess,
   showError,
 }: MaincontentProps) {
@@ -578,13 +582,31 @@ export default function Maincontent({
 
       {/* ---------- Audio Tours ---------- */}
       <div className="audio my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
-        <h3 className="text-xl font-[600] mb-4">Audio Tours</h3>
-        <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-[600] mb-4">Audio Tours</h3>
+          <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setOpenAudioTourPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
+                Add Audio Tour
+              </button>
+            </div>
+          </div>
+        </div>
+          
+          {/* Use This Component to display Audio List */}
+         <AudioList/> 
+
+        {/* You can use this in else part when no audio is present  */}
+
+        {/* <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
           <img src="/assets/images/audio.avif" alt="" />
           <p className="mt-4 font-medium text-[#6d6d6d]">
             No Audio Tour to show
           </p>
-        </div>
+        </div> */}
       </div>
 
       {/* ---------- Property Images ---------- */}

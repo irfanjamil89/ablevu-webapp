@@ -17,6 +17,7 @@ import QuestionPopup from "@/app/component/QuestionPopup";
 import WriteReviewsPopup from "@/app/component/WriteReviewsPopup";
 import PartnerCertificationPopup from "@/app/component/PartnerCertificationPopup";
 import EditPropertyImagePopup from "@/app/component/EditPropertyImagePopup";
+import AudioTourPopup from "@/app/component/AudioTourPopup";
 
 type BusinessProfile = any;
 type BusinessType = any;
@@ -82,6 +83,8 @@ export default function Page({
     const [selectedVirtualTour, setSelectedVirtualTour] = useState<any | null>(
         null
     );
+    const [OpenAudioTourPopup, setOpenAudioTourPopup] = useState(false);
+    
 
     // ⭐ Accessibility Feature: popup + edit state
     const [OpenAccessibilityFeaturePopup, setOpenAccessibilityFeaturePopup] =
@@ -877,6 +880,7 @@ export default function Page({
                     loading={loading}
                     error={error}
                     setOpenVirtualTour={handleSetOpenVirtualTour}
+                    setOpenAudioTourPopup={setOpenAudioTourPopup}
                     setOpenAccessibilityFeaturePopup={
                         handleSetOpenAccessibilityFeaturePopup
                     }
@@ -992,6 +996,22 @@ export default function Page({
                     }}
                 />
             )}
+
+            {OpenAudioTourPopup && business && (
+                <AudioTourPopup
+                    businessId={business.id}
+                    setOpenAudioTourPopup={setOpenAudioTourPopup}
+                    onUpdated={async () => {
+                        await fetchAllData();
+                        showSuccess(
+                            "Audio Tour Saved",
+                            "Audio tour has been saved successfully."
+                        );
+                    }}
+                />
+            )}
+
+            
 
             {OpenAccessibilityFeaturePopup && business && (
                 <AccessibilityFeaturePopup
