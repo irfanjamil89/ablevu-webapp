@@ -60,7 +60,21 @@ type FeatureType = {
 };
 
 type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
-type StatusFilter = "" | "draft" | "pending approved" | "approved" | "claimed";
+type StatusFilter =
+  | ""
+  | "draft"
+  | "pending approval"
+  | "approved"
+  | "pending acclaim"
+  | "claimed";
+
+type StatusKey =
+  | "draft"
+  | "pending approval"
+  | "approved"
+  | "pending acclaim"
+  | "claimed";
+
 
 type BusinessSchedule = {
   id: string;
@@ -85,6 +99,43 @@ type ScheduleListResponse = {
   limit: number;
   totalPages: number;
 };
+
+const normalizeStatusKey = (raw: string | null | undefined): StatusKey | "" => {
+  const s = normalizeStatus(raw || "");
+
+  // aliases / old values support
+  if (s === "pending" || s === "pending approved" || s === "pending approval")
+    return "pending approval";
+
+  if (s === "pending acclaim" || s === "pending claim")
+    return "pending acclaim";
+
+  if (s === "approved") return "approved";
+  if (s === "draft") return "draft";
+  if (s === "claimed") return "claimed";
+
+  return "";
+};
+
+const STATUS_UI: Record<
+  StatusKey,
+  { label: string; bg: string; text: string }
+> = {
+  draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+  "pending approval": {
+    label: "Pending Approval",
+    bg: "#FFEFD5",
+    text: "#B46A00",
+  },
+  approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+  "pending acclaim": {
+    label: "Pending Acclaim",
+    bg: "#EDE9FE",
+    text: "#5B21B6",
+  },
+  claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+};
+
 
 const normalizeStatus = (status: string) =>
   status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
@@ -130,15 +181,18 @@ export default function Page() {
   const itemsPerPage = 10;
 
   const statusFilterLabel =
-    statusFilter === "draft"
-      ? "Draft"
-      : statusFilter === "pending approved"
-      ? "Pending Approved"
-      : statusFilter === "approved"
-      ? "Approved"
-      : statusFilter === "claimed"
-      ? "Claimed"
-      : "";
+  statusFilter === "draft"
+    ? "Draft"
+    : statusFilter === "pending approval"
+    ? "Pending Approval"
+    : statusFilter === "approved"
+    ? "Approved"
+    : statusFilter === "pending acclaim"
+    ? "Pending Acclaim"
+    : statusFilter === "claimed"
+    ? "Claimed"
+    : "";
+
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -276,103 +330,116 @@ export default function Page() {
   // ---------- Status badge (business.business_status) ----------
 
   const getStatusInfo = (b: Business) => {
-    const raw = (b.business_status || "").toLowerCase().trim();
-    const status = normalizeStatus(raw);
+  const s = normalizeStatus(b.business_status || "");
 
-    let label = "";
-    let bg = "";
-    let text = "";
+  // ✅ normalize + alias support (pending, pending approval, pending approved etc.)
+  const key =
+    s === "draft"
+      ? "draft"
+      : s === "approved"
+      ? "approved"
+      : s === "claimed"
+      ? "claimed"
+      : s === "pending" || s === "pending approval" || s === "pending approved"
+      ? "pending approval"
+      : s === "pending acclaim" || s === "pending claim"
+      ? "pending acclaim"
+      : "";
 
-    if (status === "draft") {
-      label = "Draft";
-      bg = "#FFF3CD";
-      text = "#C28A00";
-    } else if (status === "pending approved") {
-      label = "Pending Approved";
-      bg = "#FFEFD5";
-      text = "#B46A00";
-    } else if (status === "claimed") {
-      label = "Claimed";
-      bg = "#E0F7FF";
-      text = "#0369A1";
-    } else if (status === "approved") {
-      label = "Approved";
-      bg = "#D1FAE5";
-      text = "#065F46";
-    } else {
-      label = "";
-      bg = "";
-      text = "";
-    }
+  // ✅ if unknown or empty status
+  if (!key) return { label: "", bg: "", text: "" };
 
-    return { label, bg, text };
+  // ✅ UI mapping
+  const uiMap: Record<
+    string,
+    { label: string; bg: string; text: string }
+  > = {
+    draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+    "pending approval": {
+      label: "Pending Approval",
+      bg: "#FFEFD5",
+      text: "#B46A00",
+    },
+    approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+    "pending acclaim": {
+      label: "Pending Acclaim",
+      bg: "#EDE9FE",
+      text: "#5B21B6",
+    },
+    claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
   };
+
+  return uiMap[key];
+};
 
   // ---------- Sorting + Status filter ----------
 
   const sortedBusinesses = useMemo(() => {
-    let arr = [...businesses];
+  let arr = [...businesses];
 
-    if (statusFilter) {
-      const normalizedFilter = normalizeStatus(statusFilter);
+  if (statusFilter) {
+    const filterKey = normalizeStatus(statusFilter);
 
-      arr = arr.filter((b) => {
-        const raw = (b.business_status || "").toLowerCase().trim();
-        const status = normalizeStatus(raw);
+    arr = arr.filter((b) => {
+      const status = normalizeStatus(b.business_status || "");
 
-        switch (normalizedFilter) {
-          case "draft":
-            return status === "draft";
+      // normalize business status to one key
+      const businessKey =
+        status === "draft"
+          ? "draft"
+          : status === "approved"
+          ? "approved"
+          : status === "claimed"
+          ? "claimed"
+          : status === "pending" ||
+            status === "pending approval" ||
+            status === "pending approved"
+          ? "pending approval"
+          : status === "pending acclaim" || status === "pending claim"
+          ? "pending acclaim"
+          : "";
 
-          case "approved":
-            return (
-              status === "approved" ||
-              (!status && b.active === true && !b.blocked)
-            );
+      // normalize filter
+      const filterNormalized =
+        filterKey === "pending" ||
+        filterKey === "pending approval" ||
+        filterKey === "pending approved"
+          ? "pending approval"
+          : filterKey === "pending acclaim" || filterKey === "pending claim"
+          ? "pending acclaim"
+          : filterKey;
 
-          case "pending approved":
-            return (
-              status === "pending" ||
-              status === "pending approval" ||
-              status === "pending approved"
-            );
+      return businessKey === filterNormalized;
+    });
+  }
 
-          case "claimed":
-            return status === "claimed";
+  // 👇 baqi sorting logic jaisa ka waisa rehne do
+  switch (sortOption) {
+    case "name-asc":
+      arr.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "name-desc":
+      arr.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+    case "created-asc":
+      arr.sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() -
+          new Date(b.created_at).getTime()
+      );
+      break;
+    case "created-desc":
+      arr.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+      );
+      break;
+  }
 
-          default:
-            return true;
-        }
-      });
-    }
+  return arr;
+}, [businesses, sortOption, statusFilter]);
 
-    switch (sortOption) {
-      case "name-asc":
-        arr.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case "name-desc":
-        arr.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case "created-asc":
-        arr.sort(
-          (a, b) =>
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime()
-        );
-        break;
-      case "created-desc":
-        arr.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-        );
-        break;
-      default:
-        break;
-    }
-
-    return arr;
-  }, [businesses, sortOption, statusFilter]);
 
   // Schedule Helper
   const dayOrder = [
@@ -710,12 +777,21 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => setStatusFilter("pending approved")}
+                          onClick={() => setStatusFilter("pending approval")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Pending Approved
                         </button>
                       </li>
+                      <li>
+                          <button
+                            type="button"
+                            onClick={() => setStatusFilter("pending acclaim")}
+                            className="w-full text-left block px-3 py-1 hover:bg-gray-100"
+                          >
+                            Pending Acclaim
+                          </button>
+                        </li>
                       <li>
                         <button
                           type="button"

@@ -139,33 +139,59 @@ const normalizeStatus = (status?: string | null) =>
   (status || "").toLowerCase().trim().replace(/[\s_-]+/g, " ");
 
 // 🔹 status badge info – updated to use new statuses
-const getStatusInfo = (b: Business) => {
-  const raw = normalizeStatus(b.business_status);
-  let label = "";
-  let bg = "";
-  let text = "";
+type StatusKey =
+  | "draft"
+  | "pending approval"
+  | "approved"
+  | "pending acclaim"
+  | "claimed";
 
-  if (raw === "draft") {
-    label = "Draft";
-    bg = "#FFF3CD";
-    text = "#C28A00";
-  } else if (raw === "pending approved") {
-    // backend: "pending approved" / "pending_approved" → normalize ho kar aa jayega
-    label = "Pending Approved";
-    bg = "#FFEFD5";
-    text = "#B46A00";
-  } else if (raw === "claimed") {
-    label = "Claimed";
-    bg = "#E0F7FF";
-    text = "#0369A1";
-  } else if (raw === "approved" || (b.active && !b.blocked)) {
-    // explicit approved + fallback on active+not blocked
-    label = "Approved";
-    bg = "#ECFDF3";
-    text = "#039855";
+const STATUS_BADGE: Record<
+  StatusKey,
+  { label: string; bg: string; text: string }
+> = {
+  draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+  "pending approval": {
+    label: "Pending Approval",
+    bg: "#FFEFD5",
+    text: "#B46A00",
+  },
+  approved: { label: "Approved", bg: "#ECFDF3", text: "#039855" },
+  "pending acclaim": {
+    label: "Pending Acclaim",
+    bg: "#EEF2FF",
+    text: "#3730A3",
+  },
+  claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+};
+
+// backend aliases ko canonical banane ke liye
+const toCanonicalStatus = (raw: string, b?: Business): StatusKey | null => {
+  const s = normalizeStatus(raw);
+
+  // aliases
+  if (s === "pending" || s === "pending approved") return "pending approval";
+  if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
+
+  if (s === "draft") return "draft";
+  if (s === "pending approval") return "pending approval";
+  if (s === "approved") return "approved";
+  if (s === "claimed") return "claimed";
+
+  // fallback: agar status empty ho aur business active ho
+  if ((!s || s === "active") && b?.active === true && !b?.blocked) {
+    return "approved";
   }
 
-  return { label, bg, text };
+  return null;
+};
+
+const getStatusInfo = (b: Business) => {
+  const canonical = toCanonicalStatus(b.business_status || "", b);
+
+  if (!canonical) return { label: "", bg: "", text: "" };
+
+  return STATUS_BADGE[canonical];
 };
 
 export default function Page() {
