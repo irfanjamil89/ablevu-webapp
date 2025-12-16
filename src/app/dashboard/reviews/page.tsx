@@ -61,7 +61,7 @@ export default function Page() {
       }
 
       const json = await res.json();
-      let list = Array.isArray(json.data) ? json.data : [];
+      const list = Array.isArray(json.data) ? json.data : [];
       // Ensure reviews is always an array
       setReviews(list);
     } catch (err: any) {
