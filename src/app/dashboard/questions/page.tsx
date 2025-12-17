@@ -14,14 +14,17 @@ interface Question {
   modified_by?: string;
   show_name: boolean;
   created_by_name: string;
+  business_name: string;
+  business_logo: string;
 }
 
 export default function Page() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState<string | null>(null); // question ID being updated
+  const [updating, setUpdating] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -31,9 +34,20 @@ export default function Page() {
       try {
         const token = localStorage.getItem("access_token");
         if (!token) throw new Error("No access token found");
+        const userRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        const userData = await userRes.json();
+        setUserRole(userData.user_role);
 
         const res = await fetch(
-          "https://staging-api.qtpack.co.uk/business-questions/list",
+          "{process.env.NEXT_PUBLIC_API_BASE_URL}business-questions/list",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -62,7 +76,7 @@ export default function Page() {
       }
     };
 
-    
+
 
     fetchQuestions();
   }, []);
@@ -86,7 +100,7 @@ export default function Page() {
         }
       );
 
-      
+
 
       const json = await res.json();
       console.log("Update Response:", json);
@@ -103,16 +117,16 @@ export default function Page() {
       setUpdating(null);
       setError("");
     }
-    
+
   };
 
-  
+
 
   if (loading)
     return (
       <div className="flex justify-center w-full items-center h-[400px]">
-      <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-    </div>
+        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+      </div>
     );
 
 
@@ -142,8 +156,8 @@ export default function Page() {
                   </div>
                   <div className="text-gray-700 font-semibold">
                     {q.show_name && q.created_by_name
-                    ? q.created_by_name
-                     : "Anonymous"}
+                      ? q.created_by_name
+                      : "Anonymous"}
                   </div>
                   <div className="text-gray-400 text-sm">
                     {new Date(q.created_at).toLocaleDateString()}
@@ -152,56 +166,70 @@ export default function Page() {
 
                 {/* Right: Business */}
                 <div className="flex items-center gap-2 text-gray-700 text-sm font-medium cursor-pointer">
-                  
-                  Business ID: {q.business_id}
+
+                  <span className="text-gray-700 font-semibold ">{q.business_name ?? "Unknown Business"}</span>
+                  {q.business_logo && (
+                    <img
+                      src={q.business_logo}
+                      alt={q.business_name}
+                      className="w-14 h-14 rounded-full object-cover"
+                    />
+                  )}
                 </div>
               </div>
 
               {/* Question */}
               <h2 className="text-xl font-semibold text-gray-900 mb-3">{q.question}</h2>
-                { error? (
-                    <>
-                    <p className="text-red-500 mb-2">{error}</p>
-                    </>
+              {(userRole === "Contributor" || userRole === "User") && q.answer && (
+                <p className="text-gray-700 mb-2">
+                  {q.answer}
+                </p>
+              )}
 
-                ):(
-                    <>
-                    
-                    </>
-                )
-                    
-                }
-                
+              {error ? (
+                <>
+                  <p className="text-red-500 mb-2">{error}</p>
+                </>
+
+              ) : (
+                <>
+
+                </>
+              )
+
+              }
+
 
 
               {/* Textarea & Post Button */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handlePostAnswer(q, answers[q.id] ?? "");
-                }}
-              >
-                <textarea
-                placeholder="Write your answer here"
-                value={answers[q.id] ?? q.answer ?? ""}
-                onChange={(e) =>
-                    setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
-                }
-                className="w-full border placeholder:text-gray-600 border-gray-300 rounded-xl p-4 text-sm hover:border-[#0519CE] focus:border-0 focus:ring-1 focus:ring-[#0519CE] outline-none mb-4"
-                />
+              {userRole === "Business" && (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handlePostAnswer(q, answers[q.id] ?? "");
+                  }}
+                >
+                  <textarea
+                    placeholder="Write your answer here"
+                    value={answers[q.id] ?? q.answer ?? ""}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                    }
+                    className="w-full border placeholder:text-gray-600 border-gray-300 rounded-xl p-4 text-sm hover:border-[#0519CE] focus:border-0 focus:ring-1 focus:ring-[#0519CE] outline-none mb-4"
+                  />
 
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={updating === q.id}
-                    className={`px-10 py-3 bg-[#0519CE] text-white font-semibold rounded-full text-sm ${
-                      updating === q.id ? "opacity-50 cursor-not-allowed" : "hover:bg-[#0519CE]"
-                    }`}
-                  >
-                    {updating === q.id ? "Posting..." : "Post"}
-                  </button>
-                </div>
-              </form>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={updating === q.id}
+                      className={`px-10 py-3 bg-[#0519CE] text-white font-semibold rounded-full text-sm ${updating === q.id ? "opacity-50 cursor-not-allowed" : "hover:bg-[#0519CE]"
+                        }`}
+                    >
+                      {updating === q.id ? "Posting..." : "Post"}
+                    </button>
+                  </div>
+                </form>
+              )}
             </section>
           );
         })

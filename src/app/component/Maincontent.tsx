@@ -52,6 +52,7 @@ type BusinessReview = {
   created_at: string;
   modified_at: string;
   reviewer_name?: string;
+  created_by_name: string;
   user?: { id: string; name: string };
 };
 
@@ -64,6 +65,7 @@ type BusinessQuestion = {
   show_name: boolean;
   created_at: string;
   modified_at: string;
+  created_by_name: string;
   user?: { id: string; name: string };
 };
 
@@ -221,6 +223,9 @@ type BusinessProfile = {
 interface MaincontentProps {
   business: BusinessProfile | null;
   businessImages: BusinessImage[];
+  businessOwner?: {
+    id: string;
+  };
   loading: boolean;
   error: string | null;
 
@@ -287,6 +292,7 @@ interface MaincontentProps {
 export default function Maincontent({
   business,
   businessImages,
+   businessOwner,
   loading,
   error,
   setOpenVirtualTour,
@@ -319,6 +325,46 @@ export default function Maincontent({
   showError,
 }: MaincontentProps) {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [userId, setUserId] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
+
+  const decodeJWT = (token: string) => {
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    const payload = decodeJWT(token);
+    setUserId(payload?.sub || null);
+  }, []);
+  const handlePostAnswer = async (q: BusinessQuestion, answer: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (!token) throw new Error("No access token found");
+      const res = await fetch(
+        `${API_BASE_URL}/business-questions/update/${q.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ answer }),
+        }
+      );
+      const json = await res.json();
+      setAnswers((prev) => ({ ...prev, [q.id]: answer }));
+      showSuccess("Success", "Answer posted successfully");
+    } catch (err: any) {
+      console.error(err);
+      showError("Error", err.message || "Failed to post answer");
+    }
+  };
 
 
 
@@ -903,7 +949,7 @@ export default function Maincontent({
         {business.businessreviews && business.businessreviews.length > 0 ? (
           <div className="space-y-4">
             {business.businessreviews.map((r) => {
-              const reviewer = r.reviewer_name || "Anonymous user";
+              const reviewer = r.created_by_name || "Anonymous user";
               const dateSource = r.approvedAt || r.created_at;
               const dateText = dateSource
                 ? new Date(dateSource).toLocaleDateString()
@@ -988,9 +1034,6 @@ export default function Maincontent({
         {business.businessQuestions && business.businessQuestions.length > 0 ? (
           <div className="space-y-4">
             {business.businessQuestions.map((q) => {
-              const shouldShowName = q.show_name && q.user?.name;
-              const displayName = shouldShowName ? q.user!.name : "Anonymous";
-
               return (
                 <section
                   key={q.id}
@@ -1007,7 +1050,9 @@ export default function Maincontent({
                       </div>
 
                       <div className="text-gray-700 font-semibold">
-                        {displayName}
+                      {q.show_name && q.created_by_name
+                      ? q.created_by_name
+                      : "Anonymous"}
                       </div>
                     </div>
 
@@ -1029,19 +1074,38 @@ export default function Maincontent({
                   <h2 className="text-md font-semibold text-gray-900 mb-2">
                     {q.question}
                   </h2>
-
                   {q.answer ? (
                     <div className="mt-2 border border-gray-200 bg-gray-50 rounded-lg p-3">
                       <p className="text-sm text-gray-800">{q.answer}</p>
                     </div>
-                  ) : (
+                  ) : userId === businessOwner?.id ? (
                     <textarea
                       rows={4}
-                      cols={4}
                       placeholder="Write your answer here..."
-                      className="w-full border placeholder:text-gray-600 border-gray-300 rounded-lg p-4 text-sm hover:border-[#0519CE] focus:border-0 focus:ring-1 focus:ring-[#0519CE] outline-none mt-2"
-                    ></textarea>
-                  )}
+                      value={answers[q.id] ?? ""}
+                      onChange={(e) =>
+                        setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+                      }
+                      onBlur={() => {
+                        if ((answers[q.id] ?? "").trim() !== q.answer) {
+                          handlePostAnswer(q, answers[q.id] ?? "");
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          if ((answers[q.id] ?? "").trim() !== q.answer) {
+                            handlePostAnswer(q, answers[q.id] ?? "");
+                          }
+                        }
+                      }}
+                      className="w-full border placeholder:text-gray-600 border-gray-300
+               rounded-lg p-4 text-sm mt-2
+               hover:border-[#0519CE] focus:border-0 focus:ring-1 focus:ring-[#0519CE] 
+               outline-none resize-none"
+                    />
+                  ) : null}
+
                 </section>
               );
             })}

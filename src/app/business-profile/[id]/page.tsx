@@ -879,7 +879,8 @@ export default function Page({
 
                 <Maincontent
                     business={business}
-                    businessImages={businessImages} // ⭐ NEW: Pass business images
+                    businessImages={businessImages}
+                    businessOwner={business?.owner} 
                     loading={loading}
                     error={error}
                     setOpenVirtualTour={handleSetOpenVirtualTour}
