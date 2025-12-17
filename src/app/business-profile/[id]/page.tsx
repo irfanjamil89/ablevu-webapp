@@ -17,6 +17,9 @@ import QuestionPopup from "@/app/component/QuestionPopup";
 import WriteReviewsPopup from "@/app/component/WriteReviewsPopup";
 import PartnerCertificationPopup from "@/app/component/PartnerCertificationPopup";
 import EditPropertyImagePopup from "@/app/component/EditPropertyImagePopup";
+import AudioTourPopup from "@/app/component/AudioTourPopup";
+import CustomMediaPopup from "@/app/component/CustomMediaPopup";
+import CustomMediaModal from "@/app/component/CustomMediaPopup";
 
 type BusinessProfile = any;
 type BusinessType = any;
@@ -82,6 +85,9 @@ export default function Page({
     const [selectedVirtualTour, setSelectedVirtualTour] = useState<any | null>(
         null
     );
+    const [OpenAudioTourPopup, setOpenAudioTourPopup] = useState(false);
+    const [CustomMediaPopup, setCustomMediaPopup] = useState(false);
+    
 
     // ⭐ Accessibility Feature: popup + edit state
     const [OpenAccessibilityFeaturePopup, setOpenAccessibilityFeaturePopup] =
@@ -614,50 +620,109 @@ export default function Page({
     }; // ← This closing brace was missing
 
     // ⭐ NEW: Business Image delete handler
-    const handleDeleteBusinessImage = async (image: BusinessImage) => {
+
+    const handleDeleteBusinessImage = (image: BusinessImage) => {
         if (!API_BASE_URL || !business) return;
 
         const token = getToken();
         if (!token) {
-            alert("No access token");
+            showError("Unauthorized", "No access token found.");
             return;
         }
 
-        const confirmDelete = window.confirm("Delete this business image?");
-        if (!confirmDelete) return;
-
-        try {
-            const res = await fetch(
-                `${API_BASE_URL}/business-images/delete/${image.id}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (!res.ok) {
-                let msg = "Failed to delete business image";
+        askConfirm(
+            "Delete Business Image?",
+            `Are you sure you want to delete "${image.name || 'this image'}"?`,
+            async () => {
                 try {
-                    const body = await res.json();
-                    if (body?.message) {
-                        msg = Array.isArray(body.message)
-                            ? body.message.join(", ")
-                            : body.message;
-                    }
-                } catch {
-                    // ignore JSON parse error
-                }
-                throw new Error(msg);
-            }
+                    const res = await fetch(
+                        `${API_BASE_URL}/business-images/delete/${image.id}`,
+                        {
+                            method: "DELETE",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
 
-            await fetchAllData();
-        } catch (err: any) {
-            console.error(err);
-            alert(err.message || "Failed to delete business image");
-        }
+                    if (!res.ok) {
+                        let msg = "Failed to delete business image";
+                        try {
+                            const body = await res.json();
+                            if (body?.message) {
+                                msg = Array.isArray(body.message)
+                                    ? body.message.join(", ")
+                                    : body.message;
+                            }
+                        } catch {
+                            // ignore JSON parse error
+                        }
+                        throw new Error(msg);
+                    }
+
+                    await fetchAllData();
+                    showSuccess(
+                        "Deleted",
+                        `Business image "${image.name || 'Image'}" has been deleted successfully.`
+                    );
+                } catch (err: any) {
+                    console.error(err);
+                    showError(
+                        "Delete Failed",
+                        err.message || "Failed to delete business image."
+                    );
+                } finally {
+                    handleCloseConfirm();
+                }
+            }
+        );
     };
+
+
+    // const handleDeleteBusinessImage = async (image: BusinessImage) => {
+    //     if (!API_BASE_URL || !business) return;
+
+    //     const token = getToken();
+    //     if (!token) {
+    //         alert("No access token");
+    //         return;
+    //     }
+
+    //     const confirmDelete = window.confirm("Delete this business image?");
+    //     if (!confirmDelete) return;
+
+    //     try {
+    //         const res = await fetch(
+    //             `${API_BASE_URL}/business-images/delete/${image.id}`,
+    //             {
+    //                 method: "DELETE",
+    //                 headers: {
+    //                     Authorization: `Bearer ${token}`,
+    //                 },
+    //             }
+    //         );
+
+    //         if (!res.ok) {
+    //             let msg = "Failed to delete business image";
+    //             try {
+    //                 const body = await res.json();
+    //                 if (body?.message) {
+    //                     msg = Array.isArray(body.message)
+    //                         ? body.message.join(", ")
+    //                         : body.message;
+    //                 }
+    //             } catch {
+    //                 // ignore JSON parse error
+    //             }
+    //             throw new Error(msg);
+    //         }
+
+    //         await fetchAllData();
+    //     } catch (err: any) {
+    //         console.error(err);
+    //         alert(err.message || "Failed to delete business image");
+    //     }
+    // };
 
     // ---- Accessibility Media: Add button popup handler ----
     const handleSetOpenAccessibilityMediaPopup: React.Dispatch<
@@ -819,6 +884,8 @@ export default function Page({
                     loading={loading}
                     error={error}
                     setOpenVirtualTour={handleSetOpenVirtualTour}
+                    setOpenAudioTourPopup={setOpenAudioTourPopup}
+                    setCustomMediaPopup={setCustomMediaPopup}
                     setOpenAccessibilityFeaturePopup={
                         handleSetOpenAccessibilityFeaturePopup
                     }
@@ -935,6 +1002,24 @@ export default function Page({
                 />
             )}
 
+            {OpenAudioTourPopup && business && (
+                <AudioTourPopup
+                    businessId={business.id}
+                    setOpenAudioTourPopup={setOpenAudioTourPopup}
+                    onUpdated={async () => {
+                        await fetchAllData();
+                        showSuccess(
+                            "Audio Tour Saved",
+                            "Audio tour has been saved successfully."
+                        );
+                    }}
+                />
+            )}
+
+            
+
+            
+
             {OpenAccessibilityFeaturePopup && business && (
                 <AccessibilityFeaturePopup
                     businessId={business.id}
@@ -956,8 +1041,7 @@ export default function Page({
                 <PropertyImagePopup
                     businessId={business.id}
                     setOpenPropertyImagePopup={setOpenPropertyImagePopup}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
+                    onUpdated={async () => {
                         await fetchAllData();
                         showSuccess(
                             "Images Updated",
@@ -991,6 +1075,19 @@ export default function Page({
                         showSuccess(
                             "Custom Section Updated",
                             "Custom sections updated successfully."
+                        );
+                    }}
+                />
+            )}
+            {CustomMediaPopup && business && (
+                <CustomMediaModal
+                    businessId={business.id}
+                    setCustomMediaPopup={setCustomMediaPopup}
+                    onUpdated={async () => {
+                        await fetchAllData();
+                        showSuccess(
+                            "Custom Media Saved",
+                            "Custom Media has been saved successfully."
                         );
                     }}
                 />

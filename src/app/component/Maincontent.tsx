@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import AudioList from "./AudioList";
+import { CheckCircle, Pencil, Trash2 } from 'lucide-react';
 
 // ---- Types ----
 type VirtualTour = {
@@ -243,6 +245,10 @@ interface MaincontentProps {
   ) => void;
   setOpenPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenEditPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setOpenAudioTourPopup: React.Dispatch<React.SetStateAction<boolean>>;
+  setCustomMediaPopup: React.Dispatch<React.SetStateAction<boolean>>;
+
+
   setSelectedImageId: React.Dispatch<React.SetStateAction<string>>;
   setOpenCustonSectionPopup: React.Dispatch<React.SetStateAction<boolean>>;
   setOpenAccessibilityMediaPopup: React.Dispatch<React.SetStateAction<boolean>>;
@@ -313,7 +319,8 @@ export default function Maincontent({
   onDeleteBusinessMedia,
   onEditBusinessMedia,
   onDeleteBusinessImage,
-
+  setOpenAudioTourPopup,
+  setCustomMediaPopup,
   showSuccess,
   showError,
 }: MaincontentProps) {
@@ -359,6 +366,14 @@ export default function Maincontent({
     }
   };
 
+
+
+  const [ImageOpenModal, setImageOpenModal] = useState<boolean>(false);
+  const [selectedPropertyImage, setSelectedPropertyImage] = useState<BusinessImage | null>(null);
+
+
+
+  // ⭐ master lists
   const [featureTypes, setFeatureTypes] =
     useState<AccessibleFeatureTypeMaster[]>([]);
   const [allFeatures, setAllFeatures] = useState<AccessibleFeatureMaster[]>([]);
@@ -616,13 +631,31 @@ export default function Maincontent({
 
       {/* ---------- Audio Tours ---------- */}
       <div className="audio my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
-        <h3 className="text-xl font-[600] mb-4">Audio Tours</h3>
-        <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-[600] mb-4">Audio Tours</h3>
+          <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setOpenAudioTourPopup(true)}
+                className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
+              >
+                Add Audio Tour
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Use This Component to display Audio List */}
+        <AudioList />
+
+        {/* You can use this in else part when no audio is present  */}
+
+        {/* <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
           <img src="/assets/images/audio.avif" alt="" />
           <p className="mt-4 font-medium text-[#6d6d6d]">
             No Audio Tour to show
           </p>
-        </div>
+        </div> */}
       </div>
 
       {/* ---------- Property Images ---------- */}
@@ -653,6 +686,10 @@ export default function Maincontent({
                   src={image.image_url || undefined}
                   alt={image.name || `Property image ${index + 1}`}
                   className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
+                  onClick={() => {
+                    setSelectedPropertyImage(image);
+                    setImageOpenModal(true);
+                  }}
                 />
                 <div className="absolute top-2 right-2 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
                   <img
@@ -675,6 +712,38 @@ export default function Maincontent({
                 </div>
               </div>
             ))}
+            {ImageOpenModal && selectedPropertyImage && (
+              <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-2xl max-w-4xl w-[500px] mx-auto  overflow-hidden shadow-2xl">
+                  {/* Close Button */}
+                  <div className="flex justify-end items-center p-4 border-b">
+                    <button
+                      onClick={() => setImageOpenModal(false)}
+                      className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  {/* Image */}
+                  <div className="p-6 flex justify-center bg-gray-50">
+                    <img
+                      src={selectedPropertyImage.image_url || ""}
+                      alt={selectedPropertyImage.name}
+                      className=" w-auto object-contain rounded-lg"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="p-6 border-t">
+                    <h4 className="font-semibold text-gray-700 mb-2">Description</h4>
+                    <p className="text-gray-600 leading-relaxed">
+                      {selectedPropertyImage.description || 'No description available'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
@@ -1224,7 +1293,42 @@ export default function Maincontent({
           </div>
         </div>
 
-        {business.businessCustomSections &&
+        <div className="p-6 bg-white border  rounded-3xl border-[#e5e5e7]">
+         
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Section Name</h1>
+            <a href="#" className="text-[#0519CE] text-md font-bold text-lg underline" onClick={()=> setCustomMediaPopup(true)}>
+              Add Media
+            </a>
+          </div>
+
+          {/* Card */}
+          <div className=" bg-white border p-6 rounded-3xl border-[#e5e5e7]">
+            {/* Icons Row */}
+            
+            <div className="flex justify-end gap-3 mb-4">
+              <CheckCircle className="w-6 h-6 text-green-500 cursor-pointer"  />
+              <Pencil className="w-6 h-6 text-yellow-500 cursor-pointer"  />
+              <Trash2 className="w-6 h-6 text-red-500 cursor-pointer"  />
+            </div>
+             <div className="flex justify-end">
+              <a  href="#" className="text-[#0519CE] text-md font-bold text-base underline">
+              View
+            </a>
+             </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Media Name</h2>
+
+            {/* Description */}
+            <p className="text-gray-600 text-base mb-4">Media Description</p>
+
+            {/* View Link */}
+           
+          </div>
+        </div>
+
+        {/* {business.businessCustomSections &&
           business.businessCustomSections.length > 0 ? (
           <ul className="space-y-2 text-sm text-gray-700">
             {business.businessCustomSections.map((s: any) => (
@@ -1248,7 +1352,7 @@ export default function Maincontent({
               No Custom section to show
             </p>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
