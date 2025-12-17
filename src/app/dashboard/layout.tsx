@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -30,6 +31,9 @@ interface User {
   email: string;
   profile_picture_url?: string;
 }
+import Header from '../component/Header2';
+import DashboardContent from '../component/DashboardContent';
+import { useUser } from "@/app/component/UserContext";
 
 // Helper function to decode JWT and check expiration
 const isTokenExpired = (token: string): boolean => {
@@ -52,6 +56,7 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now());
 
   const pathname = usePathname();
   const router = useRouter();
@@ -90,11 +95,17 @@ export default function DashboardLayout({
       return sum + (Number.isFinite(v) ? v : 0);
     }, 0);
   }, [cartItems]);
+  // Update imageKey when user profile picture changes
+  useEffect(() => {
+    if (user?.profile_picture_url) {
+      setImageKey(Date.now());
+    }
+  }, [user?.profile_picture_url]);
 
   const handleLogout = () => {
-    setLoading(true);
     localStorage.removeItem("access_token");
-    sessionStorage.clear();
+    sessionStorage.removeItem("user");
+    setUser(null);
     router.push("/");
   };
 
@@ -236,6 +247,18 @@ export default function DashboardLayout({
     fetch("https://staging-api.qtpack.co.uk/users/1", {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
+    // If user is already loaded from context, skip API call
+    if (user) {
+      setLoading(false);
+      return;
+    }
+
+    // Fetch user data using the token for authentication
+    fetch('https://staging-api.qtpack.co.uk/users/me', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      }
     })
       .then((response) => {
         if (response.status === 401) {
@@ -265,6 +288,7 @@ export default function DashboardLayout({
           return;
         }
 
+        sessionStorage.setItem('user', JSON.stringify(data));
         setLoading(false);
       })
       .catch((error) => {
@@ -356,6 +380,16 @@ export default function DashboardLayout({
     const interval = setInterval(() => fetchNotifications(), 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Get profile image URL with cache busting
+  const getProfileImageUrl = () => {
+    if (!user?.profile_picture_url) {
+      return "/assets/images/profile.png";
+    }
+    const url = user.profile_picture_url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${imageKey}`;
+  };
 
   if (loading) {
     return (
@@ -622,7 +656,7 @@ export default function DashboardLayout({
       )}
 
       <div className="flex">
-        <div className=" w-[350px] pt-5  bg-white border-r border-gray-200 flex flex-col justify-between">
+        <div className=" w-[300px] pt-5  bg-white border-r border-gray-200 flex flex-col justify-between">
           {/* Top Navigation */}
           <div className="p-4 mb-15 sticky top-0 ">
             <ul className="space-y-4 font-medium">
@@ -1345,16 +1379,29 @@ export default function DashboardLayout({
                 className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                 {user ? (
 
+                  // <img
+                  //   src={user.profile_picture_url || "/assets/images/profile.png"}
+                  //   alt={user.first_name}
+                  //   className=""
+                  //   onError={(e) => {
+                  //     (e.target as HTMLImageElement).src = "/assets/images/profile.png";
+                  //   }}
+                  // />\
+
                   <img
-                    src={user.profile_picture_url || "/assets/images/profile.png" }
-                    alt={user.first_name}
-                    className=""
+                    key={imageKey}
+                    src={getProfileImageUrl()}
+                    alt={user?.first_name || "User"}
+                    className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/assets/images/profile.png";
+                      const target = e.currentTarget as HTMLImageElement;
+                      if (target.src !== "/assets/images/profile.png") {
+                        console.log("Header: Image load error, using fallback");
+                        target.src = "/assets/images/profile.png";
+                      }
                     }}
                   />
 
-                  
                 ) : (
                   <div>Loading...</div> // Show loading message until user data is fetched
                 )}
@@ -1377,9 +1424,9 @@ export default function DashboardLayout({
             </div>
           </div>
         </div >
-
-        {children}
-
+        <DashboardContent>
+          {children}
+        </DashboardContent>
       </div>
     </div>
   );

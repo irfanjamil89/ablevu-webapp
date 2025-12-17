@@ -18,6 +18,7 @@ interface User {
   email: string;
   profile_picture_url: string;
 }
+import { useUser } from "@/app/component/UserContext";
 
 type CartItem = {
   id: string;
@@ -36,8 +37,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 
 export default function Header() {
+  // Use context for user state
+  const { user, setUser, refreshUser } = useUser();
+  
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isMounted, setIsMounted] = useState(false); // Ensure client-side render
+  const [isMounted, setIsMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openSignupModal, setOpenSignupModal] = useState(false);
@@ -98,32 +102,58 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [cartOpen, notificationsOpen, dropdownOpen]);
+  const [Loading, setLoading] = useState(false);
+  const [imageKey, setImageKey] = useState(Date.now());
 
+  // Update imageKey when user profile picture changes
   useEffect(() => {
-    const storedUser = getUserFromSession();
-    if (storedUser) {
-      setUser(storedUser);
+    if (user?.profile_picture_url) {
+      setImageKey(Date.now());
     }
   }, []);
+  }, [user?.profile_picture_url]);
+  
+  const handleBusinessCreated = () => {
+    setOpenAddBusinessModal(false);
+
+  };
 
   // Run only after client-side hydration
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Check login status
+  // Check login status and sync with user context
   useEffect(() => {
     if (!isMounted) return;
 
     const token = localStorage.getItem("access_token");
-    setIsLoggedIn(!!token);
-  }, [isMounted]);
+    const isUserLoggedIn = !!token && !!user;
+    setIsLoggedIn(isUserLoggedIn);
+  }, [isMounted, user]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.user-dropdown')) {
+        setDropdownOpen(false);
+      }
+      if (!target.closest('.notifications-dropdown')) {
+        setNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     setLoading(true);
     localStorage.removeItem("access_token");
-    sessionStorage.clear(); // Clears all session storage data
-    window.location.href = "/"; // Redirect after logout
+    sessionStorage.removeItem("user");
+    setUser(null); // Clear user from context
+    window.location.href = "/";
   };
 
   const fetchNotifications = async () => {
@@ -290,15 +320,31 @@ export default function Header() {
       currency: "USD",
       maximumFractionDigits: 0,
     }).format(value);
+  // Get profile image URL with cache busting
+  const getProfileImageUrl = () => {
+    if (!user?.profile_picture_url) {
+      return "/assets/images/profile.png";
+    }
+    // Add timestamp for cache busting
+    const url = user.profile_picture_url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}t=${imageKey}`;
+  };
 
-  // Show loading spinner while fetching data
+  // Handle successful login
+  const handleLoginSuccess = () => {
+    setOpenLoginModal(false);
+    // Refresh user data from context
+    refreshUser();
+  };
+
   if (Loading) {
     return (
-      <div className="flex fixed justify-center items-center  z-[10000] w-full inset-1 bg-white">
+      <div className="flex fixed justify-center items-center z-[10000] w-full inset-0 bg-white">
         <img
           src="/assets/images/favicon.png"
           className="w-15 h-15 animate-spin"
-          alt="Favicon"
+          alt="Loading"
         />
       </div>
     );
@@ -615,26 +661,15 @@ export default function Header() {
                         </li>
                       </>
                     )}
-
-                    {/* <li>
-                      <Link
-                        href="/search"
-                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                      >
-                        <span className="group-hover:text-black-800 relative">Search</span>
-                      </Link>
-                    </li> */}
                   </ul>
 
-                  {/* Auth Buttons / Logged-in Dropdown */}
                   <div className="flex items-center space-x-3">
                     {!isLoggedIn ? (
                       <>
                         <div className="flex items-center space-x-3">
-                          {/* Sign Up Button */}
                           <button
                             onClick={() => setOpenSignupModal(true)}
-                            className="group relative flex items-center gap-2 rounded-full cursor-pointer border-2 bg-gradient-to-r from-[#0519ce] to-[#0414a8] py-2.5 px-6 text-white font-semibold transition-all duration-300 "
+                            className="group relative flex items-center gap-2 rounded-full cursor-pointer border-2 bg-gradient-to-r from-[#0519ce] to-[#0414a8] py-2.5 px-6 text-white font-semibold transition-all duration-300"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -653,10 +688,9 @@ export default function Header() {
                             Sign Up
                           </button>
 
-                          {/* Log In Button */}
                           <button
                             onClick={() => setOpenLoginModal(true)}
-                            className="group relative flex items-center gap-2 rounded-full cursor-pointer bg-gradient-to-r from-[#0519ce] to-[#0414a8] hover:bg-gradient-to-r hover:from-[#0519ce] hover:to-[#0414a8] py-2.5 px-7 text-white font-semibold transition-all duration-300 "
+                            className="group relative flex items-center gap-2 rounded-full cursor-pointer bg-gradient-to-r from-[#0519ce] to-[#0414a8] hover:bg-gradient-to-r hover:from-[#0519ce] hover:to-[#0414a8] py-2.5 px-7 text-white font-semibold transition-all duration-300"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -696,6 +730,16 @@ export default function Header() {
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).src =
                                 "/assets/images/profile.png";
+                            key={imageKey}
+                            src={getProfileImageUrl()}
+                            alt={user?.first_name || "User"}
+                            className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.currentTarget as HTMLImageElement;
+                              if (target.src !== "/assets/images/profile.png") {
+                                console.log("Header: Image load error, using fallback");
+                                target.src = "/assets/images/profile.png";
+                              }
                             }}
                           />
 
@@ -720,6 +764,10 @@ export default function Header() {
                                   onClick={() =>
                                     (window.location.href = "/dashboard")
                                   }
+                                  onClick={() => {
+                                    setDropdownOpen(false);
+                                    window.location.href = "/dashboard";
+                                  }}
                                   className="flex w-full text-left px-4 py-2 hover:text-[#0519ce] hover:bg-[#f0f1ff]"
                                 >
                                   <svg
@@ -733,11 +781,11 @@ export default function Header() {
                                   Dashboard
                                 </button>
                               </li>
-                              <hr className="my-2  border-gray-200" />
+                              <hr className="my-2 border-gray-200" />
                               <li>
                                 <button
                                   onClick={handleLogout}
-                                  className="flex w-full text-left px-4 py-2 transition-opacity ease-in-out  hover:text-red-600 hover:bg-[#ffebeb]"
+                                  className="flex w-full text-left px-4 py-2 transition-opacity ease-in-out hover:text-red-600 hover:bg-[#ffebeb]"
                                 >
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -785,7 +833,6 @@ export default function Header() {
           setOpenSuccessModal={setOpenSuccessModal}
         />
       )}
-
       {openSuccessModal && (
         <Successmodal
           setOpenSuccessModal={setOpenSuccessModal}
@@ -793,11 +840,9 @@ export default function Header() {
           setOpenSignupModal={setOpenSignupModal}
         />
       )}
-
       {OpenFeedbackModal && (
         <Feedback setOpenFeedbackModal={setOpenFeedbackModal} />
       )}
-
       {OpenAddBusinessModal && (
         <AddBusinessModal
           setOpenAddBusinessModal={setOpenAddBusinessModal}
