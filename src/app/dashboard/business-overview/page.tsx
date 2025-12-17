@@ -73,7 +73,14 @@ type FeatureType = {
 };
 
 type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
-type StatusFilter = "" | "draft" | "pending" | "approved" | "claimed";
+type StatusFilter =
+  | ""
+  | "draft"
+  | "pending approval"
+  | "approved"
+  | "pending acclaim"
+  | "claimed";
+
 
 type BusinessSchedule = {
   id: string;
@@ -161,15 +168,18 @@ export default function Page() {
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
   const statusFilterLabel =
-    statusFilter === "draft"
-      ? "Draft"
-      : statusFilter === "pending"
-      ? "Approval Request"
-      : statusFilter === "approved"
-      ? "Approved"
-      : statusFilter === "claimed"
-      ? "Claimed"
-      : "";
+  statusFilter === "draft"
+    ? "Draft"
+    : statusFilter === "pending approval"
+    ? "Approval Request"
+    : statusFilter === "approved"
+    ? "Approved"
+    : statusFilter === "pending acclaim"
+    ? "Pending Acclaim"
+    : statusFilter === "claimed"
+    ? "Claimed"
+    : "";
+
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -342,33 +352,58 @@ export default function Page() {
 
   // ---------- Status badge (business.business_status) ----------
 
-  const getStatusInfo = (b: Business) => {
-    const raw = normalizeStatus(b.business_status);
-    let label = "";
-    let bg = "";
-    let text = "";
+  type StatusKey =
+  | "draft"
+  | "pending approval"
+  | "approved"
+  | "pending acclaim"
+  | "claimed";
 
-    if (raw === "draft") {
-      label = "Draft";
-      bg = "#FFF3CD";
-      text = "#C28A00";
-    } else if (raw === "pending approved") {
-      // contributor view → show "Approval Request"
-      label = "Approval Request";
-      bg = "#FFEFD5";
-      text = "#B46A00";
-    } else if (raw === "claimed") {
-      label = "Claimed";
-      bg = "#E0F7FF";
-      text = "#0369A1";
-    } else if (raw === "approved" || (!raw && b.active && !b.blocked)) {
-      label = "Approved";
-      bg = "#D1FAE5";
-      text = "#065F46";
-    }
+const STATUS_BADGE: Record<
+  StatusKey,
+  { label: string; bg: string; text: string }
+> = {
+  draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+  "pending approval": {
+    label: "Pending Approval",
+    bg: "#FFEFD5",
+    text: "#B46A00",
+  },
+  approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+  "pending acclaim": {
+    label: "Pending Acclaim",
+    bg: "#EEF2FF",
+    text: "#3730A3",
+  },
+  claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+};
 
-    return { label, bg, text };
-  };
+const toCanonicalStatus = (raw: string, b: Business): StatusKey | null => {
+  const s = normalizeStatus(raw);
+
+  // backend aliases
+  if (s === "pending" || s === "pending approved") return "pending approval";
+  if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
+
+  if (s === "draft") return "draft";
+  if (s === "pending approval") return "pending approval";
+  if (s === "approved") return "approved";
+  if (s === "claimed") return "claimed";
+
+  // fallback: empty status but active + not blocked
+  if ((!s || s === "active") && b.active === true && !b.blocked) {
+    return "approved";
+  }
+
+  return null;
+};
+
+const getStatusInfo = (b: Business) => {
+  const canonical = toCanonicalStatus(b.business_status || "", b);
+  if (!canonical) return { label: "", bg: "", text: "" };
+  return STATUS_BADGE[canonical];
+};
+
 
   // ---------- Sorting + Status filter ----------
 
@@ -376,31 +411,31 @@ export default function Page() {
     let arr = [...businesses];
 
     if (statusFilter) {
-      arr = arr.filter((b) => {
-        const status = normalizeStatus(b.business_status);
+  arr = arr.filter((b) => {
+    const canonical = toCanonicalStatus(b.business_status || "", b);
 
-        switch (statusFilter) {
-          case "draft":
-            return status === "draft";
+    switch (statusFilter) {
+      case "draft":
+        return canonical === "draft";
 
-          case "approved":
-            return (
-              status === "approved" ||
-              (!status && b.active === true && !b.blocked)
-            );
+      case "pending approval":
+        return canonical === "pending approval";
 
-          case "pending":
-            // filter "Approval Request" → backend "pending approved"
-            return status === "pending approved";
+      case "approved":
+        return canonical === "approved";
 
-          case "claimed":
-            return status === "claimed";
+      case "pending acclaim":
+        return canonical === "pending acclaim";
 
-          default:
-            return true;
-        }
-      });
+      case "claimed":
+        return canonical === "claimed";
+
+      default:
+        return true;
     }
+  });
+}
+
 
     switch (sortOption) {
       case "name-asc":

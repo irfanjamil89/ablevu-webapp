@@ -99,6 +99,30 @@ interface BusinessSidebarProps {
 const normalizeStatus = (status: string) =>
   status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
 
+type StatusKey =
+  | "draft"
+  | "pending approval"
+  | "approved"
+  | "pending acclaim"
+  | "claimed";
+
+// Label mapping for UI
+const STATUS_LABELS: Record<StatusKey, string> = {
+  draft: "Draft",
+  "pending approval": "Pending Approval",
+  approved: "Approved",
+  "pending acclaim": "Pending Acclaim",
+  claimed: "Claimed",
+};
+
+const ALL_STATUSES: StatusKey[] = [
+  "draft",
+  "pending approval",
+  "approved",
+  "pending acclaim",
+  "claimed",
+];
+
 const DAY_ORDER: Record<DayKey, number> = {
   monday: 1,
   tuesday: 2,
@@ -169,7 +193,7 @@ export default function BusinessSidebar({
     }
   }
 
-  // ⭐ SAVE TOGGLE (same as before, with small tweak)
+  // ⭐ SAVE TOGGLE
   const handleSaveToggle = async () => {
     if (!business || saveLoading) return;
 
@@ -237,7 +261,7 @@ export default function BusinessSidebar({
     }
   };
 
-  // ⭐ ON LOAD -> CHECK IF THIS BUSINESS IS ALREADY SAVED
+  // ⭐ ON LOAD -> CHECK SAVED
   useEffect(() => {
     const checkSaved = async () => {
       if (!business || !API_BASE_URL) return;
@@ -452,11 +476,9 @@ export default function BusinessSidebar({
       if (!res.ok) throw new Error("Failed to update");
 
       setStatus(normalized);
+      refetchBusiness?.();
 
-      showSuccess(
-        "Status Updated",
-        "Business status has been updated successfully."
-      );
+      showSuccess("Status Updated", "Business status updated successfully.");
     } catch (err) {
       setStatusError("Failed to update status");
       showError(
@@ -467,6 +489,73 @@ export default function BusinessSidebar({
       setStatusSaving(false);
     }
   };
+
+  // ✅ status helpers
+  const normalizedStatus = useMemo(
+    () => normalizeStatus(status) as StatusKey,
+    [status]
+  );
+
+  const currentStatusLabel = STATUS_LABELS[normalizedStatus] || status;
+
+  const isAdmin = userRole === "Admin";
+  const isBusinessContributorOrUser =
+  userRole === "Business" ||
+  userRole === "Contributor" ||
+  userRole === "User";
+
+  // ✅ Admin dropdown options: all statuses
+  const adminStatusOptions = useMemo(() => {
+    return ALL_STATUSES.map((s) => ({
+      value: s,
+      label: STATUS_LABELS[s],
+    }));
+  }, []);
+
+  // ✅ Non-admin actions (Business/Contributor)
+  type StatusAction = {
+    key: string;
+    label: string;
+    toStatus: StatusKey;
+    roles: Array<"Business" | "Contributor">;
+  };
+
+  const ACTIONS: StatusAction[] = [
+    {
+      key: "submit_approval",
+      label: "Submit for Approval",
+      toStatus: "pending approval",
+      roles: ["Business", "Contributor"],
+    },
+    {
+      key: "submit_acclaim",
+      label: "Submit for Acclaim",
+      toStatus: "pending acclaim",
+      roles: ["Business", "Contributor"],
+    },
+  ];
+
+  const availableActions = useMemo(() => {
+  if (!userRole) return [];
+  if (isAdmin) return []; // admin uses dropdown
+
+  const role = userRole as any;
+
+  if (!["Business", "Contributor", "User"].includes(role)) return [];
+
+  const byStatus: Record<StatusKey, Array<StatusAction["key"]>> = {
+    draft: ["submit_approval"],
+    "pending approval": [],
+    approved: ["submit_acclaim"],
+    "pending acclaim": [],
+    claimed: [],
+  };
+
+  const allowedKeys = byStatus[normalizedStatus] || [];
+
+  return ACTIONS.filter((a) => allowedKeys.includes(a.key));
+}, [userRole, isAdmin, normalizedStatus]);
+
 
   const confirmDeleteAction = async () => {
     if (!business) return;
@@ -515,9 +604,13 @@ export default function BusinessSidebar({
 
       setOpenDeleteModal(false);
 
-      showSuccess("Deleted Successfully!", "The business has been removed.", () => {
-        router.push("/dashboard/businesses");
-      });
+      showSuccess(
+        "Deleted Successfully!",
+        "The business has been removed.",
+        () => {
+          router.push("/dashboard/businesses");
+        }
+      );
     } catch (err: unknown) {
       console.error(err);
       const msg =
@@ -544,7 +637,9 @@ export default function BusinessSidebar({
           lt.businessType?.name ??
           lt.name ??
           lt.business_type_name ??
-          (lt.business_type_id ? businessTypesMap[lt.business_type_id] : undefined)
+          (lt.business_type_id
+            ? businessTypesMap[lt.business_type_id]
+            : undefined)
         );
       })
       .filter((n): n is string => Boolean(n));
@@ -566,42 +661,6 @@ export default function BusinessSidebar({
       .filter((s) => s.active)
       .sort((a, b) => getDayOrder(a.day) - getDayOrder(b.day));
   }, [business?.businessSchedule]);
-
-  const statusOptions = useMemo(() => {
-    if (!userRole) return [];
-
-    const normalizedStatus = normalizeStatus(status);
-
-    const base = [
-      { label: "Draft", value: "draft" },
-      {
-        label: userRole === "Admin" ? "Pending Approved" : "Approval Request",
-        value: "pending approved",
-      },
-      { label: "Approved", value: "approved" },
-      { label: "Claimed", value: "claimed" },
-    ];
-
-    if (userRole === "Admin") {
-      return base;
-    }
-
-    if (userRole === "Business" || userRole === "Contributor") {
-      if (normalizedStatus !== "approved") {
-        return base.filter((opt) =>
-          ["draft", "pending approved"].includes(opt.value)
-        );
-      }
-
-      return [{ label: "Approved", value: "approved" }];
-    }
-
-    return [];
-  }, [userRole, status]);
-
-  const isStatusReadOnly =
-    (userRole === "Business" || userRole === "Contributor") &&
-    normalizeStatus(status) === "approved";
 
   if (loading) {
     return (
@@ -712,6 +771,7 @@ export default function BusinessSidebar({
           )}
         </div>
       </div>
+
       {/* Details */}
       <div>
         <div className="flex justify-between items-center">
@@ -864,31 +924,70 @@ export default function BusinessSidebar({
         <p>{business.description || "No description added yet."}</p>
       </div>
 
-      {/* Status Dropdown – sirf jab role allowed ho */}
-      {statusOptions.length > 0 && (
-        <div className="pb-4">
-          <select
-            className="w-full border border-gray-300 rounded-full px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
-            value={status}
-            disabled={statusSaving || isStatusReadOnly}
-            onChange={(e) => handleStatusChange(e.target.value)}
-          >
-            {statusOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          {statusSaving && (
-            <p className="text-xs text-gray-500 mt-1">Saving...</p>
-          )}
-
-          {statusError && (
-            <p className="text-red-500 text-sm mt-1">{statusError}</p>
-          )}
+      {/* ✅ STATUS SECTION */}
+      <div className="pb-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm text-gray-500">Business Status</p>
+          <span className="text-sm font-semibold text-gray-800">
+            {currentStatusLabel}
+          </span>
         </div>
-      )}
+
+        {/* ✅ ADMIN: Dropdown (all statuses) */}
+        {isAdmin && (
+          <>
+            <select
+              className="w-full border border-gray-300 rounded-full px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
+              value={normalizedStatus}
+              disabled={statusSaving}
+              onChange={(e) => handleStatusChange(e.target.value)}
+            >
+              {adminStatusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            {statusSaving && (
+              <p className="text-xs text-gray-500 mt-1">Saving...</p>
+            )}
+
+            {statusError && (
+              <p className="text-red-500 text-sm mt-1">{statusError}</p>
+            )}
+          </>
+        )}
+
+        {/* ✅ Business/Contributor: Action Buttons */}
+        {!isAdmin && isBusinessContributorOrUser && (
+          <>
+            {availableActions.length > 0 ? (
+              <div className="mt-2 flex flex-col gap-2">
+                {availableActions.map((action) => (
+                  <button
+                    key={action.key}
+                    type="button"
+                    disabled={statusSaving}
+                    onClick={() => handleStatusChange(action.toStatus)}
+                    className="w-full rounded-full px-4 py-2 text-sm font-bold border border-[#0519CE] text-[#0519CE] hover:bg-[#f0f1ff] disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {statusSaving ? "Saving..." : action.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-500 mt-2">
+                No actions available for current status.
+              </p>
+            )}
+
+            {statusError && (
+              <p className="text-red-500 text-sm mt-2">{statusError}</p>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Delete Business button */}
       <div className="mt-3">
