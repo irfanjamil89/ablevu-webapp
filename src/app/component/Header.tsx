@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Login from "./Login";
 import Signup from "./Signup";
@@ -7,7 +7,34 @@ import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
 import Feedback from "./Feedback";
 import AddBusinessModal from "./AddBusinessModal";
+import { User as UserIcon, ShoppingCart, Trash2 } from "lucide-react";
+
+interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  user_role: string;
+  paid_contributor: boolean;
+  email: string;
+  profile_picture_url: string;
+}
 import { useUser } from "@/app/component/UserContext";
+
+type CartItem = {
+  id: string;
+  business_id: string;
+  amount: string | number;
+  status: string;
+};
+
+type BusinessMini = {
+  id: string;
+  name: string;
+  logo_url?: string | null;
+};
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 
 export default function Header() {
   // Use context for user state
@@ -24,21 +51,64 @@ export default function Header() {
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [bizMap, setBizMap] = useState<Record<string, BusinessMini>>({});
+  const cartRef = useRef<HTMLLIElement | null>(null);
+  const notifRef = useRef<HTMLLIElement | null>(null);
+  const userRef = useRef<HTMLDivElement | null>(null);
+
+
+  const getUserFromSession = (): User | null => {
+    const userData = sessionStorage.getItem("user");
+    return userData ? JSON.parse(userData) : null;
+  };
+
+  const handleBusinessCreated = () => {
+    setOpenAddBusinessModal(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+
+      // cart
+      if (cartOpen && cartRef.current && !cartRef.current.contains(target)) {
+        setCartOpen(false);
+      }
+
+      // notifications (optional)
+      if (
+        notificationsOpen &&
+        notifRef.current &&
+        !notifRef.current.contains(target)
+      ) {
+        setNotificationsOpen(false);
+      }
+
+      // user dropdown (optional)
+      if (
+        dropdownOpen &&
+        userRef.current &&
+        !userRef.current.contains(target)
+      ) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [cartOpen, notificationsOpen, dropdownOpen]);
   const [Loading, setLoading] = useState(false);
   const [imageKey, setImageKey] = useState(Date.now());
 
   // Update imageKey when user profile picture changes
   useEffect(() => {
-    if (user?.profile_picture_url) {
-      setImageKey(Date.now());
-    }
-  }, [user?.profile_picture_url]);
+  if (user?.profile_picture_url) setImageKey(Date.now());
+}, [user?.profile_picture_url]);
+
   
-  const handleBusinessCreated = () => {
-    setOpenAddBusinessModal(false);
-
-  };
-
   // Run only after client-side hydration
   useEffect(() => {
     setIsMounted(true);
@@ -129,13 +199,14 @@ export default function Header() {
 
   const handleNotificationClick = (item: any) => {
     if (!item.meta) return;
-    const meta = typeof item.meta === 'string' ? JSON.parse(item.meta) : item.meta;
+    const meta =
+      typeof item.meta === "string" ? JSON.parse(item.meta) : item.meta;
 
     switch (meta.type) {
-      case 'business-created':
+      case "business-created":
         window.location.href = `/business-profile/${meta.id}`;
         break;
-      case 'business-status':
+      case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
       default:
@@ -156,6 +227,90 @@ export default function Header() {
     return () => clearInterval(interval);
   }, [isLoggedIn]);
 
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  const loggedIn = !!token && token !== "null" && token !== "undefined";
+
+  // ✅ fetch business mini list
+  const fetchBusinessesMini = async () => {
+    try {
+      const res = await fetch(`${API_BASE}business/list1`);
+      if (!res.ok) return;
+
+      const json = await res.json();
+      const arr = Array.isArray(json) ? json : json?.data ?? [];
+
+      const map: Record<string, BusinessMini> = {};
+      arr.forEach((b: any) => {
+        map[b.id] = {
+          id: b.id,
+          name: b.name,
+          logo_url: b.logo_url,
+        };
+      });
+
+      setBizMap(map);
+    } catch (e) {
+      console.error("business fetch error", e);
+    }
+  };
+
+  // ✅ fetch cart
+  const fetchCart = async () => {
+    if (!loggedIn) return;
+
+    try {
+      setCartLoading(true);
+
+      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Cart load failed");
+
+      const data = await res.json();
+      setCartItems(Array.isArray(data) ? data : data?.data ?? []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  // ✅ remove item
+  const removeFromCart = async (id: string) => {
+    try {
+      await fetch(`${API_BASE}business-claim-cart/delete/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setCartItems((prev) => prev.filter((x) => x.id !== id));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (loggedIn) {
+      fetchBusinessesMini();
+    }
+  }, [loggedIn]);
+
+  const cartTotal = cartItems.reduce((sum, item) => {
+    const v =
+      typeof item.amount === "string" ? parseFloat(item.amount) : item.amount;
+    return sum + (Number.isFinite(v) ? v : 0);
+  }, 0);
+  const formatUSD = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
   // Get profile image URL with cache busting
   const getProfileImageUrl = () => {
     if (!user?.profile_picture_url) {
@@ -192,13 +347,26 @@ export default function Header() {
         <div className="m-auto bg-white px-1 w-5/6 custom-container lg:mx-auto rounded-full lg:px-0 lg:py-4 md:px-12 md:bg-transparent">
           <div className="flex w-full items-center justify-between rounded-full bg-white px-5 md:px-4 py-2">
             <div className="z-20">
-              <Link href="/" className="flex items-center gap-2" aria-label="Home">
-                <img src="/assets/images/logo.png" alt="logo-Ablevu" className="w-32" />
+              <Link
+                href="/"
+                className="flex items-center gap-2"
+                aria-label="Home"
+              >
+                <img
+                  src="/assets/images/logo.png"
+                  alt="logo-Ablevu"
+                  className="w-32"
+                />
               </Link>
             </div>
 
             <div className="flex items-center justify-center">
-              <input type="checkbox" name="hamburger" id="hamburger" className="peer hidden" />
+              <input
+                type="checkbox"
+                name="hamburger"
+                id="hamburger"
+                className="peer hidden"
+              />
               <label
                 htmlFor="hamburger"
                 className="peer-checked:hamburger z-20 block cursor-pointer p-2 lg:hidden"
@@ -211,7 +379,10 @@ export default function Header() {
                 <div className="flex h-full flex-col justify-center lg:flex-row lg:items-center w-full bg-white lg:bg-transparent">
                   <ul className="space-y-8 px-6 pt-32 text-gray-700 md:pe-6 lg:flex lg:space-x-4 lg:space-y-0 lg:pt-0 font-['Roboto'] font-bold">
                     <li>
-                      <Link href="/" className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2">
+                      <Link
+                        href="/"
+                        className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2"
+                      >
                         <span className="text-black-800 relative">Home</span>
                       </Link>
                     </li>
@@ -220,7 +391,9 @@ export default function Header() {
                         href="/business"
                         className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                       >
-                        <span className="group-hover:text-black-800 relative">Businesses</span>
+                        <span className="group-hover:text-black-800 relative">
+                          Businesses
+                        </span>
                       </Link>
                     </li>
                     <li>
@@ -228,7 +401,9 @@ export default function Header() {
                         href="/contributor"
                         className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                       >
-                        <span className="group-hover:text-black-800 relative">Contributor</span>
+                        <span className="group-hover:text-black-800 relative">
+                          Contributor
+                        </span>
                       </Link>
                     </li>
                     <li>
@@ -236,7 +411,9 @@ export default function Header() {
                         href="/access-friendly-city"
                         className="before:bg-black-100 group relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                       >
-                        <span className="group-hover:text-black-800 relative">Access Friendly Cities</span>
+                        <span className="group-hover:text-black-800 relative">
+                          Access Friendly Cities
+                        </span>
                       </Link>
                     </li>
                     {isLoggedIn && (
@@ -245,20 +422,27 @@ export default function Header() {
                           onClick={() => setOpenFeedbackModal(true)}
                           className="before:bg-black-100 mr-4 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                         >
-                          <span className="group-hover:text-black-800 relative">Share Feedback</span>
+                          <span className="group-hover:text-black-800 relative">
+                            Share Feedback
+                          </span>
                         </li>
 
                         <li
                           onClick={() => setOpenAddBusinessModal(true)}
                           className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
                         >
-                          <span className="group-hover:text-black-800 relative">Add Business</span>
+                          <span className="group-hover:text-black-800 relative">
+                            Add Business
+                          </span>
                         </li>
-
-                        <li className="relative ml-3 notifications-dropdown">
+                        {/* Notifications Dropdown */}
+                        <li className="relative ml-3" ref={notifRef}>
                           <button
                             onClick={() => {
-                              setNotificationsOpen(!notificationsOpen);
+                              setNotificationsOpen((prev) => !prev);
+                              setCartOpen(false);
+                              setDropdownOpen(false);
+
                               if (!notificationsOpen) fetchNotifications();
                             }}
                             className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
@@ -283,6 +467,8 @@ export default function Header() {
 
                           {notificationsOpen && (
                             <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
+                              {" "}
+                              {/* Increased width */}
                               <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                                 {notifications.length === 0 && (
                                   <li className="px-4 py-6 text-gray-500 text-sm text-center">
@@ -304,10 +490,14 @@ export default function Header() {
                                   <li
                                     key={item.id}
                                     className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                    onClick={() => handleNotificationClick(item)}
+                                    onClick={() =>
+                                      handleNotificationClick(item)
+                                    }
                                   >
                                     <div className="w-full pr-2">
-                                      <p className="text-sm font-medium">{item.content}</p>
+                                      <p className="text-sm font-medium">
+                                        {item.content}
+                                      </p>
                                     </div>
                                     <button
                                       onClick={(e) => {
@@ -325,6 +515,138 @@ export default function Header() {
                                   </li>
                                 ))}
                               </ul>
+                            </div>
+                          )}
+                        </li>
+
+                        {/* Cart Dropdown */}
+                        <li className="relative ml-3" ref={cartRef}>
+                          <button
+                            onClick={async () => {
+                              setCartOpen(!cartOpen);
+                              setNotificationsOpen(false);
+                              setDropdownOpen(false);
+
+                              if (!cartOpen) {
+                                await fetchCart(); // ✅ fresh cart
+                              }
+                            }}
+                            className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+                          >
+                            <ShoppingCart className="h-6 w-6" />
+
+                            {cartItems.length > 0 && (
+                              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-2 py-[2px] rounded-full shadow">
+                                {cartItems.length}
+                              </span>
+                            )}
+                          </button>
+
+                          {cartOpen && (
+                            <div className="absolute right-0 mt-3 w-[26rem] bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                              {/* Header */}
+                              <div className="px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                                <div className="flex items-start justify-between">
+                                  <div>
+                                    <p className="font-bold text-base text-gray-900">
+                                      Cart
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {cartItems.length} item
+                                      {cartItems.length > 1 ? "s" : ""} in your
+                                      cart
+                                    </p>
+                                  </div>
+
+                                  <div className="text-right">
+                                    <p className="text-[11px] text-gray-500">
+                                      Total
+                                    </p>
+                                    <p className="font-extrabold text-gray-900">
+                                      {formatUSD(cartTotal)}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Body */}
+                              {cartLoading ? (
+                                <div className="px-6 py-10 text-center text-gray-500">
+                                  Loading cart...
+                                </div>
+                              ) : cartItems.length === 0 ? (
+                                <div className="px-6 py-10 text-center">
+                                  <p className="text-sm font-semibold">
+                                    Your cart is empty
+                                  </p>
+                                </div>
+                              ) : (
+                                <ul className="max-h-[22rem] overflow-y-auto">
+                                  {cartItems.map((item) => {
+                                    const biz = bizMap[item.business_id];
+                                    const amount =
+                                      typeof item.amount === "string"
+                                        ? parseFloat(item.amount)
+                                        : item.amount;
+
+                                    return (
+                                      <li
+                                        key={item.id}
+                                        className="px-5 py-4 border-b"
+                                      >
+                                        <div className="flex gap-4">
+                                          <img
+                                            src={
+                                              biz?.logo_url ||
+                                              "/assets/images/b-img.png"
+                                            }
+                                            className="h-14 w-14 rounded-xl object-cover"
+                                          />
+
+                                          <div className="flex-1">
+                                            <p className="font-bold text-sm">
+                                              {biz?.name || "Business"}
+                                            </p>
+
+                                            <p className="text-sm font-semibold mt-1 capitalize">
+                                              Status: {item.status}
+                                            </p>
+
+                                            <p className="font-extrabold mt-2">
+                                              {formatUSD(Number(amount || 0))}
+                                            </p>
+                                          </div>
+
+                                          <button
+                                            onClick={() =>
+                                              removeFromCart(item.id)
+                                            }
+                                            className="p-2 hover:bg-red-50 text-red-600 rounded-xl"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                        </div>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              )}
+
+                              {/* Footer */}
+                              {cartItems.length > 0 && (
+                                <div className="p-4 border-t bg-white">
+                                  <div className="flex gap-3">
+                                    <button
+                                      onClick={() =>
+                                        (window.location.href = "/checkout")
+                                      }
+                                      className="w-full rounded-xl bg-[#0519ce] text-white py-2.5 text-sm font-bold hover:opacity-90 shadow"
+                                    >
+                                      Checkout
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </li>
@@ -380,8 +702,15 @@ export default function Header() {
                         </div>
                       </>
                     ) : (
-                      <div className="relative user-dropdown">
-                        <div className="flex items-center cursor-pointer" onClick={() => setDropdownOpen(!dropdownOpen)}>
+                      <div className="relative user-dropdown" ref={userRef}>
+                        <div
+                          className="flex items-center cursor-pointer"
+                          onClick={() => {
+                            setDropdownOpen((prev) => !prev);
+                            setCartOpen(false);
+                            setNotificationsOpen(false);
+                          }}
+                        >
                           <img
                             key={imageKey}
                             src={getProfileImageUrl()}
@@ -389,13 +718,10 @@ export default function Header() {
                             className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
-                              if (target.src !== "/assets/images/profile.png") {
-                                console.log("Header: Image load error, using fallback");
-                                target.src = "/assets/images/profile.png";
-                              }
+                              console.log("Header: Image load error, using fallback");
+                              target.src = "/assets/images/profile.png";
                             }}
                           />
-
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
@@ -427,7 +753,8 @@ export default function Header() {
                                     className="w-5 h-5 mr-2"
                                   >
                                     <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-                                  </svg> Dashboard
+                                  </svg>{" "}
+                                  Dashboard
                                 </button>
                               </li>
                               <hr className="my-2 border-gray-200" />
@@ -443,7 +770,8 @@ export default function Header() {
                                     className="w-5 h-5 mr-2"
                                   >
                                     <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
-                                  </svg> Logout
+                                  </svg>{" "}
+                                  Logout
                                 </button>
                               </li>
                             </ul>
@@ -492,8 +820,10 @@ export default function Header() {
         <Feedback setOpenFeedbackModal={setOpenFeedbackModal} />
       )}
       {OpenAddBusinessModal && (
-        <AddBusinessModal setOpenAddBusinessModal={setOpenAddBusinessModal}
-        onBusinessCreated={handleBusinessCreated} />
+        <AddBusinessModal
+          setOpenAddBusinessModal={setOpenAddBusinessModal}
+          onBusinessCreated={handleBusinessCreated}
+        />
       )}
     </div>
   );

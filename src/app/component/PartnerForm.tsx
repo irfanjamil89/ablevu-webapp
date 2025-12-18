@@ -81,7 +81,7 @@ const PartnerForm: React.FC<PartnerFormProps> = ({ setOpenFormModal }) => {
       };
 
       const imageResponse = await axios.post(
-        "https://staging-api.qtpack.co.uk/images/upload-base64",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`,
         imagePayload,
         {
           headers: {
@@ -112,7 +112,7 @@ const PartnerForm: React.FC<PartnerFormProps> = ({ setOpenFormModal }) => {
       };
 
       const partnerResponse = await axios.post(
-        "https://staging-api.qtpack.co.uk/partner/create/",
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}partner/create/`,
         partnerPayload,
         {
           headers: {

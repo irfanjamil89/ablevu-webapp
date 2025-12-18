@@ -63,7 +63,7 @@ const ImageUploadModal: React.FC<ImageUploadProps> = ({
     setSuccess("");
 
     try {
-      const response = await fetch('https://staging-api.qtpack.co.uk/images/upload-base64', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",

@@ -72,7 +72,7 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
   // Step 1: Create business image record (without image_url initially)
   const createBusinessImageRecord = async (): Promise<string> => {
     try {
-      const response = await fetch('https://staging-api.qtpack.co.uk/business-images/create', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business-images/create`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -111,8 +111,8 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
   const uploadImageBase64 = async (businessImageId: string): Promise<string> => {
     try {
       console.log('Uploading image with businessImageId:', businessImageId); // Debug log
-      
-      const response = await fetch('https://staging-api.qtpack.co.uk/images/upload-base64', {
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",

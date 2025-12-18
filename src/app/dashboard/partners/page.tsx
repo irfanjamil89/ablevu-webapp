@@ -31,7 +31,7 @@ export default function Page() {
     async function loadPartners() {
         try {
             setLoading(true);
-            const res = await fetch("https://staging-api.qtpack.co.uk/partner/list?page=1&limit=1000");
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}partner/list?page=1&limit=1000`);
             const json = await res.json();
             setPartners(json.items || []);
         } catch (error) {
@@ -61,7 +61,7 @@ export default function Page() {
             }
 
             await axios.delete(
-                `https://staging-api.qtpack.co.uk/partner/delete/${partnerToDelete}`,
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}partner/delete/${partnerToDelete}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
