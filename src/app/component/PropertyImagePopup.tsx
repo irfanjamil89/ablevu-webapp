@@ -18,7 +18,8 @@ export type BusinessProfile = {
 interface PropertyImagePopupProps {
   businessId: string;
   setOpenPropertyImagePopup: React.Dispatch<React.SetStateAction<boolean>>;
-  onUpdated?: (b: BusinessProfile) => void;
+   onUpdated?: () => void;
+
 }
 
 const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
@@ -177,7 +178,9 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
 
       // Show success message
       setSuccessMessage('Property image created successfully!');
-      
+
+       onUpdated?.();
+
       // Close the popup after a short delay to show success message
       setTimeout(() => {
         setOpenPropertyImagePopup(false);
@@ -257,16 +260,16 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
           <div>
             <input
               type="text"
-              placeholder="alt text of the image"
+              placeholder="Write alt text of the image"
               value={altText}
               onChange={(e) => setAltText(e.target.value)}
-              className="w-full border border-gray-300 text-center rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0519CE] outline-none"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#0519CE] outline-none"
             />
           </div>
           
-          <p className="text-gray-700 text-sm mb-4">
+          {/* <p className="text-gray-700 text-sm mb-4">
             This is our AI readers Alt text generated. Please feel free to update or improve as you see fit
-          </p>
+          </p> */}
 
           <div>
             <label className="block text-md font-medium text-gray-700 mb-1">
