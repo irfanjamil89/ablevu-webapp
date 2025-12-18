@@ -59,8 +59,6 @@ export default function Header() {
   const notifRef = useRef<HTMLLIElement | null>(null);
   const userRef = useRef<HTMLDivElement | null>(null);
 
-  const [Loading, setLoading] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
 
   const getUserFromSession = (): User | null => {
     const userData = sessionStorage.getItem("user");
@@ -107,17 +105,10 @@ export default function Header() {
 
   // Update imageKey when user profile picture changes
   useEffect(() => {
-    if (user?.profile_picture_url) {
-      setImageKey(Date.now());
-    }
-  }, []);
-  }, [user?.profile_picture_url]);
+  if (user?.profile_picture_url) setImageKey(Date.now());
+}, [user?.profile_picture_url]);
+
   
-  const handleBusinessCreated = () => {
-    setOpenAddBusinessModal(false);
-
-  };
-
   // Run only after client-side hydration
   useEffect(() => {
     setIsMounted(true);
@@ -721,28 +712,16 @@ export default function Header() {
                           }}
                         >
                           <img
-                            src={
-                              user?.profile_picture_url ||
-                              "/assets/images/profile.png"
-                            }
-                            alt="User"
-                            className="cursor-pointer h-10 w-10 mr-1"
-                            onError={(e) => {
-                              (e.currentTarget as HTMLImageElement).src =
-                                "/assets/images/profile.png";
                             key={imageKey}
                             src={getProfileImageUrl()}
                             alt={user?.first_name || "User"}
                             className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
-                              if (target.src !== "/assets/images/profile.png") {
-                                console.log("Header: Image load error, using fallback");
-                                target.src = "/assets/images/profile.png";
-                              }
+                              console.log("Header: Image load error, using fallback");
+                              target.src = "/assets/images/profile.png";
                             }}
                           />
-
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
@@ -761,9 +740,6 @@ export default function Header() {
                             <ul className="text-sm text-gray-700">
                               <li>
                                 <button
-                                  onClick={() =>
-                                    (window.location.href = "/dashboard")
-                                  }
                                   onClick={() => {
                                     setDropdownOpen(false);
                                     window.location.href = "/dashboard";

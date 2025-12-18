@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "../component/Header2";
 import { ShoppingCart, Trash2 } from "lucide-react";
+import DashboardContent from '../component/DashboardContent';
+import { useUser } from "@/app/component/UserContext";
 
 type CartItem = {
   id: string;
@@ -31,9 +33,6 @@ interface User {
   email: string;
   profile_picture_url?: string;
 }
-import Header from '../component/Header2';
-import DashboardContent from '../component/DashboardContent';
-import { useUser } from "@/app/component/UserContext";
 
 // Helper function to decode JWT and check expiration
 const isTokenExpired = (token: string): boolean => {
@@ -247,6 +246,7 @@ export default function DashboardLayout({
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
+      });
     // If user is already loaded from context, skip API call
     if (user) {
       setLoading(false);
@@ -254,7 +254,7 @@ export default function DashboardLayout({
     }
 
     // Fetch user data using the token for authentication
-    fetch('https://staging-api.qtpack.co.uk/users/me', {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

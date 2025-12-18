@@ -333,7 +333,7 @@ export default function Page() {
                                                     <td className="px-4 py-3 flex items-center gap-2 font-semibold min-w-[200px]">
                                                         {coupon.name}
                                                     </td>
-                                                    <td className="px-2 py-3 font-mono text-sm bg-gray-50 rounded px-3">
+                                                    <td className="px-2 py-3 font-mono text-sm bg-gray-50 rounded">
                                                         {coupon.code}
                                                     </td>
                                                     <td className="px-4 py-3 w-[150px] text-gray-600">
