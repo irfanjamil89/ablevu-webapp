@@ -189,7 +189,7 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
             fileName: createdCityId,
           };
 
-          const imageRes = await fetch("https://staging-api.qtpack.co.uk/images/upload-base64", {
+          const imageRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,

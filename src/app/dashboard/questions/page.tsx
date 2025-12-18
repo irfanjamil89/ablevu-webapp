@@ -89,7 +89,7 @@ export default function Page() {
 
       const userId = q.created_by; // or current logged-in user ID
       const res = await fetch(
-        `https://staging-api.qtpack.co.uk/business-questions/update/${q.id}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business-questions/update/${q.id}`,
         {
           method: "PATCH",
           headers: {

@@ -207,7 +207,7 @@ export default function AddBusinessModal({
           };
 
           const imageRes = await fetch(
-            "https://staging-api.qtpack.co.uk/images/upload-base64",
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`,
             {
               method: "POST",
               headers: {

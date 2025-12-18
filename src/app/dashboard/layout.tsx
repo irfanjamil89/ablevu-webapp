@@ -233,7 +233,7 @@ export default function DashboardLayout({
       return;
     }
 
-    fetch("https://staging-api.qtpack.co.uk/users/1", {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
     })

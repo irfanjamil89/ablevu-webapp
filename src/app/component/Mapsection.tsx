@@ -354,7 +354,7 @@ const getOrCreateBatchId = () => {
     try {
       setLoading(true);
 
-      const response = await fetch("https://staging-api.qtpack.co.uk/business/list1", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list1`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });

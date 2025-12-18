@@ -61,7 +61,7 @@ export default function Page() {
         try {
             setLoading(true);
             setError(null);
-            const response = await fetch('https://staging-api.qtpack.co.uk/coupons/list');
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}coupons/list`);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -106,7 +106,7 @@ export default function Page() {
                 active: true
             };
 
-            const response = await fetch('https://staging-api.qtpack.co.uk/coupons/create', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}coupons/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -139,7 +139,7 @@ export default function Page() {
 
         console.log(couponId);
         try {
-            const response = await fetch(`https://staging-api.qtpack.co.uk/coupons/delete/${couponId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}coupons/delete/${couponId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
