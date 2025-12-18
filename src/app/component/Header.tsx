@@ -258,27 +258,34 @@ export default function Header() {
 
   // ✅ fetch cart
   const fetchCart = async () => {
-    if (!loggedIn) return;
+  if (!loggedIn) return;
 
-    try {
-      setCartLoading(true);
+  try {
+    setCartLoading(true);
 
-      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (!res.ok) throw new Error("Cart load failed");
+    if (!res.ok) throw new Error("Cart load failed");
 
-      const data = await res.json();
-      setCartItems(Array.isArray(data) ? data : data?.data ?? []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setCartLoading(false);
-    }
-  };
+    const data = await res.json();
+
+    const items = Array.isArray(data) ? data : data?.data ?? [];
+    const pendingOnly = items.filter(
+      (x: any) => (x.status || "").toLowerCase() === "pending"
+    );
+
+    setCartItems(pendingOnly);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setCartLoading(false);
+  }
+};
+
 
   // ✅ remove item
   const removeFromCart = async (id: string) => {
