@@ -173,7 +173,7 @@ export default function CheckoutPage() {
     const batch_id = cart[0]?.batch_id;
     if (!batch_id) throw new Error("batch_id not found in cart.");
 
-    const res = await fetch(`${API_BASE}stripe/checkout`, {
+    const res = await fetch("http://localhost:3006/stripe/checkout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
