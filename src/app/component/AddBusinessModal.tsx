@@ -127,7 +127,7 @@ const startSubscriptionCheckout = async (
   }
 
   const res = await fetch(
-    "http://localhost:3006/subscriptions/checkout",
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
     {
       method: "POST",
       headers: {
