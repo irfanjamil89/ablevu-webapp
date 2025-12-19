@@ -853,6 +853,37 @@ export default function DashboardLayout({
                     Coupon Codes
 
                   </Link>
+                    <Link href="/dashboard/reviews"
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
+                      ? "bg-blue-700 text-white font-semibold"
+                      : "text-gray-700 hover:bg-gray-100"
+                      }`}>
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        d="M128 224H64a32 32 0 00-32 32v192a32 32 0 0032 32h64a32 32 0 0032-32V256a32 32 0 00-32-32z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M384 224h-92l12-70c6-36-12-70-41-86a14 14 0 00-23 9v94c0 28-22 53-48 53h-20v224h226c27 0 49-20 52-47l17-160c3-29-17-53-43-53z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+
+                    Reviews
+                  </Link>
 
 
                   {/* <!-- Feedback --> */}
