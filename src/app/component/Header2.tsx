@@ -170,42 +170,47 @@ export default function Header2() {
   // ✅ Fetch Cart (my-cart)
   // -----------------------------
   const fetchCart = useCallback(async () => {
-    try {
-      if (!token || token === "null" || token === "undefined") {
-        setCartItems([]);
-        return;
-      }
-
-      setCartLoading(true);
-
-      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        setCartItems([]);
-        return;
-      }
-
-      const json = await res.json();
-      const rows: CartItem[] = Array.isArray(json)
-        ? json
-        : Array.isArray(json?.data)
-        ? json.data
-        : [];
-
-      setCartItems(rows);
-    } catch (e) {
-      console.error("fetchCart error:", e);
+  try {
+    if (!token || token === "null" || token === "undefined") {
       setCartItems([]);
-    } finally {
-      setCartLoading(false);
+      return;
     }
-  }, [token]);
+
+    setCartLoading(true);
+
+    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      setCartItems([]);
+      return;
+    }
+
+    const json = await res.json();
+    const rows: CartItem[] = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.data)
+      ? json.data
+      : [];
+
+    // ✅ only pending
+    const pendingOnly = rows.filter(
+      (x: any) => (x.status || "").toLowerCase() === "pending"
+    );
+
+    setCartItems(pendingOnly);
+  } catch (e) {
+    console.error("fetchCart error:", e);
+    setCartItems([]);
+  } finally {
+    setCartLoading(false);
+  }
+}, [token]);
 
   // ✅ When cart opens => load cart + business names
   useEffect(() => {
