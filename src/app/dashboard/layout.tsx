@@ -365,12 +365,17 @@ export default function DashboardLayout({
 
     switch (meta.type) {
       case "business-created":
+        window.location.href = `/business-profile/${meta.id}`;
+        break;
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
       case 'new-question':
       window.location.href = `/dashboard/questions`;
        break;
+       case 'new-review':
+         window.location.href = `/dashboard/reviews`;
+         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
