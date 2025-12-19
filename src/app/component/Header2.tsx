@@ -310,6 +310,12 @@ export default function Header2() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
+        case 'new-question':
+      window.location.href = `/dashboard/questions`;
+       break;
+       case 'new-review':
+         window.location.href = `/dashboard/reviews`;
+         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -463,7 +469,7 @@ export default function Header2() {
 
                       {notificationsOpen && (
                         <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                          <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                          <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
                             {notifications.length === 0 && (
                               <li className="px-4 py-6 text-gray-500 text-sm text-center">
                                 No new notifications
@@ -489,7 +495,7 @@ export default function Header2() {
                                   className="hover:opacity-80"
                                 >
                                   <img
-                                    src="https://www.svgrepo.com/show/490436/trash-can.svg"
+                                    src="https://www.svgrepo.com/show/497079/eye-slash.svg"
                                     alt="Mark as read"
                                     className="w-5 h-5"
                                   />
@@ -500,8 +506,6 @@ export default function Header2() {
                         </div>
                       )}
                     </li>
-
-                    {/* Cart Dropdown (✅ integrated) */}
                     <li className="relative ml-3" ref={cartRef}>
                       <button
                         onClick={async () => {

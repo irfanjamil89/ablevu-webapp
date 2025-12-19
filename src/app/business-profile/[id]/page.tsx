@@ -18,7 +18,6 @@ import WriteReviewsPopup from "@/app/component/WriteReviewsPopup";
 import PartnerCertificationPopup from "@/app/component/PartnerCertificationPopup";
 import EditPropertyImagePopup from "@/app/component/EditPropertyImagePopup";
 import AudioTourPopup from "@/app/component/AudioTourPopup";
-import CustomMediaPopup from "@/app/component/CustomMediaPopup";
 import CustomMediaModal from "@/app/component/CustomMediaPopup";
 
 type BusinessProfile = any;
@@ -103,6 +102,8 @@ export default function Page({
 
 
     const [OpenCustonSectionPopup, setOpenCustonSectionPopup] = useState(false);
+     const [OpenCustomMediaPopup, setOpenCustomMediaPopup] = useState(false);
+     const [activeCustomSectionId, setActiveCustomSectionId] = useState<string | null>(null);
 
     // ⭐ Accessibility Media: popup + selected media (for edit)
     const [OpenAccessibilityMediaPopup, setOpenAccessibilityMediaPopupState] =
@@ -568,6 +569,65 @@ export default function Page({
         );
     };
 
+    const handleDeleteCustomSectionMedia = (media: any) => {
+        if (!API_BASE_URL || !business) return;
+        const token = getToken();
+        if (!token) {
+            showError("Unauthorized", "No access token found.");
+            return;
+        }
+        askConfirm(
+            "Delete Media?",
+            "Are you sure you want to delete this custom section media item?",
+            async () => {
+                try {
+                    const res = await fetch(
+                        `${API_BASE_URL}/business-custom-sections-media/delete/${media.id}`,
+                        {
+                            method: "DELETE",
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                        }
+                    );
+                    if (!res.ok) {
+                        let msg = "Failed to delete media";
+                        try {
+                            const body = await res.json();
+                             if (body?.message) {
+                                msg = Array.isArray(body.message)
+                                    ? body.message.join(", ")
+                                    : body.message;
+                            }
+                        } catch { }
+                        throw new Error(msg);
+                    }
+                    await fetchAllData();
+                    showSuccess("Deleted", "Custom section media has been deleted.");
+                } catch (err: any) {
+                    console.error(err);
+                    showError("Delete Failed", err.message || "Failed to delete media.");
+                } finally {
+                    handleCloseConfirm();
+                }
+            }
+        );
+    };
+
+    const handleEditCustomSectionMedia = (media: any) => {
+        setSelectedMedia(media);
+        setOpenCustomMediaPopup(true);
+    }
+    const handleAddCustomSectionMedia = (sectionId: string) => {
+  setSelectedMedia(null); 
+  setActiveCustomSectionId(sectionId);
+  setOpenCustomMediaPopup(true);
+};
+
+
+    
+
+
 
     // ---- Business Media delete handler ----
     const handleDeleteBusinessMedia = (media: any) => {
@@ -798,6 +858,22 @@ export default function Page({
         }
     };
 
+   const handleSetOpenCustomMediaPopup = (value: boolean | ((prev: boolean) => boolean)) => {
+  if (typeof value === "function") {
+    setOpenCustomMediaPopup((prev) => {
+      const next = value(prev);
+      if (next) setSelectedMedia(null);
+      return next;
+    });
+  } else {
+    if (value) setSelectedMedia(null);
+    setOpenCustomMediaPopup(value);
+  }
+};
+
+
+            
+
     // ---- Accessibility Feature: edit handler (group pencil) ----
     const handleEditAccessibilityFeatureGroup = (
         group: AccessibilityFeatureGroup
@@ -886,6 +962,9 @@ export default function Page({
                     setOpenVirtualTour={handleSetOpenVirtualTour}
                     setOpenAudioTourPopup={setOpenAudioTourPopup}
                     setCustomMediaPopup={setCustomMediaPopup}
+                    onDeleteCustomSectionMedia={handleDeleteCustomSectionMedia}
+                    onEditCustomSectionMedia={handleEditCustomSectionMedia}
+                    onAddCustomSectionMedia={handleAddCustomSectionMedia}
                     setOpenAccessibilityFeaturePopup={
                         handleSetOpenAccessibilityFeaturePopup
                     }
@@ -1069,20 +1148,21 @@ export default function Page({
                 <CustomSectionPopup
                     businessId={business.id}
                     setOpenCustonSectionPopup={setOpenCustonSectionPopup}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
+                    onUpdated={async () => {
                         await fetchAllData();
                         showSuccess(
-                            "Custom Section Updated",
-                            "Custom sections updated successfully."
+                            "Custom Section Created",
+                            "Custom section Created successfully."
                         );
                     }}
                 />
             )}
-            {CustomMediaPopup && business && (
+            {OpenCustomMediaPopup && business && (
                 <CustomMediaModal
                     businessId={business.id}
-                    setCustomMediaPopup={setCustomMediaPopup}
+                    setCustomMediaPopup={handleSetOpenCustomMediaPopup}
+                     activeCustomSectionId={activeCustomSectionId}
+                     media= {selectedMedia}
                     onUpdated={async () => {
                         await fetchAllData();
                         showSuccess(
