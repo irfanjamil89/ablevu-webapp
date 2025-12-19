@@ -47,7 +47,7 @@ export default function Page() {
         setUserRole(userData.user_role);
 
         const res = await fetch(
-          "{process.env.NEXT_PUBLIC_API_BASE_URL}business-questions/list",
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}business-questions/list`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
