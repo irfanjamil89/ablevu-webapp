@@ -51,7 +51,7 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
       try {
         setIsFetching(true);
         const response = await fetch(
-          `https://staging-api.qtpack.co.uk/business-images/business-images-profile/${businessImageId}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}business-images/business-images-profile/${businessImageId}`,
           {
             method: 'GET',
             headers: {
@@ -120,7 +120,7 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
     try {
       console.log('Uploading new image with businessImageId:', businessImageId);
       
-      const response = await fetch('https://staging-api.qtpack.co.uk/images/upload-base64', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
         method: 'POST',
         headers: {
           "Content-Type": "application/json",
@@ -167,7 +167,7 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
       }
 
       const response = await fetch(
-        `https://staging-api.qtpack.co.uk/business-images/update/${businessImageId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business-images/update/${businessImageId}`,
         {
           method: 'PATCH',
           headers: {

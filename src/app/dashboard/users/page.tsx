@@ -63,7 +63,7 @@ export default function Page() {
     const fetchUsers = async (): Promise<void> => {
         try {
             setLoading(true);
-            const response = await fetch('https://staging-api.qtpack.co.uk/users/');
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/`);
             if (!response.ok) throw new Error('Failed to fetch users');
             const data: User[] = await response.json();
             setUsers(data);

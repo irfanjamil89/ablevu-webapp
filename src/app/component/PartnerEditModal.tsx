@@ -90,7 +90,7 @@ const PartnerEditModal: React.FC<PartnerEditModalProps> = ({
       };
 
       const response = await axios.patch(
-        `https://staging-api.qtpack.co.uk/partner/update/${partnerId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}partner/update/${partnerId}`,
         payload,
         {
           headers: {
@@ -110,7 +110,7 @@ const PartnerEditModal: React.FC<PartnerEditModalProps> = ({
             };
 
             await axios.post(
-              "https://staging-api.qtpack.co.uk/images/upload-base64",
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`,
               imagePayload,
               {
                 headers: {

@@ -12,7 +12,7 @@ export default function Page() {
     setMessage('');
 
     try {
-      const response = await fetch('https://staging-api.qtpack.co.uk/users/change-role', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/change-role`, {
         method: 'PATCH',
         headers: {
           "Content-Type": "application/json",

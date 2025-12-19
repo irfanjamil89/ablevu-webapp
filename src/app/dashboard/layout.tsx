@@ -1,26 +1,57 @@
 
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import Header from '../component/Header2';
+import Header from "../component/Header2";
+import { ShoppingCart, Trash2 } from "lucide-react";
 import DashboardContent from '../component/DashboardContent';
 import { useUser } from "@/app/component/UserContext";
+
+type CartItem = {
+  id: string;
+  business_id: string;
+  amount: string | number;
+  status: string;
+  created_at: string;
+};
+
+type BusinessMini = {
+  id: string;
+  name: string;
+  logo_url?: string | null;
+};
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+interface User {
+  id: string;
+  first_name: string;
+  last_name: string;
+  user_role: string;
+  paid_contributor: boolean;
+  email: string;
+  profile_picture_url?: string;
+}
 
 // Helper function to decode JWT and check expiration
 const isTokenExpired = (token: string): boolean => {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const expiry = payload.exp * 1000; // Convert to milliseconds
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const expiry = payload.exp * 1000;
     return Date.now() >= expiry;
   } catch (error) {
-    console.error('Error decoding token:', error);
-    return true; // Treat invalid tokens as expired
+    console.error("Error decoding token:", error);
+    return true;
   }
 };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, setUser } = useUser();
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
@@ -28,9 +59,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const pathname = usePathname();
   const router = useRouter();
+
   const [notifications, setNotifications] = useState<any[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  // ✅ Cart states (REAL)
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartLoading, setCartLoading] = useState(false);
+
+  const [bizMap, setBizMap] = useState<Record<string, BusinessMini>>({});
+  const cartRef = useRef<HTMLDivElement | null>(null);
+  const notifRef = useRef<HTMLDivElement | null>(null);
+
+
+
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  const loggedIn = !!token && token !== "null" && token !== "undefined";
+
+  // ✅ USD formatter
+  const formatUSD = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  // ✅ total from cart amount
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => {
+      const v =
+        typeof item.amount === "string" ? parseFloat(item.amount) : item.amount;
+      return sum + (Number.isFinite(v) ? v : 0);
+    }, 0);
+  }, [cartItems]);
   // Update imageKey when user profile picture changes
   useEffect(() => {
     if (user?.profile_picture_url) {
@@ -46,22 +109,144 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
+  const handleClickOutside = (e: MouseEvent) => {
+    const target = e.target as Node;
+
+    // cart
+    if (cartOpen && cartRef.current && !cartRef.current.contains(target)) {
+      setCartOpen(false);
+    }
+
+    // notifications (optional)
+    if (
+      notificationsOpen &&
+      notifRef.current &&
+      !notifRef.current.contains(target)
+    ) {
+      setNotificationsOpen(false);
+    }
+    
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [cartOpen, notificationsOpen, ]);
+
+
+  // ✅ fetch businesses list to map id -> name/logo
+  const fetchBusinessesMini = async () => {
+    try {
+      const res = await fetch(`${API_BASE}business/list1`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) return;
+
+      const json = await res.json();
+      const arr: any[] = Array.isArray(json) ? json : json?.data ?? [];
+
+      const map: Record<string, BusinessMini> = {};
+      arr.forEach((b) => {
+        if (b?.id) {
+          map[b.id] = { id: b.id, name: b.name, logo_url: b.logo_url };
+        }
+      });
+
+      setBizMap(map);
+    } catch (e) {
+      console.error("fetchBusinessesMini error", e);
+    }
+  };
+
+  // ✅ fetch cart from backend
+  const fetchCart = async () => {
+    try {
+      if (!loggedIn) {
+        setCartItems([]);
+        return;
+      }
+
+      setCartLoading(true);
+
+      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to load cart");
+
+      const data = await res.json();
+      const items: CartItem[] = Array.isArray(data) ? data : data?.data ?? [];
+      setCartItems(items);
+    } catch (e) {
+      console.error("fetchCart error", e);
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  // ✅ delete single item from backend
+  const removeFromCart = async (id: string) => {
+    try {
+      if (!loggedIn) return;
+
+      const res = await fetch(`${API_BASE}business-claim-cart/delete/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to remove item");
+
+      setCartItems((prev) => prev.filter((x) => x.id !== id));
+    } catch (e) {
+      console.error("removeFromCart error", e);
+    }
+  };
+
+  // ✅ clear cart backend (delete all)
+  const clearCart = async () => {
+    try {
+      if (!loggedIn) return;
+      await Promise.all(cartItems.map((x) => removeFromCart(x.id)));
+      setCartItems([]);
+    } catch (e) {
+      console.error("clearCart error", e);
+    }
+  };
+
+  useEffect(() => {
+    // ✅ preload business map once
+    fetchBusinessesMini();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    console.log("Token from localStorage:", token);
 
     if (!token) {
-      setError('Please log in to continue.');
+      setError("Please log in to continue.");
       setLoading(false);
-      router.push('/');
+      router.push("/");
       return;
     }
 
-    // Check if token is expired before making the API call
     if (isTokenExpired(token)) {
-      console.log('Token expired, logging out...');
+      console.log("Token expired, logging out...");
       handleLogout();
       return;
     }
 
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}` },
+      });
     // If user is already loaded from context, skip API call
     if (user) {
       setLoading(false);
@@ -69,50 +254,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     // Fetch user data using the token for authentication
-    fetch('https://staging-api.qtpack.co.uk/users/me', {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
       }
     })
-      .then(response => {
-        // Check if response indicates token expiration (401 Unauthorized)
+      .then((response) => {
         if (response.status === 401) {
-          console.log('Token invalid or expired (401), logging out...');
+          console.log("Token invalid or expired (401), logging out...");
           handleLogout();
           return null;
         }
         return response.json();
       })
-      .then(data => {
-        if (!data) return; // Skip if we got a 401
+      .then((data) => {
+        if (!data) return;
 
         setUser(data);
+        sessionStorage.setItem("user", JSON.stringify(data));
+
+        if (data.user_role === "Business") {
+          router.push("/dashboard/business-overview");
+          setLoading(false);
+          return;
+        } else if (data.user_role === "Contributor") {
+          router.push("/dashboard/contributor-overview");
+          setLoading(false);
+          return;
+        } else if (data.user_role === "User") {
+          router.push("/dashboard/saved");
+          setLoading(false);
+          return;
+        }
+
         sessionStorage.setItem('user', JSON.stringify(data));
         setLoading(false);
       })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-        setError('Failed to fetch user data.');
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        setError("Failed to fetch user data.");
         setLoading(false);
       });
 
-    // Set up periodic token check (every minute)
     const tokenCheckInterval = setInterval(() => {
-      const currentToken = localStorage.getItem('access_token');
+      const currentToken = localStorage.getItem("access_token");
       if (!currentToken || isTokenExpired(currentToken)) {
-        console.log('Token expired during session, logging out...');
+        console.log("Token expired during session, logging out...");
         clearInterval(tokenCheckInterval);
         handleLogout();
       }
-    }, 60000); // Check every 60 seconds
+    }, 60000);
 
-    // Cleanup interval on unmount
     return () => clearInterval(tokenCheckInterval);
-  }, [user]);
+  }, []);
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   const fetchNotifications = async () => {
     try {
@@ -155,9 +352,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       );
 
       if (res.ok) {
-        setNotifications((prev) =>
-          prev.filter((notification) => notification.id !== id)
-        );
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
       }
     } catch (error) {
       console.error("Error marking notification as read:", error);
@@ -166,13 +361,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleNotificationClick = (item: any) => {
     if (!item.meta) return;
-    const meta = typeof item.meta === 'string' ? JSON.parse(item.meta) : item.meta;
+    const meta = typeof item.meta === "string" ? JSON.parse(item.meta) : item.meta;
 
     switch (meta.type) {
-      case 'business-created':
-        window.location.href = `/business-profile/${meta.id}`;
-        break;
-      case 'business-status':
+      case "business-created":
+      case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
       case 'new-question':
@@ -181,18 +374,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       default:
         console.log("Unhandled notification type:", meta.type);
     }
+
     markAsRead(item.id);
   };
 
   useEffect(() => {
     fetchNotifications();
-
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30000);
-
+    const interval = setInterval(() => fetchNotifications(), 30000);
     return () => clearInterval(interval);
-  },);
+  }, []);
 
   // Get profile image URL with cache busting
   const getProfileImageUrl = () => {
@@ -207,7 +397,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
       </div>
     );
   }
@@ -215,11 +409,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (error) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
       </div>
     );
   }
-
 
   return (
     <div>
@@ -227,42 +424,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="w-full border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between px-4 lg:px-6 py-1">
             <div className="flex items-center gap-[85px]">
-              {/* Logo */}
               <Link href="/" className="w-[180px]">
-                <img
-                  src="/assets/images/logo.png"
-                  alt="AbleVu Logo"
-                  className="w-[180px]"
-                />
+                <img src="/assets/images/logo.png" alt="AbleVu Logo" className="w-[180px]" />
               </Link>
-
-              {/* Welcome Message */}
-
 
               <div className="flex items-center gap-5 text-gray-700">
                 <span className="text-2xl">👋</span>
                 <span className="font-medium text-xl">
-                  {
-                    error ? (
-                      <>Failed to fetch user details</>
-                    ) : (
-                      <>
-                        Welcome Back! <span>{user.first_name} {user.last_name} ({user.user_role})</span>
-                      </>
-                    )
-                  }
-
+                  Welcome Back! <span>{user.first_name} {user.last_name} ({user.user_role})</span>
                 </span>
               </div>
             </div>
 
-            {/* Right side: Notifications + Logout */}
             <div className="flex items-center space-x-3 relative">
-              {/* Notifications Dropdown */}
-              <div className="relative">
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
                 <button
                   onClick={() => {
                     setNotificationsOpen(!notificationsOpen);
+                    setCartOpen(false);
                     if (!notificationsOpen) fetchNotifications();
                   }}
                   className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
@@ -290,17 +470,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
                       {notifications.length === 0 && (
                         <li className="px-4 py-6 text-gray-500 text-sm text-center">
-                          <div className="flex flex-col items-center justify-center">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="h-8 w-8 text-gray-400 mb-2"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM8 16a2 2 0 104 0H8z" />
-                            </svg>
-                            <p>No new notifications</p>
-                          </div>
+                          No new notifications
                         </li>
                       )}
 
@@ -333,30 +503,155 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 )}
               </div>
 
-              {/* Logout button */}
+              {/* Cart Dropdown */}
+              <div className="relative" ref={cartRef}>
+                <button
+                  onClick={async () => {
+                    setCartOpen((prev) => !prev);
+                    setNotificationsOpen(false);
+
+                    // ✅ open par fetch latest cart
+                    if (!cartOpen) {
+                      await fetchCart();
+                    }
+                  }}
+                  className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+                  aria-label="Cart"
+                >
+                  <ShoppingCart className="h-6 w-6" />
+                  {cartItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-2 py-[2px] rounded-full shadow">
+                      {cartItems.length}
+                    </span>
+                  )}
+                </button>
+
+                {cartOpen && (
+                  <div className="absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                    {/* Header */}
+                    <div className="px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-bold text-base text-gray-900">Cart</p>
+                          <p className="text-xs text-gray-500">
+                            {cartItems.length} item{cartItems.length > 1 ? "s" : ""} in your cart
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-[11px] text-gray-500">Total</p>
+                          <p className="font-extrabold text-gray-900">{formatUSD(cartTotal)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    {cartLoading ? (
+                      <div className="px-6 py-10 text-center text-gray-600">Loading cart...</div>
+                    ) : cartItems.length === 0 ? (
+                      <div className="px-6 py-10 text-center">
+                        <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                          <ShoppingCart className="h-6 w-6 text-gray-500" />
+                        </div>
+                        <p className="text-sm font-semibold text-gray-800">Your cart is empty</p>
+                        <p className="text-xs text-gray-500 mt-1">Add items to see them here.</p>
+                      </div>
+                    ) : (
+                      <ul className="max-h-96 overflow-y-auto">
+                        {cartItems.map((item) => {
+                          const biz = bizMap[item.business_id];
+                          const businessName =
+                            biz?.name ?? `Business (${item.business_id?.slice(0, 6)}...)`;
+                          const logo = biz?.logo_url || "/assets/images/b-img.png";
+
+                          const amountNum =
+                            typeof item.amount === "string"
+                              ? parseFloat(item.amount)
+                              : item.amount;
+
+                          return (
+                            <li
+                              key={item.id}
+                              className="px-5 py-4 border-b last:border-b-0 hover:bg-gray-50 transition"
+                            >
+                              <div className="flex items-start gap-4">
+                                <img
+                                  src={logo}
+                                  className="h-14 w-14 rounded-xl object-cover shrink-0"
+                                  alt={businessName}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src =
+                                      "/assets/images/b-img.png";
+                                  }}
+                                />
+
+                                <div className="flex-1">
+                                  <p className="text-sm font-bold text-gray-900 leading-5">
+                                    {businessName}
+                                  </p>
+
+                                  {/* ✅ status bigger */}
+                                  <p className="mt-1 text-sm font-semibold text-gray-700">
+                                    Status:{" "}
+                                    <span className="capitalize">{item.status}</span>
+                                  </p>
+
+                                  <p className="text-sm font-extrabold text-gray-900 mt-2">
+                                    {formatUSD(Number(amountNum || 0))}
+                                  </p>
+                                </div>
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFromCart(item.id);
+                                  }}
+                                  className="p-2 rounded-xl hover:bg-red-50 text-red-600 transition"
+                                  title="Remove"
+                                  aria-label="Remove item"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+
+                    {/* Footer */}
+                    {cartItems.length > 0 && (
+                      <div className="p-4 border-t bg-white">
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => (window.location.href = "/checkout")}
+                            className="w-full rounded-xl bg-[#0519ce] text-white py-2.5 text-sm font-bold hover:opacity-90 shadow"
+                          >
+                            View Cart
+                          </button>
+
+                          <button
+                            onClick={clearCart}
+                            className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold hover:bg-gray-50"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Logout */}
               <button
                 type="button"
                 className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer transition"
                 onClick={handleLogout}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 11-4 0v-1m4-10V5a2 2 0 10-4 0v1"
-                  />
-                </svg>
                 Logout
               </button>
             </div>
-
           </div>
         </div>
       ) : (

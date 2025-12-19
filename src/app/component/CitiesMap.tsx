@@ -147,7 +147,7 @@ export default function CitiesMap() {
     try {
       setLoading(true);
 
-      const response = await fetch('https://staging-api.qtpack.co.uk/accessible-city/list');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-city/list`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch cities');
