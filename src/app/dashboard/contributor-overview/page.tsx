@@ -179,6 +179,38 @@ export default function Page() {
     ? "Claimed"
     : "";
 
+  const handleCompleteAccountDetails = async () => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  if (!token) {
+    alert("Please login first.");
+    return;
+  }
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({}),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert(err.message || "Failed to start onboarding");
+    return;
+  }
+
+  const data = await res.json();
+  if (data?.url) {
+    window.location.href = data.url; // ✅ redirect to Stripe
+  }
+};
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -1155,11 +1187,13 @@ const getStatusInfo = (b: Business) => {
                       {/* BUTTONS */}
                       <div className="flex justify-center gap-3 pt-2">
                         <button
-                          type="submit"
-                          className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700"
-                        >
-                          Complete Account Details
-                        </button>
+                      type="button"
+                      onClick={handleCompleteAccountDetails}
+                      className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700"
+                    >
+                      Complete Account Details
+                    </button>
+
                       </div>
                     </form>
                   </div>
