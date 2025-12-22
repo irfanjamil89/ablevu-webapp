@@ -170,42 +170,47 @@ export default function Header2() {
   // ✅ Fetch Cart (my-cart)
   // -----------------------------
   const fetchCart = useCallback(async () => {
-    try {
-      if (!token || token === "null" || token === "undefined") {
-        setCartItems([]);
-        return;
-      }
-
-      setCartLoading(true);
-
-      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        setCartItems([]);
-        return;
-      }
-
-      const json = await res.json();
-      const rows: CartItem[] = Array.isArray(json)
-        ? json
-        : Array.isArray(json?.data)
-          ? json.data
-          : [];
-
-      setCartItems(rows);
-    } catch (e) {
-      console.error("fetchCart error:", e);
+  try {
+    if (!token || token === "null" || token === "undefined") {
       setCartItems([]);
-    } finally {
-      setCartLoading(false);
+      return;
     }
-  }, [token]);
+
+    setCartLoading(true);
+
+    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      setCartItems([]);
+      return;
+    }
+
+    const json = await res.json();
+    const rows: CartItem[] = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.data)
+      ? json.data
+      : [];
+
+    // ✅ only pending
+    const pendingOnly = rows.filter(
+      (x: any) => (x.status || "").toLowerCase() === "pending"
+    );
+
+    setCartItems(pendingOnly);
+  } catch (e) {
+    console.error("fetchCart error:", e);
+    setCartItems([]);
+  } finally {
+    setCartLoading(false);
+  }
+}, [token]);
 
   // ✅ When cart opens => load cart + business names
   useEffect(() => {
@@ -305,6 +310,12 @@ export default function Header2() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
+        case 'new-question':
+      window.location.href = `/dashboard/questions`;
+       break;
+       case 'new-review':
+         window.location.href = `/dashboard/reviews`;
+         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -486,7 +497,7 @@ export default function Header2() {
                                   className="hover:opacity-80"
                                 >
                                   <img
-                                    src="https://www.svgrepo.com/show/490436/trash-can.svg"
+                                    src="https://www.svgrepo.com/show/497079/eye-slash.svg"
                                     alt="Mark as read"
                                     className="w-5 h-5"
                                   />

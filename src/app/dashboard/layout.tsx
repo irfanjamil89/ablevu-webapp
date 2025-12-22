@@ -161,33 +161,40 @@ export default function DashboardLayout({
 
   // ✅ fetch cart from backend
   const fetchCart = async () => {
-    try {
-      if (!loggedIn) {
-        setCartItems([]);
-        return;
-      }
-
-      setCartLoading(true);
-
-      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to load cart");
-
-      const data = await res.json();
-      const items: CartItem[] = Array.isArray(data) ? data : data?.data ?? [];
-      setCartItems(items);
-    } catch (e) {
-      console.error("fetchCart error", e);
-    } finally {
-      setCartLoading(false);
+  try {
+    if (!loggedIn) {
+      setCartItems([]);
+      return;
     }
-  };
+
+    setCartLoading(true);
+
+    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to load cart");
+
+    const data = await res.json();
+    const items: CartItem[] = Array.isArray(data) ? data : data?.data ?? [];
+
+    // ✅ ONLY pending items
+    const pendingItems = items.filter(
+      (item) => (item.status || "").toLowerCase() === "pending"
+    );
+
+    setCartItems(pendingItems);
+  } catch (e) {
+    console.error("fetchCart error", e);
+  } finally {
+    setCartLoading(false);
+  }
+};
+
 
   // ✅ delete single item from backend
   const removeFromCart = async (id: string) => {
@@ -365,9 +372,17 @@ export default function DashboardLayout({
 
     switch (meta.type) {
       case "business-created":
+        window.location.href = `/business-profile/${meta.id}`;
+        break;
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
+      case 'new-question':
+      window.location.href = `/dashboard/questions`;
+       break;
+       case 'new-review':
+         window.location.href = `/dashboard/reviews`;
+         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -464,7 +479,7 @@ export default function DashboardLayout({
 
                 {notificationsOpen && (
                   <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                    <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                    <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
                       {notifications.length === 0 && (
                         <li className="px-4 py-6 text-gray-500 text-sm text-center">
                           No new notifications
@@ -488,7 +503,7 @@ export default function DashboardLayout({
                             className="hover:opacity-80"
                           >
                             <img
-                              src="https://www.svgrepo.com/show/490436/trash-can.svg"
+                              src="https://www.svgrepo.com/show/497079/eye-slash.svg"
                               alt="Mark as read"
                               className="w-5 h-5"
                             />
@@ -844,6 +859,37 @@ export default function DashboardLayout({
 
                     Coupon Codes
 
+                  </Link>
+                    <Link href="/dashboard/reviews"
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
+                      ? "bg-blue-700 text-white font-semibold"
+                      : "text-gray-700 hover:bg-gray-100"
+                      }`}>
+
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                      width="32"
+                      height="32"
+                      className="w-5 h-5"
+                    >
+                      <path
+                        d="M128 224H64a32 32 0 00-32 32v192a32 32 0 0032 32h64a32 32 0 0032-32V256a32 32 0 00-32-32z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M384 224h-92l12-70c6-36-12-70-41-86a14 14 0 00-23 9v94c0 28-22 53-48 53h-20v224h226c27 0 49-20 52-47l17-160c3-29-17-53-43-53z"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="32"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+
+                    Reviews
                   </Link>
 
 

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 export type BusinessProfile = {
   id: string;
@@ -17,7 +17,7 @@ export type BusinessProfile = {
 interface CustomSectionPopupProps {
   businessId: string;
   setOpenCustonSectionPopup: React.Dispatch<React.SetStateAction<boolean>>;
-  onUpdated?: (b: BusinessProfile) => void;
+  onUpdated?: () => void;
 }
 
 // ---------- Component ----------
@@ -26,8 +26,53 @@ const CustomSectionPopup: React.FC<CustomSectionPopupProps> = ({
   setOpenCustonSectionPopup,
   onUpdated,
 }) => {
+  const [label, setlabel] = useState("");
+  const [ active, setactive] = useState(true);
+   const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
+    const [loading, setLoading] = useState(false);
 
+    const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
+    const payload = {
+      business_id: businessId,
+      label,
+      active
+    };
+
+    try {
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business-custom-sections/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (response.ok) {
+        setSuccess("Custom Section added successfully!");
+        setlabel("");
+        onUpdated?.();
+        setOpenCustonSectionPopup(false);
+      } else {
+        const data = await response.json();
+        setError(data.message || "Failed to create Custom Section.");
+      }
+    } catch (err: any) {
+      console.error("Custom Section Error:", err.message);
+    } finally {
+      setLoading(false);
+    }
+
+  }
   return (
     <div
               className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-50">
@@ -46,19 +91,26 @@ const CustomSectionPopup: React.FC<CustomSectionPopupProps> = ({
                 <h2 className="text-lg font-bold text-gray-700 mb-4">Add Custom Section</h2>
 
                 {/* <!-- FORM --> */}
-                <form className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-5">
 
                   {/* <!-- Title --> */}
                   <div>
                     <label className="block text-md font-medium text-gray-700 mb-1">Section Title</label>
-                    <input type="text" placeholder="Enter"
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-md placeholder:text-gray-500 hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200" />
+                    <input 
+                    id="label"
+                    type="text" 
+                    placeholder="Enter"
+                    value={label} onChange={(e) => setlabel(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-md placeholder:text-gray-500 hover:border-[#0519CE] focus:border-[#0519CE] outline-none transition-all duration-200" />
                   </div>
 
                   {/* <!-- Visible to Public? --> */}
                   <div>
                     <label className="block text-md font-medium text-gray-700 mb-1">Visible to Public?</label>
                     <select
+                      id="active"
+                      value={active ? "Yes" : "No"}
+                      onChange={(e) => setactive(e.target.value === "Yes")}
                       className="w-full border border-gray-300 rounded-lg px-1 py-2 text-md focus:ring-1 focus:ring-[#0519CE] outline-none">
                       <option>Yes</option>
                       <option>No</option>
@@ -73,8 +125,9 @@ const CustomSectionPopup: React.FC<CustomSectionPopupProps> = ({
                       Cancel
                     </label>
                     <button type="submit"
+                      disabled={loading}
                       className="px-5 py-2.5 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700">
-                      Create Section
+                      {loading ? "Creating..." : "Create Section"}
                     </button>
                   </div>
                 </form>

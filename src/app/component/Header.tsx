@@ -209,6 +209,12 @@ export default function Header() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
+        case 'new-question':
+      window.location.href = `/dashboard/questions`;
+       break;
+       case 'new-review':
+         window.location.href = `/dashboard/reviews`;
+         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -258,27 +264,34 @@ export default function Header() {
 
   // ✅ fetch cart
   const fetchCart = async () => {
-    if (!loggedIn) return;
+  if (!loggedIn) return;
 
-    try {
-      setCartLoading(true);
+  try {
+    setCartLoading(true);
 
-      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (!res.ok) throw new Error("Cart load failed");
+    if (!res.ok) throw new Error("Cart load failed");
 
-      const data = await res.json();
-      setCartItems(Array.isArray(data) ? data : data?.data ?? []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setCartLoading(false);
-    }
-  };
+    const data = await res.json();
+
+    const items = Array.isArray(data) ? data : data?.data ?? [];
+    const pendingOnly = items.filter(
+      (x: any) => (x.status || "").toLowerCase() === "pending"
+    );
+
+    setCartItems(pendingOnly);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    setCartLoading(false);
+  }
+};
+
 
   // ✅ remove item
   const removeFromCart = async (id: string) => {
@@ -507,7 +520,7 @@ export default function Header() {
                                       className="hover:opacity-80"
                                     >
                                       <img
-                                        src="https://www.svgrepo.com/show/490436/trash-can.svg"
+                                        src="https://www.svgrepo.com/show/497079/eye-slash.svg"
                                         alt="Mark as read"
                                         className="w-5 h-5"
                                       />

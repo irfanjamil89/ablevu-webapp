@@ -357,8 +357,8 @@ export default function Page() {
               type="email"
               name="email"
               value={profileForm.email}
-              onChange={handleProfileChange}
-              className="border border-gray-200 rounded-lg p-3 mt-1 w-full text-gray-700 focus:outline-[#0519CE]"
+              readOnly
+              className="border border-gray-200 rounded-lg p-3 mt-1 w-full text-gray-700 bg-gray-100 focus:outline-none "
             />
             {profileErrors.email && (
               <span className="text-red-600 text-xs mt-1">
