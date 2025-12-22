@@ -182,6 +182,38 @@ export default function Page() {
               ? "Claimed"
               : "";
 
+  const handleCompleteAccountDetails = async () => {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+  if (!token) {
+    alert("Please login first.");
+    return;
+  }
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({}),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert(err.message || "Failed to start onboarding");
+    return;
+  }
+
+  const data = await res.json();
+  if (data?.url) {
+    window.location.href = data.url; // ✅ redirect to Stripe
+  }
+};
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -1128,48 +1160,52 @@ export default function Page() {
                         when businesses approve the profiles you create for them.
                       </p>
 
-                      {/* FORM */}
-                      <form className="space-y-4">
-                        <ul className="space-y-4">
-                          <li className="flex items-start pr-5">
-                            <img
-                              src="/assets/images/tick-circle.svg"
-                              alt="tick-circle"
-                              className="w-5 h-5"
-                            />
-                            <p className="ml-3 text-gray-800">
-                              Once a business approves a profile you’ve submitted
-                              or claim it, they will pay you a creation fee of
-                              $100 for that profile.
-                            </p>
-                          </li>
+                      
 
-                          <li className="flex items-start pr-5">
-                            <img
-                              src="/assets/images/tick-circle.svg"
-                              alt="tick-circle"
-                              className="w-5 h-5"
-                            />
-                            <p className="ml-3 text-gray-800">
-                              AbleVu will keep the platform fee on every
-                              transaction of business profile.
-                            </p>
-                          </li>
-                        </ul>
+                    {/* FORM */}
+                    <form className="space-y-4">
+                      <ul className="space-y-4">
+                        <li className="flex items-start pr-5">
+                          <img
+                            src="/assets/images/tick-circle.svg"
+                            alt="tick-circle"
+                            className="w-5 h-5"
+                          />
+                          <p className="ml-3 text-gray-800">
+                            Once a business approves a profile you’ve submitted
+                            or claim it, they will pay you a creation fee of
+                            $100 for that profile.
+                          </p>
+                        </li>
 
-                        {/* BUTTONS */}
-                        <div className="flex justify-center gap-3 pt-2">
-                          <button
-                            type="submit"
-                            className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700"
-                          >
-                            Complete Account Details
-                          </button>
-                        </div>
-                      </form>
-                    </div>
+                        <li className="flex items-start pr-5">
+                          <img
+                            src="/assets/images/tick-circle.svg"
+                            alt="tick-circle"
+                            className="w-5 h-5"
+                          />
+                          <p className="ml-3 text-gray-800">
+                            AbleVu will keep the platform fee on every
+                            transaction of business profile.
+                          </p>
+                        </li>
+                      </ul>
+
+                      {/* BUTTONS */}
+                      <div className="flex justify-center gap-3 pt-2">
+                        <button
+                      type="button"
+                      onClick={handleCompleteAccountDetails}
+                      className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700"
+                    >
+                      Complete Account Details
+                    </button>
+
+                      </div>
+                    </form>
                   </div>
                   {/* pop-up button END */}
+                </div>
                 </div>
               </section>
             )}
