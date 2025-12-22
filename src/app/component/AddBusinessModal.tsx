@@ -88,6 +88,13 @@ export default function AddBusinessModal({
   const [createError, setCreateError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // ---------- Check if form is valid ----------
+  const isFormValid =
+    newBusiness.name.trim() !== "" &&
+    newBusiness.fullAddress.trim() !== "" &&
+    newBusiness.description.trim() !== "" &&
+    selectedCategoryId !== "";
+
   // ---------- Fetch business types on mount ----------
 
   useEffect(() => {
@@ -241,13 +248,11 @@ export default function AddBusinessModal({
           ? "Business and logo uploaded successfully!"
           : "Business created successfully!"
       );
+      setOpenAddBusinessModal(false);
 
         onBusinessCreated();
 
       // ✅ Close popup shortly after success
-      setTimeout(() => {
-        setOpenAddBusinessModal(false);
-      }, 800);
     } catch (err: any) {
       setCreateError(err.message || "Something went wrong");
     } finally {
@@ -492,7 +497,7 @@ export default function AddBusinessModal({
               <div className="pt-2">
                 <button
                   onClick={handleCreateBusiness}
-                  disabled={isCreating}
+                  disabled={isCreating || !isFormValid}
                   className="w-full px-5 py-3 text-center text-sm font-bold bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
                 >
                   {isCreating ? "Creating..." : "Create Business"}

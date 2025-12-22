@@ -96,25 +96,25 @@ export default function Mapsections() {
 
   const pad2 = (n: number) => String(n).padStart(2, "0");
 
-const makeOrderBatchId = () => {
-  const d = new Date();
+  const makeOrderBatchId = () => {
+    const d = new Date();
 
-  const DD = pad2(d.getDate());
-  const MM = pad2(d.getMonth() + 1);
-  const YYYY = d.getFullYear();
+    const DD = pad2(d.getDate());
+    const MM = pad2(d.getMonth() + 1);
+    const YYYY = d.getFullYear();
 
-  const HH = pad2(d.getHours());
-  const mm = pad2(d.getMinutes());
+    const HH = pad2(d.getHours());
+    const mm = pad2(d.getMinutes());
 
-  return `Order-${DD}${MM}${YYYY}${HH}${mm}`;
-};
+    return `Order-${DD}${MM}${YYYY}${HH}${mm}`;
+  };
 
-const getOrCreateBatchId = () => {
-  const key = "claim_batch_id";
-  const batch = makeOrderBatchId();
-  localStorage.setItem(key, batch); // ✅ always overwrite
-  return batch;
-};
+  const getOrCreateBatchId = () => {
+    const key = "claim_batch_id";
+    const batch = makeOrderBatchId();
+    localStorage.setItem(key, batch); // ✅ always overwrite
+    return batch;
+  };
 
 
   useEffect(() => {
@@ -194,17 +194,10 @@ const getOrCreateBatchId = () => {
         });
 
         const approvedIcon = new L.Icon({
-          iconUrl:
-            "data:image/svg+xml;base64," +
-            btoa(`
-            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
-              <path fill="#DC2626" stroke="#991B1B" stroke-width="2" d="M16 0C10.5 0 6 4.5 6 10v4H4c-1.1 0-2 0.9-2 2v20c0 1.1 0.9 2 2 2h24c1.1 0 2-0.9 2-2V16c0-1.1-0.9-2-2-2h-2v-4c0-5.5-4.5-10-10-10zm0 4c3.3 0 6 2.7 6 6v4H10v-4c0-3.3 2.7-6 6-6zm0 16c1.7 0 3 1.3 3 3s-1.3 3-3 3-3-1.3-3-3 1.3-3 3-3z"/>
-              <path fill="none" stroke="#991B1B" stroke-width="1.5" d="M16 40L16 38"/>
-            </svg>
-          `),
-          iconSize: [32, 42],
-          iconAnchor: [16, 42],
-          popupAnchor: [0, -42],
+          iconUrl: "/assets/images/lock.png", // or "assets/images/lock.png" depending on your public folder structure
+          iconSize: [32, 42], // adjust these dimensions to match your lock.png size
+          iconAnchor: [16, 42], // adjust to position the marker correctly
+          popupAnchor: [0, -42], // adjust to position popups correctly
           shadowUrl:
             "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
           shadowSize: [41, 41],
@@ -227,35 +220,35 @@ const getOrCreateBatchId = () => {
           const map = useMap();
 
           React.useEffect(() => {
-  if (shouldFitBounds && businesses.length > 0) {
-    const points: [number, number][] = [];
+            if (shouldFitBounds && businesses.length > 0) {
+              const points: [number, number][] = [];
 
-    for (const b of businesses) {
-      const coords = validateCoordinates(b.latitude, b.longitude);
-      if (!coords) continue;
+              for (const b of businesses) {
+                const coords = validateCoordinates(b.latitude, b.longitude);
+                if (!coords) continue;
 
-      // ✅ extra safety
-      if (!Number.isFinite(coords.lat) || !Number.isFinite(coords.lng)) continue;
+                // ✅ extra safety
+                if (!Number.isFinite(coords.lat) || !Number.isFinite(coords.lng)) continue;
 
-      points.push([coords.lat, coords.lng]);
-    }
+                points.push([coords.lat, coords.lng]);
+              }
 
-    if (points.length > 0) {
-      const bounds = L.latLngBounds(points);
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-    }
-  } else {
-    // ✅ center safety
-    if (
-      Array.isArray(center) &&
-      center.length === 2 &&
-      Number.isFinite(center[0]) &&
-      Number.isFinite(center[1])
-    ) {
-      map.setView(center, zoom);
-    }
-  }
-}, [center, zoom, map, businesses, shouldFitBounds]);
+              if (points.length > 0) {
+                const bounds = L.latLngBounds(points);
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+              }
+            } else {
+              // ✅ center safety
+              if (
+                Array.isArray(center) &&
+                center.length === 2 &&
+                Number.isFinite(center[0]) &&
+                Number.isFinite(center[1])
+              ) {
+                map.setView(center, zoom);
+              }
+            }
+          }, [center, zoom, map, businesses, shouldFitBounds]);
 
 
           return null;
@@ -306,11 +299,10 @@ const getOrCreateBatchId = () => {
 
                       {business.business_status && (
                         <span
-                          className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${
-                            business.business_status.toLowerCase() === "approved"
+                          className={`inline-block px-2 py-1 text-xs font-semibold rounded mb-2 ${business.business_status.toLowerCase() === "approved"
                               ? "bg-red-100 text-red-800"
                               : "bg-blue-100 text-blue-800"
-                          }`}
+                            }`}
                         >
                           {business.business_status.toUpperCase()}
                         </span>
@@ -466,7 +458,7 @@ const getOrCreateBatchId = () => {
                         <h3 className="font-semibold text-lg">
                           {business.name}
                         </h3>
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded bg-red-100 text-red-800">
+                        <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-red-100 text-red-800">
                           {business.business_status}
                         </span>
                       </div>
@@ -493,7 +485,7 @@ const getOrCreateBatchId = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold text-lg">{business.name}</h3>
                       {business.business_status && (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded bg-blue-100 text-blue-800">
+                        <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-blue-100 text-blue-800">
                           {business.business_status}
                         </span>
                       )}
@@ -555,9 +547,8 @@ const getOrCreateBatchId = () => {
                     setClaimLoading(false);
                   }
                 }}
-                className={`px-5 py-2 rounded-full bg-[#0519ce] text-white font-semibold hover:opacity-90 ${
-                  claimLoading ? "opacity-60 cursor-not-allowed" : ""
-                }`}
+                className={`px-5 py-2 rounded-full bg-[#0519ce] text-white font-semibold hover:opacity-90 ${claimLoading ? "opacity-60 cursor-not-allowed" : ""
+                  }`}
               >
                 {claimLoading ? "Adding..." : "Yes, claim"}
               </button>

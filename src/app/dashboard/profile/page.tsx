@@ -39,6 +39,12 @@ export default function Page() {
     email: "",
     phone_number: "",
   });
+  const [originalProfileForm, setOriginalProfileForm] = useState<UpdateProfile>({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone_number: "",
+  });
   const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileMessage, setProfileMessage] = useState<Message | null>(null);
@@ -51,6 +57,9 @@ export default function Page() {
 
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<Message | null>(null);
+
+  const isProfileChanged = JSON.stringify(profileForm) !== JSON.stringify(originalProfileForm);
+  const isPasswordFilled = passwordForm.currentPassword || passwordForm.newPassword || passwordForm.confirmPassword;
 
   const handleProfileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -169,6 +178,7 @@ export default function Page() {
         type: "success",
         text: "Profile updated successfully.",
       });
+      setOriginalProfileForm(profileForm);
     } catch (error: any) {
       console.error("Profile update error:", error);
       setProfileMessage({
@@ -207,12 +217,14 @@ export default function Page() {
         const data = await res.json();
         if (!res.ok) throw new Error(data?.message);
 
-        setProfileForm({
+        const profile = {
           first_name: data.first_name || "",
           last_name: data.last_name || "",
           email: data.email || "",
           phone_number: data.phone_number || "",
-        });
+        };
+        setProfileForm(profile);
+        setOriginalProfileForm(profile);
       })
       .catch((err) => console.error("Profile fetch error:", err));
   }, []);
@@ -374,15 +386,15 @@ export default function Page() {
           </div>
 
           <div className="flex justify-end space-x-4">
-            <button
+            {/* <button
               type="button"
               className="text-[#0519CE] text-sm font-bold border border-[#0519CE] rounded-full py-3 px-6 hover:bg-gray-100"
             >
               Cancel
-            </button>
+            </button> */}
             <button
               type="submit"
-              disabled={profileLoading}
+              disabled={profileLoading || !isProfileChanged}
               className="bg-[#0519CE] text-white text-sm font-bold rounded-full py-3 px-5 hover:bg-blue-700 disabled:opacity-60"
             >
               {profileLoading ? "Saving..." : "Save Changes"}
@@ -420,6 +432,7 @@ export default function Page() {
                 value={passwordForm.currentPassword}
                 onChange={handlePasswordChange}
                 className="border border-gray-300 rounded-md p-3 mt-1 w-full"
+                required
               />
               <button
                 type="button"
@@ -451,6 +464,7 @@ export default function Page() {
                 value={passwordForm.newPassword}
                 onChange={handlePasswordChange}
                 className="border border-gray-300 rounded-md p-3 mt-1 w-full"
+                required
               />
               <button
                 type="button"
@@ -482,6 +496,7 @@ export default function Page() {
                 value={passwordForm.confirmPassword}
                 onChange={handlePasswordChange}
                 className="border border-gray-300 rounded-md p-3 mt-1 w-full"
+                required
               />
 
               <button
@@ -508,7 +523,7 @@ export default function Page() {
           <div className="flex justify-end">
             <button
               type="submit"
-              disabled={passwordLoading}
+              disabled={passwordLoading || !isPasswordFilled}
               className="bg-[#0519CE] text-white text-sm font-bold rounded-full py-3 px-8 hover:bg-blue-700 disabled:opacity-60"
             >
               {passwordLoading ? "Updating..." : "Update"}
