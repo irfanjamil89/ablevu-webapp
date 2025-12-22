@@ -390,7 +390,7 @@ export default function Header() {
 
               <div className="fixed inset-0 w-[100%] translate-x-[-100%] border-r shadow-xl transition duration-300 peer-checked:translate-x-0 lg:static lg:w-auto lg:translate-x-0 lg:border-r-0 lg:shadow-none">
                 <div className="flex h-full flex-col justify-center lg:flex-row lg:items-center w-full bg-white lg:bg-transparent">
-                  <ul className="space-y-8 px-6 pt-32 text-gray-700 md:pe-6 lg:flex lg:space-x-4 lg:space-y-0 lg:pt-0 font-['Roboto'] font-bold">
+                  <ul className="list-center space-y-8 px-6 pt-32 text-gray-700 md:pe-6 lg:flex lg:space-x-4 lg:space-y-0 lg:pt-0 font-['Roboto'] font-bold">
                     <li>
                       <Link
                         href="/"
@@ -449,7 +449,7 @@ export default function Header() {
                           </span>
                         </li>
                         {/* Notifications Dropdown */}
-                        <li className="relative ml-3" ref={notifRef}>
+                        <li className="relative m-right-0" ref={notifRef}>
                           <button
                             onClick={() => {
                               setNotificationsOpen((prev) => !prev);
@@ -479,19 +479,21 @@ export default function Header() {
                           </button>
 
                           {notificationsOpen && (
-                            <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                              <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
+                            <div className="absolute top-10 right-0 mr-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
+                              {" "}
+                              {/* Increased width */}
+                              <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                                 {notifications.length === 0 && (
                                   <li className="px-4 py-6 text-gray-500 text-sm text-center">
-                                    <div className="flex flex-col items-center justify-center">
-                                      <svg
+                                    <div className="flex  items-center justify-center">
+                                      {/* <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         className="h-8 w-8 text-gray-400 mb-2"
                                         viewBox="0 0 20 20"
                                         fill="currentColor"
                                       >
                                         <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM8 16a2 2 0 104 0H8z" />
-                                      </svg>
+                                      </svg> */}
                                       <p>No new notifications</p>
                                     </div>
                                   </li>
@@ -531,7 +533,7 @@ export default function Header() {
                         </li>
 
                         {/* Cart Dropdown */}
-                        <li className="relative ml-3" ref={cartRef}>
+                        <li className="relative" ref={cartRef}>
                           <button
                             onClick={async () => {
                               setCartOpen(!cartOpen);
@@ -554,7 +556,7 @@ export default function Header() {
                           </button>
 
                           {cartOpen && (
-                            <div className="absolute right-0 mt-3 w-[26rem] bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                            <div className="absolute top-10 right-0 mt-3 w-[26rem] bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
                               {/* Header */}
                               <div className="px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
                                 <div className="flex items-start justify-between">

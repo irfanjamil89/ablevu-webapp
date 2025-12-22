@@ -3,6 +3,8 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
 import Link from "next/link";
 import AddBusinessModal from "@/app/component/AddBusinessModal";
+import { useUser } from "@/app/component/UserContext";
+
 
 // ---------- Types ----------
 
@@ -134,6 +136,7 @@ const normalizeStatus = (status?: string | null) =>
 // ---------- Component ----------
 
 export default function Page() {
+  const { user, updateUser } = useUser();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [features, setFeatures] = useState<FeatureType[]>([]);
@@ -159,25 +162,25 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-    const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
-  
+  const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
+
 
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
   const statusFilterLabel =
-  statusFilter === "draft"
-    ? "Draft"
-    : statusFilter === "pending approval"
-    ? "Approval Request"
-    : statusFilter === "approved"
-    ? "Approved"
-    : statusFilter === "pending acclaim"
-    ? "Pending Acclaim"
-    : statusFilter === "claimed"
-    ? "Claimed"
-    : "";
+    statusFilter === "draft"
+      ? "Draft"
+      : statusFilter === "pending approval"
+        ? "Approval Request"
+        : statusFilter === "approved"
+          ? "Approved"
+          : statusFilter === "pending acclaim"
+            ? "Pending Acclaim"
+            : statusFilter === "claimed"
+              ? "Claimed"
+              : "";
 
   const handleCompleteAccountDetails = async () => {
   const token =
@@ -286,51 +289,51 @@ export default function Page() {
   }, [appliedSearch]);
 
   // ---------- Fetch businesses (shared function) ----------
-  
-    const fetchBusinesses = useCallback(async (search: string) => {
-      const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-      let url = base + "/business/list";
-  
-      if (search) {
-        url += `?search=${encodeURIComponent(search)}`;
-      }
-  
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("access_token")
-          : null;
-  
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-  
-      setLoading(true);
-  
-      try {
-        const response = await fetch(url, { headers });
-        const data = await response.json();
-        console.log("Business list API:", data);
-        const list: Business[] = data.data || [];
-        setBusinesses(list);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
-  
-    // fetch on first load + whenever appliedSearch changes
-    useEffect(() => {
-      fetchBusinesses(appliedSearch);
-    }, [appliedSearch, fetchBusinesses]);
-  
-    // ---------- Callback for modal to refresh list ----------
-  
-    const handleBusinessCreated = () => {
-      // re-fetch businesses with current search filter
-      fetchBusinesses(appliedSearch);
-    };
+
+  const fetchBusinesses = useCallback(async (search: string) => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    let url = base + "/business/list";
+
+    if (search) {
+      url += `?search=${encodeURIComponent(search)}`;
+    }
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+      console.log("Business list API:", data);
+      const list: Business[] = data.data || [];
+      setBusinesses(list);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // fetch on first load + whenever appliedSearch changes
+  useEffect(() => {
+    fetchBusinesses(appliedSearch);
+  }, [appliedSearch, fetchBusinesses]);
+
+  // ---------- Callback for modal to refresh list ----------
+
+  const handleBusinessCreated = () => {
+    // re-fetch businesses with current search filter
+    fetchBusinesses(appliedSearch);
+  };
 
   // ---------- Maps (ID -> Name) ----------
 
@@ -385,56 +388,56 @@ export default function Page() {
   // ---------- Status badge (business.business_status) ----------
 
   type StatusKey =
-  | "draft"
-  | "pending approval"
-  | "approved"
-  | "pending acclaim"
-  | "claimed";
+    | "draft"
+    | "pending approval"
+    | "approved"
+    | "pending acclaim"
+    | "claimed";
 
-const STATUS_BADGE: Record<
-  StatusKey,
-  { label: string; bg: string; text: string }
-> = {
-  draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
-  "pending approval": {
-    label: "Pending Approval",
-    bg: "#FFEFD5",
-    text: "#B46A00",
-  },
-  approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
-  "pending acclaim": {
-    label: "Pending Acclaim",
-    bg: "#EEF2FF",
-    text: "#3730A3",
-  },
-  claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
-};
+  const STATUS_BADGE: Record<
+    StatusKey,
+    { label: string; bg: string; text: string }
+  > = {
+    draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+    "pending approval": {
+      label: "Pending Approval",
+      bg: "#FFEFD5",
+      text: "#B46A00",
+    },
+    approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+    "pending acclaim": {
+      label: "Pending Acclaim",
+      bg: "#EEF2FF",
+      text: "#3730A3",
+    },
+    claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+  };
 
-const toCanonicalStatus = (raw: string, b: Business): StatusKey | null => {
-  const s = normalizeStatus(raw);
+  const toCanonicalStatus = (raw: string, b: Business): StatusKey | null => {
+    const s = normalizeStatus(raw);
 
-  // backend aliases
-  if (s === "pending" || s === "pending approved") return "pending approval";
-  if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
+    // backend aliases
+    if (s === "pending" || s === "pending approved") return "pending approval";
+    if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
 
-  if (s === "draft") return "draft";
-  if (s === "pending approval") return "pending approval";
-  if (s === "approved") return "approved";
-  if (s === "claimed") return "claimed";
+    if (s === "draft") return "draft";
+    if (s === "pending approval") return "pending approval";
+    if (s === "approved") return "approved";
+    if (s === "claimed") return "claimed";
 
-  // fallback: empty status but active + not blocked
-  if ((!s || s === "active") && b.active === true && !b.blocked) {
-    return "approved";
-  }
+    // fallback: empty status but active + not blocked
+    if ((!s || s === "active") && b.active === true && !b.blocked) {
+      return "approved";
+    }
 
-  return null;
-};
+    return null;
+  };
 
-const getStatusInfo = (b: Business) => {
-  const canonical = toCanonicalStatus(b.business_status || "", b);
-  if (!canonical) return { label: "", bg: "", text: "" };
-  return STATUS_BADGE[canonical];
-};
+  const getStatusInfo = (b: Business) => {
+    const canonical = toCanonicalStatus(b.business_status || "", b);
+    if (!canonical) return { label: "", bg: "", text: "" };
+    return STATUS_BADGE[canonical];
+  };
 
   // ---------- Sorting + Status filter ----------
 
@@ -442,30 +445,30 @@ const getStatusInfo = (b: Business) => {
     let arr = [...businesses];
 
     if (statusFilter) {
-  arr = arr.filter((b) => {
-    const canonical = toCanonicalStatus(b.business_status || "", b);
+      arr = arr.filter((b) => {
+        const canonical = toCanonicalStatus(b.business_status || "", b);
 
-    switch (statusFilter) {
-      case "draft":
-        return canonical === "draft";
+        switch (statusFilter) {
+          case "draft":
+            return canonical === "draft";
 
-      case "pending approval":
-        return canonical === "pending approval";
+          case "pending approval":
+            return canonical === "pending approval";
 
-      case "approved":
-        return canonical === "approved";
+          case "approved":
+            return canonical === "approved";
 
-      case "pending acclaim":
-        return canonical === "pending acclaim";
+          case "pending acclaim":
+            return canonical === "pending acclaim";
 
-      case "claimed":
-        return canonical === "claimed";
+          case "claimed":
+            return canonical === "claimed";
 
-      default:
-        return true;
+          default:
+            return true;
+        }
+      });
     }
-  });
-}
 
 
     switch (sortOption) {
@@ -766,7 +769,7 @@ const getStatusInfo = (b: Business) => {
   // ---------- UI ----------
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
           <div className="w-full min-h-screen bg-white px-6 py-5">
@@ -813,10 +816,10 @@ const getStatusInfo = (b: Business) => {
                           {sortOption === "name-asc"
                             ? "Name A–Z"
                             : sortOption === "name-desc"
-                            ? "Name Z–A"
-                            : sortOption === "created-asc"
-                            ? "Oldest First"
-                            : "Newest First"}
+                              ? "Name Z–A"
+                              : sortOption === "created-asc"
+                                ? "Oldest First"
+                                : "Newest First"}
                           )
                         </span>
                       )}
@@ -920,8 +923,8 @@ const getStatusInfo = (b: Business) => {
                   id="business-toggle"
                   className="hidden peer"
                 /> */}
-               <button
-                  onClick={()=> setOpenAddBusinessModal(true)}
+                <button
+                  onClick={() => setOpenAddBusinessModal(true)}
                   className="px-4 py-3 text-sm font-bold bg-[#0519CE] text-white rounded-lg cursor-pointer hover:bg-blue-700 transition"
                 >
                   Add Business
@@ -1104,56 +1107,60 @@ const getStatusInfo = (b: Business) => {
                 </div>
               </div>
             </div>
-
-            <section className="bg-[#F0F1FF] py-3 px-4 flex items-center rounded-lg justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-blue-600 text-xl w-5 h-5">
-                  <img src="/assets/images/error.svg" />
-                </span>
-                <p className="text-gray-800 text-base">
-                  Right now, you are a{" "}
-                  <span className="font-bold text-black">
-                    volunteer contributor
+            {user?.paid_contributor ? (
+              <></>
+            ) : (
+              <section className="bg-[#F0F1FF] py-3 px-4 flex items-center rounded-lg justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-blue-600 text-xl w-5 h-5">
+                    <img src="/assets/images/error.svg" />
                   </span>
-                  . Do you want to become a Paid Contributor?
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-y-4 items-center gap-3">
-                {/* pop-up button start */}
-                <input
-                  type="checkbox"
-                  id="learn-more-toggle"
-                  className="hidden peer"
-                />
+                  <p className="text-gray-800 text-base">
+                    Right now, you are a{" "}
+                    <span className="font-bold text-black">
+                      volunteer contributor
+                    </span>
+                    . Do you want to become a Paid Contributor?
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-y-4 items-center gap-3">
+                  {/* pop-up button start */}
+                  <input
+                    type="checkbox"
+                    id="learn-more-toggle"
+                    className="hidden peer"
+                  />
 
-                {/* OPEN BUTTON */}
-                <label
-                  htmlFor="learn-more-toggle"
-                  className="px-6 py-3 text-[#0519CE] font-bold underline text-sm cursor-pointer"
-                >
-                  Learn More
-                </label>
+                  {/* OPEN BUTTON */}
+                  <label
+                    htmlFor="learn-more-toggle"
+                    className="px-6 py-3 text-[#0519CE] font-bold underline text-sm cursor-pointer"
+                  >
+                    Learn More
+                  </label>
 
-                {/* OVERLAY */}
-                <div className="fixed inset-0 bg-[#000000b4] hidden peer-checked:flex items-center justify-center z-50">
-                  {/* MODAL CARD */}
-                  <div className="bg-white rounded-2xl shadow-2xl w-11/12 sm:w-[450px] p-6 relative">
-                    {/* CLOSE BUTTON */}
-                    <label
-                      htmlFor="learn-more-toggle"
-                      className="absolute top-5 right-7 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer"
-                    >
-                      ×
-                    </label>
+                  {/* OVERLAY */}
+                  <div className="fixed inset-0 bg-[#000000b4] hidden peer-checked:flex items-center justify-center z-50">
+                    {/* MODAL CARD */}
+                    <div className="bg-white rounded-2xl shadow-2xl w-11/12 sm:w-[450px] p-6 relative">
+                      {/* CLOSE BUTTON */}
+                      <label
+                        htmlFor="learn-more-toggle"
+                        className="absolute top-5 right-7 text-gray-500 hover:text-gray-800 text-2xl font-bold cursor-pointer"
+                      >
+                        ×
+                      </label>
 
-                    {/* HEADER */}
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-2 space-y-5">
-                      Paid Contributor
-                    </h2>
-                    <p className="text-gray-600 text-md mb-4">
-                      As a paid contributor, you have the opportunity to earn
-                      when businesses approve the profiles you create for them.
-                    </p>
+                      {/* HEADER */}
+                      <h2 className="text-2xl font-semibold text-gray-900 mb-2 space-y-5">
+                        Paid Contributor
+                      </h2>
+                      <p className="text-gray-600 text-md mb-4">
+                        As a paid contributor, you have the opportunity to earn
+                        when businesses approve the profiles you create for them.
+                      </p>
+
+                      
 
                     {/* FORM */}
                     <form className="space-y-4">
@@ -1197,10 +1204,13 @@ const getStatusInfo = (b: Business) => {
                       </div>
                     </form>
                   </div>
+                  {/* pop-up button END */}
                 </div>
-                {/* pop-up button END */}
-              </div>
-            </section>
+                </div>
+              </section>
+            )}
+
+
 
             {/* Business cards */}
             <section>
@@ -1334,35 +1344,35 @@ const getStatusInfo = (b: Business) => {
                               Accessible Features
                             </span>
                             <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                        {(() => {
-                            const list = business.accessibilityFeatures || [];
-                            const count = list.length;
+                              {(() => {
+                                const list = business.accessibilityFeatures || [];
+                                const count = list.length;
 
-                            if (count === 0) return <li>No features</li>;
+                                if (count === 0) return <li>No features</li>;
 
-                            // Only first 2 items
-                            const firstTwo = list.slice(0, 2);
+                                // Only first 2 items
+                                const firstTwo = list.slice(0, 2);
 
-                            return (
-                            <>
-                                {firstTwo.map((feature) => (
-                                <li
-                                    key={feature.id}
-                                    className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
-                                >
-                                    {getFeatureName(feature)}
-                                </li>
-                                ))}
+                                return (
+                                  <>
+                                    {firstTwo.map((feature) => (
+                                      <li
+                                        key={feature.id}
+                                        className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
+                                      >
+                                        {getFeatureName(feature)}
+                                      </li>
+                                    ))}
 
-                                {count > 2 && (
-                                <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
-                                    +{count - 2}
-                                </li>
-                                )}
-                            </>
-                            );
-                        })()}
-                        </ul>
+                                    {count > 2 && (
+                                      <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
+                                        +{count - 2}
+                                      </li>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </ul>
 
                           </div>
                         </div>
@@ -1409,11 +1419,10 @@ const getStatusInfo = (b: Business) => {
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                        currentPage === 1
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                      }`}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                     >
                       Previous
                     </button>
@@ -1427,11 +1436,10 @@ const getStatusInfo = (b: Business) => {
                           ) : (
                             <button
                               onClick={() => goToPage(page as number)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                                currentPage === page
-                                  ? "bg-[#0519CE] text-white"
-                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                              }`}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                                ? "bg-[#0519CE] text-white"
+                                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                }`}
                             >
                               {page}
                             </button>
@@ -1444,11 +1452,10 @@ const getStatusInfo = (b: Business) => {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                        currentPage === totalPages
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                      }`}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                     >
                       Next
                     </button>
@@ -1460,11 +1467,11 @@ const getStatusInfo = (b: Business) => {
         </div>
       </div>
       {OpenAddBusinessModal && (
-              <AddBusinessModal
-                setOpenAddBusinessModal={setOpenAddBusinessModal}
-                onBusinessCreated={handleBusinessCreated} // ✅ refresh on create
-              />
-            )}
+        <AddBusinessModal
+          setOpenAddBusinessModal={setOpenAddBusinessModal}
+          onBusinessCreated={handleBusinessCreated} // ✅ refresh on create
+        />
+      )}
     </div>
   );
 }
