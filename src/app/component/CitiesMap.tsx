@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import 'leaflet/dist/leaflet.css';
+import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
 import Link from "next/link";
 
 // TypeScript Interfaces
@@ -9,8 +9,8 @@ interface City {
   id: string;
   city_name: string;
   featured: boolean;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: string | number | null;
+  longitude: string | number | null;
   display_order: number | null;
   picture_url: string | null;
   slug: string;
@@ -29,119 +29,59 @@ interface ApiResponse {
   pageCount: number;
 }
 
+const mapContainerStyle = {
+  width: '100%',
+  height: '100%'
+};
+
+const defaultCenter = {
+  lat: 37.0902,  // Center of USA
+  lng: -95.7129
+};
+
 export default function CitiesMap() {
   const [cities, setCities] = useState<City[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [mapCenter, setMapCenter] = useState<[number, number]>([25, 51]);
-  const [mapZoom, setMapZoom] = useState<number>(4);
-  const [MapComponent, setMapComponent] = useState<any>(null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [mapCenter, setMapCenter] = useState(defaultCenter);
+  const [mapZoom, setMapZoom] = useState<number>(4);  // Good zoom level for USA
+  const [map, setMap] = useState<google.maps.Map | null>(null);
   const [shouldFitBounds, setShouldFitBounds] = useState<boolean>(true);
 
-    const DEFAULT_IMAGE = "https://411bac323421e63611e34ce12875d6ae.cdn.bubble.io/cdn-cgi/image/w=256,h=181,f=auto,dpr=0.75,fit=cover,q=75/f1744979714205x630911143129575800/Untitled%20design%20%2829%29.png";
+  const DEFAULT_IMAGE = "https://411bac323421e63611e34ce12875d6ae.cdn.bubble.io/cdn-cgi/image/w=256,h=181,f=auto,dpr=0.75,fit=cover,q=75/f1744979714205x630911143129575800/Untitled%20design%20%2829%29.png";
 
+  // Filter cities with search term
+  const filteredCities = cities.filter((city) =>
+    city.city_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  // Dynamically load the map component only on client side
+  // Filter cities with valid coordinates for map display
+  const validCities = filteredCities
+    .map(city => ({
+      ...city,
+      latitude: city.latitude ? parseFloat(city.latitude.toString()) : null,
+      longitude: city.longitude ? parseFloat(city.longitude.toString()) : null
+    }))
+    .filter(
+      (city) => 
+        city.latitude !== null && 
+        city.longitude !== null &&
+        !isNaN(city.latitude) &&
+        !isNaN(city.longitude)
+    );
+
   useEffect(() => {
-    const loadMap = async () => {
-      if (typeof window !== 'undefined') {
-        const L = (await import('leaflet')).default;
-        const { MapContainer, TileLayer, Marker, Popup, useMap } = await import('react-leaflet');
-        
-        // Create custom icon for cities
-        const customIcon = new L.Icon({
-          iconUrl: '/assets/images/favicon.png',
-          iconSize: [32, 32],
-          iconAnchor: [16, 32],
-          popupAnchor: [0, -32],
-        });
-
-        // Create Map Controller component
-        function MapController({ 
-          center, 
-          zoom, 
-          cities, 
-          shouldFitBounds 
-        }: { 
-          center: [number, number]; 
-          zoom: number; 
-          cities: City[];
-          shouldFitBounds: boolean;
-        }) {
-          const map = useMap();
-          
-          React.useEffect(() => {
-            if (shouldFitBounds && cities.length > 0) {
-              // Calculate bounds to fit all markers
-              const validCities = cities.filter(c => c.latitude && c.longitude);
-              
-              if (validCities.length > 0) {
-                const bounds = L.latLngBounds(
-                  validCities.map(c => [c.latitude!, c.longitude!] as [number, number])
-                );
-                map.fitBounds(bounds, { padding: [50, 50] });
-              }
-            } else if (center && !shouldFitBounds) {
-              map.setView(center, zoom);
-            }
-          }, [center, zoom, map, cities, shouldFitBounds]);
-          
-          return null;
-        }
-
-        // Create the map component
-        const Map = ({ cities, center, zoom, shouldFitBounds }: any) => (
-          <MapContainer
-            center={center}
-            zoom={zoom}
-            style={{ height: '100%', width: '100%' }}
-            scrollWheelZoom={true}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <MapController 
-              center={center} 
-              zoom={zoom} 
-              cities={cities}
-              shouldFitBounds={shouldFitBounds}
-            />
-            {cities.map((city: City) => {
-              if (!city.latitude || !city.longitude) return null;
-              return (
-                <Marker
-                  key={city.id}
-                  position={[city.latitude, city.longitude]}
-                  icon={customIcon}
-                >
-                  <Popup>
-                    <div className="p-2">
-                      <h3 className="font-bold text-base mb-1">{city.city_name}</h3>
-                      <p className="text-sm text-gray-600 mb-2">
-                        {city.businessCount} {city.businessCount === 1 ? 'Business' : 'Businesses'}
-                      </p>
-                      {city.featured && (
-                        <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                          Featured
-                        </span>
-                      )}
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MapContainer>
-        );
-
-        setMapComponent(() => Map);
-      }
-    };
-
-    loadMap();
     fetchCities();
   }, []);
+
+  // Auto-fit bounds when cities load
+  useEffect(() => {
+    if (map && validCities.length > 0 && shouldFitBounds) {
+      fitBoundsToMarkers();
+    }
+  }, [map, validCities, shouldFitBounds]);
 
   const fetchCities = async () => {
     try {
@@ -155,10 +95,6 @@ export default function CitiesMap() {
 
       const result: ApiResponse = await response.json();
       setCities(result.items || []);
-      
-      // Enable fit bounds for initial load
-      setShouldFitBounds(true);
-
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -168,16 +104,63 @@ export default function CitiesMap() {
     }
   };
 
-  const filteredCities = cities.filter((city) =>
-    city.city_name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fitBoundsToMarkers = () => {
+    if (!map) return;
+
+    const validMapCities = validCities.filter(c => c.latitude && c.longitude);
+    
+    if (validMapCities.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    validMapCities.forEach(city => {
+      bounds.extend({ lat: city.latitude!, lng: city.longitude! });
+    });
+
+    map.fitBounds(bounds);
+  };
 
   const handleCityClick = (city: City) => {
-    if (city.latitude && city.longitude) {
-      setShouldFitBounds(false); // Disable auto-fit when clicking
-      setMapCenter([city.latitude, city.longitude]);
+    const lat = city.latitude ? parseFloat(city.latitude.toString()) : null;
+    const lng = city.longitude ? parseFloat(city.longitude.toString()) : null;
+    
+    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+      setShouldFitBounds(false);  // Disable auto-fit when clicking a city
+      setSelectedCity(city);
+      setMapCenter({ lat, lng });
       setMapZoom(12);
+      
+      if (map) {
+        map.panTo({ lat, lng });
+        map.setZoom(12);
+      }
     }
+  };
+
+  const onMapLoad = (mapInstance: google.maps.Map) => {
+    setMap(mapInstance);
+  };
+
+  // Create marker icon using a reliable public icon URL
+  
+  // const getMarkerIcon = () => {
+  //   if (typeof google !== 'undefined') {
+  //     return {
+  //       url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',  // Google's reliable marker icon
+  //       scaledSize: new google.maps.Size(32, 32),
+  //     };
+  //   }
+  //   return undefined;
+  // };
+
+  const getMarkerIcon = () => {
+    if (typeof google !== 'undefined') {
+      return {
+        url: '/assets/images/favicon.png',
+        scaledSize: new google.maps.Size(32, 32),
+        anchor: new google.maps.Point(16, 16), // Center the icon on the coordinates
+      };
+    }
+    return undefined;
   };
 
   return (
@@ -230,42 +213,32 @@ export default function CitiesMap() {
                   className="w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-4 transition hover:bg-gray-50 text-left"
                 >
                   <div className="w-[128px] rounded-2xl">
-                   
                     <img
-                    src={city?.picture_url || DEFAULT_IMAGE}
+                      src={city?.picture_url || DEFAULT_IMAGE}
                       alt={city?.city_name || 'City'}
-                    className="w-[128px] h-[96px] rounded-2xl object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src =DEFAULT_IMAGE;
-                    }} />
-
+                      className="w-[128px] h-[96px] rounded-2xl object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = DEFAULT_IMAGE;
+                      }}
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-lg">{city.city_name}</h3>
-                      {/* {city.featured && (
-                        <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded">
-                          Featured
-                        </span>
-                      )} */}
                     </div>
                     <p className="text-sm text-gray-600">
                       {city.businessCount} {city.businessCount === 1 ? 'Business' : 'Businesses'}
                     </p>
-                    {city.latitude && city.longitude && (
-                      <p className="text-xs text-gray-400 mt-1">
-                        {/* 📍 {city.latitude.toFixed(4)}, {city.longitude.toFixed(4)} */}
-                      </p>
-                    )}
                   </div>
                 </button>
               ))
             )}
           </div>
         </div>
+
         {/* Map */}
-        <div className="w-full lg:w-2/3 h-[580px] rounded-lg shadow">
-          {!MapComponent || loading ? (
+        <div className="w-full lg:w-2/3 h-[580px] rounded-lg shadow overflow-hidden">
+          {loading ? (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
               <p className="text-gray-600">Loading map...</p>
             </div>
@@ -274,16 +247,55 @@ export default function CitiesMap() {
               <p className="text-red-600">Error: {error}</p>
             </div>
           ) : (
-            <MapComponent
-              cities={filteredCities}
+            <GoogleMap
+              mapContainerStyle={mapContainerStyle}
               center={mapCenter}
               zoom={mapZoom}
-              shouldFitBounds={shouldFitBounds}
-            />
+              onLoad={onMapLoad}
+              options={{
+                zoomControl: true,
+                streetViewControl: false,
+                mapTypeControl: true,
+                fullscreenControl: true,
+              }}
+            >
+              {validCities.map((city) => (
+                <Marker
+                  key={city.id}
+                  position={{ lat: city.latitude!, lng: city.longitude! }}
+                  onClick={() => setSelectedCity(city)}
+                  icon={getMarkerIcon()}
+                />
+              ))}
+
+              {selectedCity && selectedCity.latitude && selectedCity.longitude && (() => {
+                const lat = parseFloat(selectedCity.latitude.toString());
+                const lng = parseFloat(selectedCity.longitude.toString());
+                if (!isNaN(lat) && !isNaN(lng)) {
+                  return (
+                    <InfoWindow
+                      position={{ lat, lng }}
+                      onCloseClick={() => setSelectedCity(null)}
+                    >
+                      <div className="p-2">
+                        <h3 className="font-bold text-base mb-1">{selectedCity.city_name}</h3>
+                        <p className="text-sm text-gray-600 mb-2">
+                          {selectedCity.businessCount} {selectedCity.businessCount === 1 ? 'Business' : 'Businesses'}
+                        </p>
+                        {selectedCity.featured && (
+                          <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                            Featured
+                          </span>
+                        )}
+                      </div>
+                    </InfoWindow>
+                  );
+                }
+                return null;
+              })()}
+            </GoogleMap>
           )}
         </div>
-
-        
       </div>
     </section>
   );
