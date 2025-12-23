@@ -341,19 +341,23 @@ const startSubscriptionCheckout = async (
   };
 
   // ✅ Plan modal confirm
-  const handleConfirmPlan = async () => {
-  if (!selectedPlan) {
-    setCreateError("Please choose a subscription plan first.");
-    return;
+  const handleConfirmPlan = async (plan: PlanKey) => {
+  setCreateError(null);
+
+  // full screen loader ON
+  setIsCreating(true);
+
+  try {
+    const businessId = await handleCreateBusiness(plan);
+    if (!businessId) return;
+
+    await startSubscriptionCheckout(plan, businessId);
+  } finally {
+    // Stripe redirect ho jata hai, warna yahan OFF ho jayega
+    setIsCreating(false);
   }
-
-  // 1️⃣ Create business draft
-  const businessId = await handleCreateBusiness(selectedPlan);
-  if (!businessId) return;
-
-  // 2️⃣ Start Stripe subscription checkout
-  await startSubscriptionCheckout(selectedPlan, businessId);
 };
+
 
 
   return (
@@ -602,16 +606,16 @@ const startSubscriptionCheckout = async (
           <div className="p-6 mt-auto">
             <button
               type="button"
-              className="w-full rounded-full bg-blue-500 text-white font-bold py-4 text-lg hover:bg-blue-600 transition"
+              className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={(e) => {
-                e.stopPropagation(); // ✅ card click conflict avoid
-                setSelectedPlan("monthly");
-                handleConfirmPlan();
+                e.stopPropagation();
+                handleConfirmPlan("monthly"); // ✅ direct plan
               }}
               disabled={isCreating}
             >
               Choose Plan
             </button>
+
           </div>
         </div>
 
@@ -659,19 +663,31 @@ const startSubscriptionCheckout = async (
           <div className="p-6 bg-white mt-auto rounded-b-[36px]">
             <button
               type="button"
-              className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition"
+              className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
               onClick={(e) => {
-                e.stopPropagation(); // ✅ card click conflict avoid
-                setSelectedPlan("yearly");
-                handleConfirmPlan();
+                e.stopPropagation();
+                handleConfirmPlan("yearly"); // ✅ direct plan
               }}
               disabled={isCreating}
             >
               Choose Plan
             </button>
+
           </div>
         </div>
       </div>
+    </div>
+  </div>
+)}
+{isCreating && (
+  <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+    <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl flex flex-col items-center gap-3">
+      <img
+        src="/assets/images/favicon.png"
+        className="w-12 h-12 animate-spin"
+        alt="Loading"
+      />
+      <p className="text-gray-700 font-semibold">Processing...</p>
     </div>
   </div>
 )}

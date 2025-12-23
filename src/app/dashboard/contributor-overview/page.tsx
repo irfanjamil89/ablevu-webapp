@@ -163,6 +163,7 @@ export default function Page() {
   
 
   const [isCreating, setIsCreating] = useState(false);
+  const [isOnboardingLoading, setIsOnboardingLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
@@ -188,29 +189,42 @@ export default function Page() {
     return;
   }
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({}),
+  try {
+    setIsOnboardingLoading(true);
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.message || "Failed to start onboarding");
+      return;
     }
-  );
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    alert(err.message || "Failed to start onboarding");
-    return;
-  }
+    const data = await res.json();
 
-  const data = await res.json();
-  if (data?.url) {
-    window.location.href = data.url; // ✅ redirect to Stripe
+    if (data?.url) {
+      window.location.href = data.url; // ✅ redirect
+      return;
+    }
+
+    alert("Stripe onboarding url not found.");
+  } catch (e: any) {
+    alert(e?.message || "Something went wrong");
+  } finally {
+    setIsOnboardingLoading(false);
   }
 };
+
 
   // ---------- Fetch business types & accessible features ----------
 
@@ -766,6 +780,20 @@ const getStatusInfo = (b: Business) => {
   // ---------- UI ----------
 
   return (
+    <>
+    {isOnboardingLoading && (
+  <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+    <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl flex flex-col items-center gap-3">
+      <img
+        src="/assets/images/favicon.png"
+        className="w-12 h-12 animate-spin"
+        alt="Favicon"
+      />
+      <p className="text-gray-700 font-semibold">Redirecting to Stripe…</p>
+    </div>
+  </div>
+)}
+
     <div className="w-full h-screen">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
@@ -1187,13 +1215,13 @@ const getStatusInfo = (b: Business) => {
                       {/* BUTTONS */}
                       <div className="flex justify-center gap-3 pt-2">
                         <button
-                      type="button"
-                      onClick={handleCompleteAccountDetails}
-                      className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700"
-                    >
-                      Complete Account Details
-                    </button>
-
+                          type="button"
+                          onClick={handleCompleteAccountDetails}
+                          disabled={isOnboardingLoading}
+                          className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          {isOnboardingLoading ? "Processing..." : "Complete Account Details"}
+                        </button>
                       </div>
                     </form>
                   </div>
@@ -1466,5 +1494,6 @@ const getStatusInfo = (b: Business) => {
               />
             )}
     </div>
+    </>
   );
 }

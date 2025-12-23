@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AiOutlineLike } from "react-icons/ai";
+import { AiOutlineLike,AiFillLike } from "react-icons/ai";
 import {
   BsBookmark,
   BsBookmarkFill,
@@ -164,6 +164,8 @@ export default function BusinessSidebar({
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [likeLoading, setLikeLoading] = useState(false);
   const [likeCount, setLikeCount] = useState<number>(0);
+  const [likedByUser, setLikedByUser] = useState(false);
+  const [likeId, setLikeId] = useState<string | null>(null);
 
   // ⭐ SAVE STATE
   const [saved, setSaved] = useState(false);
@@ -319,56 +321,77 @@ export default function BusinessSidebar({
   }, [business?.id, API_BASE_URL]);
 
   const handleRecommendClick = async () => {
-    if (!business) return;
-    if (!API_BASE_URL) {
-      showError("Error", "API base URL is not configured.");
-      return;
-    }
+  if (!business || likeLoading) return;
 
-    try {
-      setLikeLoading(true);
+  const token =
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("access_token")
+      : null;
 
-      const token =
-        typeof window !== "undefined"
-          ? window.localStorage.getItem("access_token")
-          : null;
+  if (!token) {
+    showError("Login Required", "Please login to like this business.");
+    return;
+  }
 
+  try {
+    setLikeLoading(true);
+
+    // 🔴 UNLIKE
+    if (likedByUser && likeId) {
       const res = await fetch(
-        `${API_BASE_URL}/business-recomendations/create`,
+        `${API_BASE_URL}/business-recomendations/delete/${likeId}`,
         {
-          method: "POST",
+          method: "DELETE",
           headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            businessId: business.id,
-            label: "like",
-            active: true,
-          }),
         }
       );
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        const msg =
-          (body as { message?: string })?.message ||
-          `Failed to create recommendation (${res.status})`;
-        throw new Error(msg);
-      }
+      if (!res.ok) throw new Error("Failed to remove like");
 
-      setLikeCount((prev) => prev + 1);
+      setLikedByUser(false);
+      setLikeId(null);
+      setLikeCount((prev) => Math.max(0, prev - 1));
 
-      showSuccess("Thank you!", "Your recommendation has been submitted.");
-    } catch (err) {
-      console.error(err);
-      const msg =
-        err instanceof Error ? err.message : "Failed to submit recommendation.";
-      showError("Error", msg);
-    } finally {
-      setLikeLoading(false);
+      showSuccess("Removed", "Like removed successfully.");
+      return;
     }
-  };
+
+    // 🟢 LIKE
+    const res = await fetch(
+      "http://localhost:3006/business-recomendations/create",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          businessId: business.id,
+          label: "like",
+          active: true,
+        }),
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed to like");
+
+    const data = await res.json();
+    const createdLike = data?.data || data;
+
+    setLikedByUser(true);
+    setLikeId(createdLike?.id || null);
+    setLikeCount((prev) => prev + 1);
+
+    showSuccess("Liked", "You liked this business.");
+  } catch (err: any) {
+    showError("Error", err.message || "Action failed");
+  } finally {
+    setLikeLoading(false);
+  }
+};
+
 
   const handleShare = async () => {
     try {
@@ -381,19 +404,40 @@ export default function BusinessSidebar({
   };
 
   useEffect(() => {
-    if (!business?.businessRecomendations) {
-      setLikeCount(0);
-      return;
+  if (!business?.businessRecomendations) {
+    setLikedByUser(false);
+    setLikeId(null);
+    setLikeCount(0);
+    return;
+  }
+
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("access_token")
+      : null;
+
+  const userId = getUserIdFromToken(token);
+
+  let found = false;
+  let foundLikeId: string | null = null;
+
+  const count = business.businessRecomendations.filter((rec: any) => {
+    const isLike = rec.label === "like" && rec.active !== false;
+
+    if (isLike && rec.created_by === userId) {
+      found = true;
+      foundLikeId = rec.id; // 🔥 THIS IS IMPORTANT
     }
 
-    const count = business.businessRecomendations.filter((rec: any) => {
-      const label = (rec.label || "").toLowerCase().trim();
-      const isActive = rec.active !== false;
-      return label === "like" && isActive;
-    }).length;
+    return isLike;
+  }).length;
 
-    setLikeCount(count);
-  }, [business?.businessRecomendations]);
+  setLikeCount(count);
+  setLikedByUser(found);
+  setLikeId(foundLikeId);
+}, [business?.businessRecomendations]);
+
+
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -728,13 +772,23 @@ export default function BusinessSidebar({
           <div className="flex items-center gap-3">
             {/* LIKE BUTTON */}
             <button
-              className="flex items-center gap-1 py-1 px-3 rounded-2xl bg-[#f0f1ff] text-[#0205d3]"
-              onClick={handleRecommendClick}
-              disabled={likeLoading}
-            >
-              <AiOutlineLike className="w-5 h-5" />
-              <span>{likeCount}</span>
-            </button>
+  onClick={handleRecommendClick}
+  disabled={likeLoading}
+  className={`flex items-center gap-1 py-1 px-3 rounded-2xl
+    ${
+      likedByUser
+        ? "bg-[#0205d3] text-white"
+        : "bg-[#f0f1ff] text-[#0205d3]"
+    }`}
+>
+  {likedByUser ? (
+    <AiFillLike className="w-5 h-5" />
+  ) : (
+    <AiOutlineLike className="w-5 h-5" />
+  )}
+  <span>{likeCount}</span>
+</button>
+
 
             {/* SAVE / BOOKMARK BUTTON */}
             <button
