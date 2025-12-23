@@ -69,3 +69,17 @@ body {
 .leaflet-container a.redd{
   color: white;
 }
+
+.leaflet-marker-icon.leaflet-zoom-animated.leaflet-interactive{
+  object-fit: contain;
+}
+
+.list-center li{
+  display: flex;
+  align-items: center;
+}
+
+
+.m-right-0{
+  margin-right: 0 !important;
+}

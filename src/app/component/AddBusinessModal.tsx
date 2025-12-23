@@ -22,6 +22,9 @@ type BusinessType = {
   name: string;
 };
 
+// ✅ Plan type
+type PlanKey = "monthly" | "yearly";
+
 // ---------- Address helper ----------
 
 function extractAddressParts(result: { address_components?: any[] }) {
@@ -88,8 +91,72 @@ export default function AddBusinessModal({
   const [createError, setCreateError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // ---------- Fetch business types on mount ----------
+  // ✅ NEW: plan modal states
+  const [openPlanModal, setOpenPlanModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
 
+  const getPriceIdByPlan = (plan: PlanKey) => {
+  if (plan === "monthly") {
+    return process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "";
+  }
+  if (plan === "yearly") {
+    return process.env.NEXT_PUBLIC_STRIPE_PRICE_YEARLY || "";
+  }
+  return "";
+};
+
+const startSubscriptionCheckout = async (
+  plan: PlanKey,
+  businessId: string
+) => {
+  const token =
+    typeof window !== "undefined"
+      ? localStorage.getItem("access_token")
+      : null;
+
+  if (!token) {
+    setCreateError("You must be logged in.");
+    return;
+  }
+
+  const priceId = getPriceIdByPlan(plan);
+
+  if (!priceId) {
+    setCreateError("Stripe price id missing.");
+    return;
+  }
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        business_id: businessId,
+        package: plan,
+        price_id: priceId,
+      }),
+    }
+  );
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    setCreateError(data?.message || "Subscription checkout failed");
+    return;
+  }
+
+  if (data?.url) {
+    // ✅ STRIPE REDIRECT
+    window.location.href = data.url;
+  }
+};
+
+
+  // ---------- Fetch business types on mount ----------
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -118,9 +185,8 @@ export default function AddBusinessModal({
     }
   };
 
-  // ---------- Create business handler ----------
-
-  const handleCreateBusiness = async () => {
+  // ✅ Step-1: validate then open plan modal (NO create here)
+  const handleOpenPlanAfterValidation = () => {
     setCreateError(null);
     setSuccessMessage(null);
 
@@ -147,6 +213,26 @@ export default function AddBusinessModal({
       return;
     }
 
+    // ✅ all good => open plan popup
+    setSelectedPlan(null);
+    setOpenPlanModal(true);
+  };
+
+  // ---------- Create business handler (NOW depends on plan) ----------
+  const handleCreateBusiness = async (plan: PlanKey): Promise<string | null> => {
+    setCreateError(null);
+    setSuccessMessage(null);
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+
+    if (!token) {
+      setCreateError("You must be logged in before creating a business.");
+      return null;
+    }
+
     const payload = {
       name: newBusiness.name.trim(),
       business_type: [selectedCategoryId],
@@ -164,6 +250,9 @@ export default function AddBusinessModal({
 
       active: false,
       business_status: "draft",
+
+      // ✅ add selected plan
+      subscription_plan: plan, // "monthly" | "yearly"
     };
 
     try {
@@ -234,22 +323,12 @@ export default function AddBusinessModal({
           );
         }
       }
+       return businessId;
+      
 
-      // Show success message only after both operations complete
-      setSuccessMessage(
-        selectedImage
-          ? "Business and logo uploaded successfully!"
-          : "Business created successfully!"
-      );
-
-        onBusinessCreated();
-
-      // ✅ Close popup shortly after success
-      setTimeout(() => {
-        setOpenAddBusinessModal(false);
-      }, 800);
     } catch (err: any) {
       setCreateError(err.message || "Something went wrong");
+      return null;
     } finally {
       setIsCreating(false);
     }
@@ -261,16 +340,30 @@ export default function AddBusinessModal({
     }
   };
 
-  // ---------- UI ----------
+  // ✅ Plan modal confirm
+  const handleConfirmPlan = async () => {
+  if (!selectedPlan) {
+    setCreateError("Please choose a subscription plan first.");
+    return;
+  }
+
+  // 1️⃣ Create business draft
+  const businessId = await handleCreateBusiness(selectedPlan);
+  if (!businessId) return;
+
+  // 2️⃣ Start Stripe subscription checkout
+  await startSubscriptionCheckout(selectedPlan, businessId);
+};
+
 
   return (
     <>
-      {/* Modal Backdrop - Fixed with high z-index */}
+      {/* Modal Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] flex items-center justify-center p-4"
         onClick={handleBackdropClick}
       >
-        {/* Modal Container - Scrollable */}
+        {/* Modal Container */}
         <div className="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl z-[9999] relative">
           {/* Close Button */}
           <button
@@ -279,26 +372,16 @@ export default function AddBusinessModal({
             type="button"
             disabled={isCreating}
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
-          {/* Modal Content */}
           <div className="p-6">
             <h2 className="text-2xl font-semibold text-gray-900 mb-1">
               Add New Business
             </h2>
+
             <p className="text-gray-600 text-sm mb-4">
               This business will remain locked until it has been claimed by the
               business. Please submit to admin for approval.
@@ -328,10 +411,7 @@ export default function AddBusinessModal({
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   value={newBusiness.name}
                   onChange={(e) =>
-                    setNewBusiness((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
+                    setNewBusiness((prev) => ({ ...prev, name: e.target.value }))
                   }
                 />
               </div>
@@ -345,14 +425,9 @@ export default function AddBusinessModal({
                 <GoogleAddressInput
                   value={newBusiness.fullAddress}
                   onChangeText={(text) =>
-                    setNewBusiness((prev) => ({
-                      ...prev,
-                      fullAddress: text,
-                    }))
+                    setNewBusiness((prev) => ({ ...prev, fullAddress: text }))
                   }
                   onSelect={(result) => {
-                    console.log("Selected place:", result);
-
                     const { city, state, country, zipcode } =
                       extractAddressParts(result);
 
@@ -369,28 +444,6 @@ export default function AddBusinessModal({
                     }));
                   }}
                 />
-
-                {/* Show parsed address details */}
-                {newBusiness.city && (
-                  <div className="mt-2 text-xs text-gray-600 space-y-1 bg-gray-50 p-2 rounded">
-                    <div>
-                      <span className="font-medium">City:</span>{" "}
-                      {newBusiness.city}
-                    </div>
-                    <div>
-                      <span className="font-medium">State:</span>{" "}
-                      {newBusiness.state}
-                    </div>
-                    <div>
-                      <span className="font-medium">Country:</span>{" "}
-                      {newBusiness.country}
-                    </div>
-                    <div>
-                      <span className="font-medium">Zipcode:</span>{" "}
-                      {newBusiness.zipcode}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Logo upload */}
@@ -398,6 +451,7 @@ export default function AddBusinessModal({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Upload Business Logo/Photo
                 </label>
+
                 <div className="relative">
                   <input
                     type="file"
@@ -422,18 +476,8 @@ export default function AddBusinessModal({
                       </div>
                     ) : (
                       <>
-                        <svg
-                          className="w-10 h-10 text-gray-400 mb-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                          />
+                        <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
                         <p className="text-blue-600 font-semibold text-sm">
                           Click to upload{" "}
@@ -461,12 +505,9 @@ export default function AddBusinessModal({
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   value={newBusiness.description}
                   onChange={(e) =>
-                    setNewBusiness((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
+                    setNewBusiness((prev) => ({ ...prev, description: e.target.value }))
                   }
-                ></textarea>
+                />
               </div>
 
               {/* Category select */}
@@ -488,10 +529,10 @@ export default function AddBusinessModal({
                 </select>
               </div>
 
-              {/* Submit Button */}
+              {/* ✅ Submit Button (NOW opens plan popup) */}
               <div className="pt-2">
                 <button
-                  onClick={handleCreateBusiness}
+                  onClick={handleOpenPlanAfterValidation}
                   disabled={isCreating}
                   className="w-full px-5 py-3 text-center text-sm font-bold bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
                 >
@@ -502,6 +543,138 @@ export default function AddBusinessModal({
           </div>
         </div>
       </div>
+
+      {/* ✅ Subscription Plan Popup */}
+      {openPlanModal && (
+  <div className="fixed inset-0 z-[10010] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="w-full max-w-2xl bg-white rounded-3xl shadow-1xl p-6 relative">
+      <button
+        type="button"
+        disabled={isCreating}
+        onClick={() => !isCreating && setOpenPlanModal(false)}
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+      >
+        ✕
+      </button>
+
+      <h3 className="text-2xl font-bold text-gray-900 text-center mb-6">
+        Choose a Subscription Plan
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Monthly */}
+        <div
+          className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${
+            selectedPlan === "monthly"
+              ? "ring-4 ring-blue-400"
+              : "hover:shadow-xl"
+          }`}
+          onClick={() => setSelectedPlan("monthly")}
+        >
+          {/* pill (no cut) */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
+            Monthly
+          </div>
+
+          {/* content */}
+          <div className="p-8 pt-20 flex-1">
+            <div className="text-center text-5xl font-extrabold text-gray-900 mb-8">
+              $29
+            </div>
+
+            <ul className="space-y-4 text-gray-700">
+              <li className="flex gap-3 items-start">
+                <span className="text-blue-500 text-xl">✓</span>
+                Upload 30+ photos & videos.
+              </li>
+              <li className="flex gap-3 items-start">
+                <span className="text-blue-500 text-xl">✓</span>
+                Integrate your 360° virtual tour.
+              </li>
+              <li className="flex gap-3 items-start">
+                <span className="text-blue-500 text-xl">✓</span>
+                Answer customer questions
+              </li>
+            </ul>
+          </div>
+
+          {/* button (aligned) */}
+          <div className="p-6 mt-auto">
+            <button
+              type="button"
+              className="w-full rounded-full bg-blue-500 text-white font-bold py-4 text-lg hover:bg-blue-600 transition"
+              onClick={(e) => {
+                e.stopPropagation(); // ✅ card click conflict avoid
+                setSelectedPlan("monthly");
+                handleConfirmPlan();
+              }}
+              disabled={isCreating}
+            >
+              Choose Plan
+            </button>
+          </div>
+        </div>
+
+        {/* Yearly */}
+        <div
+          className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${
+            selectedPlan === "yearly"
+              ? "ring-4 ring-blue-400"
+              : "hover:shadow-xl"
+          }`}
+          onClick={() => setSelectedPlan("yearly")}
+        >
+          {/* pill (no cut) */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
+            Yearly
+          </div>
+
+          {/* content */}
+          <div className="bg-[#06A7E8] text-white p-8 pt-20 flex-1 rounded-[36px]">
+            <div className="text-center text-5xl font-extrabold mb-8">
+              $299
+            </div>
+
+            <ul className="space-y-4">
+              <li className="flex gap-3 items-start">
+                <span className="text-white text-xl">✓</span>
+                Upload 30+ photos & videos.
+              </li>
+              <li className="flex gap-3 items-start">
+                <span className="text-white text-xl">✓</span>
+                Integrate your 360° virtual tour.
+              </li>
+              <li className="flex gap-3 items-start">
+                <span className="text-white text-xl">✓</span>
+                Answer customer questions
+              </li>
+              <li className="flex gap-3 items-start">
+                <span className="text-white text-xl">✓</span>
+                Most cost-effective
+              </li>
+            </ul>
+          </div>
+
+          {/* button (aligned) */}
+          <div className="p-6 bg-white mt-auto rounded-b-[36px]">
+            <button
+              type="button"
+              className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition"
+              onClick={(e) => {
+                e.stopPropagation(); // ✅ card click conflict avoid
+                setSelectedPlan("yearly");
+                handleConfirmPlan();
+              }}
+              disabled={isCreating}
+            >
+              Choose Plan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
     </>
   );
 }

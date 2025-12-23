@@ -29,8 +29,6 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         password: password,
       });
 
-
-
       // The API returns { access_token: "..." } with status 201
       if (response.status === 201 && response.data?.access_token) {
         localStorage.setItem("access_token", response.data.access_token);
@@ -40,11 +38,11 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         window.location.href = "/dashboard";
       }
       else {
-        setError("Username or Password is incrrect.");
+        setError("Username or Password is incorrect.");
       }
     } catch (err: any) {
       console.error("Login failed:", err?.response?.data || err);
-      setError("Username or Password is incrrect.");
+      setError("Username or Password is incorrect.");
     } finally {
       setLoading(false);
     }

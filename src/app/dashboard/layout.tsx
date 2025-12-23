@@ -161,33 +161,40 @@ export default function DashboardLayout({
 
   // ✅ fetch cart from backend
   const fetchCart = async () => {
-    try {
-      if (!loggedIn) {
-        setCartItems([]);
-        return;
-      }
-
-      setCartLoading(true);
-
-      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Failed to load cart");
-
-      const data = await res.json();
-      const items: CartItem[] = Array.isArray(data) ? data : data?.data ?? [];
-      setCartItems(items);
-    } catch (e) {
-      console.error("fetchCart error", e);
-    } finally {
-      setCartLoading(false);
+  try {
+    if (!loggedIn) {
+      setCartItems([]);
+      return;
     }
-  };
+
+    setCartLoading(true);
+
+    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) throw new Error("Failed to load cart");
+
+    const data = await res.json();
+    const items: CartItem[] = Array.isArray(data) ? data : data?.data ?? [];
+
+    // ✅ ONLY pending items
+    const pendingItems = items.filter(
+      (item) => (item.status || "").toLowerCase() === "pending"
+    );
+
+    setCartItems(pendingItems);
+  } catch (e) {
+    console.error("fetchCart error", e);
+  } finally {
+    setCartLoading(false);
+  }
+};
+
 
   // ✅ delete single item from backend
   const removeFromCart = async (id: string) => {

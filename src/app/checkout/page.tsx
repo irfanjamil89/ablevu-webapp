@@ -22,6 +22,7 @@ type Business = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingCart, setLoadingCart] = useState(true);
@@ -86,7 +87,9 @@ export default function CheckoutPage() {
         if (!res.ok) throw new Error("Failed to load cart items");
 
         const data = await res.json();
+        const items = Array.isArray(data) ? data : data?.data ?? [];
         setCart(Array.isArray(data) ? data : data?.data ?? []);
+        setCart(items.filter((x: any) => (x.status || "").toLowerCase() === "pending"));
       } catch (e: any) {
         setError(e.message || "Something went wrong");
       } finally {
@@ -167,7 +170,6 @@ export default function CheckoutPage() {
       throw new Error("Your cart is empty.");
     }
 
-    // ✅ batch_id server ko bhejna hai (items nahi)
     const batch_id = cart[0]?.batch_id;
     if (!batch_id) throw new Error("batch_id not found in cart.");
 
@@ -183,13 +185,15 @@ export default function CheckoutPage() {
     const data = await res.json();
     if (!res.ok) throw new Error(data?.message || "Failed to create checkout session");
 
+    // ✅ UI: remove this batch from cart (pending list)
+    setCart((prev) => prev.filter((i) => i.batch_id !== batch_id));
+
     window.location.href = data.url;
   } catch (e: any) {
     setError(e.message || "Something went wrong");
     setPayLoading(false);
   }
 };
-
 
   return (
     <div>
