@@ -360,7 +360,7 @@ export default function BusinessSidebar({
 
     // 🟢 LIKE
     const res = await fetch(
-      "http://localhost:3006/business-recomendations/create",
+      `${API_BASE_URL}/business-recomendations/create`,
       {
         method: "POST",
         headers: {
