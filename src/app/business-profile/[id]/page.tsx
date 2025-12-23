@@ -186,18 +186,13 @@ export default function Page({
 
             const token = getToken();
 
-            if (!token) {
-                setError("No access token found");
-                return;
-            }
-
             // 1️⃣ Fetch business profile
             const profileRes = await fetch(
                 `${API_BASE_URL}/business/business-profile/${id}`,
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
+                       
                     },
                 }
             );
@@ -941,6 +936,7 @@ export default function Page({
                 <BusinessSidebar
                     business={business}
                     businessTypes={businessTypes}
+                    businessOwner={business?.owner} 
                     loading={loading}
                     error={error}
                     setOpenDetailPopup={setOpenDetailPopup}

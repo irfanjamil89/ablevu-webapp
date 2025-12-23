@@ -51,6 +51,14 @@ export default function Page() {
 
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<Message | null>(null);
+  const [rules, setRules] = useState({
+    length: false,
+    lowercase: false,
+    uppercase: false,
+    number: false,
+    special: false,
+  });
+  const [passwordFocus, setPasswordFocus] = useState(false);
 
   const handleProfileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -217,13 +225,24 @@ export default function Page() {
       .catch((err) => console.error("Profile fetch error:", err));
   }, []);
 
-  const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+
+  setPasswordForm((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+  if (name === "newPassword") {
+    setRules({
+      length: value.length >= 12,
+      lowercase: /[a-z]/.test(value),
+      uppercase: /[A-Z]/.test(value),
+      number: /[0-9]/.test(value),
+      special: /[!@#$%]/.test(value),
+    });
+  }
+};
+
 
   const changePasswordRequest = async () => {
     const token = localStorage.getItem("access_token");
@@ -450,6 +469,8 @@ export default function Page() {
                 name="newPassword"
                 value={passwordForm.newPassword}
                 onChange={handlePasswordChange}
+                onFocus={() => setPasswordFocus(true)}
+                onBlur={() => setPasswordFocus(false)}
                 className="border border-gray-300 rounded-md p-3 mt-1 w-full"
               />
               <button
@@ -470,6 +491,38 @@ export default function Page() {
                   </svg>
                 )}
               </button>
+              <div
+                style={{
+                  maxHeight: passwordFocus ? "200px" : "0",
+                  opacity: passwordFocus ? 1 : 0,
+                }}
+                className="mt-2 text-xs transition-all duration-500 overflow-hidden mb-2"
+              >
+                <p className="text-[14px] mt-2">Password must:</p>
+                <ul className="list-disc pl-5 space-y-1 mt-2">
+
+                  <li className={`${rules.length ? "text-green-600" : "text-red-600"}`}>
+                    Be a minimum of 12 characters
+                  </li>
+
+                  <li className={`${rules.lowercase ? "text-green-600" : "text-red-600"}`}>
+                    Include at least one lowercase letter (a-z)
+                  </li>
+
+                  <li className={`${rules.uppercase ? "text-green-600" : "text-red-600"}`}>
+                    Include at least one uppercase letter (A-Z)
+                  </li>
+
+                  <li className={`${rules.number ? "text-green-600" : "text-red-600"}`}>
+                    Include at least one number (0-9)
+                  </li>
+
+                  <li className={`${rules.special ? "text-green-600" : "text-red-600"}`}>
+                    Include at least one special character (!@#$%)
+                  </li>
+
+                </ul>
+              </div>
             </div >
 
             <div className="relative">
