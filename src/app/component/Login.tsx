@@ -38,11 +38,11 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
         window.location.href = "/dashboard";
       }
       else {
-        setError("Username or Password is incrrect.");
+        setError("Username or Password is incorrect.");
       }
     } catch (err: any) {
       console.error("Login failed:", err?.response?.data || err);
-      setError("Username or Password is incrrect.");
+      setError("Username or Password is incorrect.");
     } finally {
       setLoading(false);
     }

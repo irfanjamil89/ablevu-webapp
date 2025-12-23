@@ -108,6 +108,7 @@ export default function ImageUpload() {
             setTimeout(() => {
                 setOpenEditModal(false);
                 setEditMessage("");
+                window.location.reload();
             }, 1500);
 
         } catch (error: any) {

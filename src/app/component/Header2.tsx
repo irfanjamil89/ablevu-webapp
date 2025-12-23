@@ -90,32 +90,32 @@ export default function Header2() {
   };
 
   useEffect(() => {
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as Node;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
 
-    // cart
-    if (cartOpen && cartRef.current && !cartRef.current.contains(target)) {
-      setCartOpen(false);
-    }
+      // cart
+      if (cartOpen && cartRef.current && !cartRef.current.contains(target)) {
+        setCartOpen(false);
+      }
 
-    // notifications (optional)
-    if (
-      notificationsOpen &&
-      notifRef.current &&
-      !notifRef.current.contains(target)
-    ) {
-      setNotificationsOpen(false);
-    }
+      // notifications (optional)
+      if (
+        notificationsOpen &&
+        notifRef.current &&
+        !notifRef.current.contains(target)
+      ) {
+        setNotificationsOpen(false);
+      }
 
-    // user dropdown (optional)
-    if (dropdownOpen && userRef.current && !userRef.current.contains(target)) {
-      setDropdownOpen(false);
-    }
-  };
+      // user dropdown (optional)
+      if (dropdownOpen && userRef.current && !userRef.current.contains(target)) {
+        setDropdownOpen(false);
+      }
+    };
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, [cartOpen, notificationsOpen, dropdownOpen]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [cartOpen, notificationsOpen, dropdownOpen]);
 
 
   const handleBusinessCreated = () => setOpenAddBusinessModal(false);
@@ -155,8 +155,8 @@ export default function Header2() {
       const rows: BusinessMini[] = Array.isArray(json)
         ? json
         : Array.isArray(json?.data)
-        ? json.data
-        : [];
+          ? json.data
+          : [];
 
       const map: Record<string, BusinessMini> = {};
       for (const b of rows) map[b.id] = b;
@@ -310,6 +310,12 @@ export default function Header2() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
+        case 'new-question':
+      window.location.href = `/dashboard/questions`;
+       break;
+       case 'new-review':
+         window.location.href = `/dashboard/reviews`;
+         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -375,7 +381,7 @@ export default function Header2() {
 
               <div className="fixed inset-0 w-[100%] translate-x-[-100%] border-r shadow-xl transition duration-300 peer-checked:translate-x-0 lg:static lg:w-auto lg:translate-x-0 lg:border-r-0 lg:shadow-none">
                 <div className="flex h-full flex-col justify-center lg:flex-row lg:items-center w-full bg-white lg:bg-transparent">
-                  <ul className="space-y-8 px-6 pt-32 text-gray-700 md:pe-6 lg:flex lg:space-x-4 lg:space-y-0 lg:pt-0 font-['Roboto'] font-bold">
+                  <ul className="list-center space-y-8 px-6 pt-32 text-gray-700 md:pe-6 lg:flex lg:space-x-4 lg:space-y-0 lg:pt-0 font-['Roboto'] font-bold">
                     <li>
                       <Link href="/" className="group relative">
                         <span className="text-black-800 relative">Home</span>
@@ -415,12 +421,14 @@ export default function Header2() {
                           <span className="relative">Share Feedback</span>
                         </li>
 
-                        <li
-                          onClick={() => setOpenAddBusinessModal(true)}
-                          className="cursor-pointer"
-                        >
-                          <span className="relative">Add Business</span>
-                        </li>
+                        { user?.user_role !== "User" ? (
+                          <li
+                            onClick={() => setOpenAddBusinessModal(true)}
+                            className="cursor-pointer"
+                          >
+                            <span className="relative">Add Business</span>
+                          </li>
+                        ) : null }
                       </div>
                     ) : null}
 
@@ -433,7 +441,7 @@ export default function Header2() {
                     </li>
 
                     {/* Notifications Dropdown */}
-                    <li className="relative ml-3"  ref={notifRef}>
+                    <li className="relative m-right-0" ref={notifRef}>
                       <button
                         onClick={() => {
                           setNotificationsOpen((prev) => !prev);
@@ -462,7 +470,7 @@ export default function Header2() {
                       </button>
 
                       {notificationsOpen && (
-                        <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
+                        <div className="absolute right-0 top-10 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
                           <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                             {notifications.length === 0 && (
                               <li className="px-4 py-6 text-gray-500 text-sm text-center">
@@ -489,7 +497,7 @@ export default function Header2() {
                                   className="hover:opacity-80"
                                 >
                                   <img
-                                    src="https://www.svgrepo.com/show/490436/trash-can.svg"
+                                    src="https://www.svgrepo.com/show/497079/eye-slash.svg"
                                     alt="Mark as read"
                                     className="w-5 h-5"
                                   />
@@ -502,7 +510,7 @@ export default function Header2() {
                     </li>
 
                     {/* Cart Dropdown (✅ integrated) */}
-                    <li className="relative ml-3" ref={cartRef}>
+                    <li className="relative" ref={cartRef}>
                       <button
                         onClick={async () => {
                           setCartOpen(!cartOpen);
@@ -525,7 +533,7 @@ export default function Header2() {
                       </button>
 
                       {cartOpen && (
-                        <div className="absolute right-0 mt-3 w-[26rem] bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                        <div className="absolute top-10 right-0 mt-3 w-[26rem] bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
                           {/* Header */}
                           <div className="px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
                             <div className="flex items-start justify-between">
@@ -695,6 +703,14 @@ export default function Header2() {
                                   }
                                   className="flex w-full text-left px-4 py-2 hover:text-[#0519ce] hover:bg-[#f0f1ff]"
                                 >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-5 h-5 mr-2"
+                                  >
+                                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+                                  </svg>{" "}
                                   Dashboard
                                 </button>
                               </li>
@@ -704,6 +720,14 @@ export default function Header2() {
                                   onClick={handleLogout}
                                   className="flex w-full text-left px-4 py-2 hover:text-red-600 hover:bg-[#ffebeb]"
                                 >
+                                   <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="w-5 h-5 mr-2"
+                                  >
+                                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
+                                  </svg>{" "}
                                   Logout
                                 </button>
                               </li>

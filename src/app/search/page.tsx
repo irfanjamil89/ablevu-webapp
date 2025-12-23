@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Header from "../component/Header2";
 import Footer from "../component/Footer";
+import Link from "next/link";
+
 
 // --------- TYPES ---------
 type BusinessTypeMaster = {
@@ -296,7 +298,7 @@ export default function Page() {
                           key={type.id}
                           type="button"
                           onClick={() => toggleBusinessType(type.id)}
-                          className={`text-sm px-3 py-1 rounded-full border transition ${
+                          className={`text-sm text-left px-3 py-1 rounded-full border transition ${
                             isSelected
                               ? "bg-[#0519CE] text-white border-[#0519CE]"
                               : "bg-white text-gray-700 border-gray-200 hover:bg-blue-50"
@@ -393,8 +395,9 @@ export default function Page() {
                   const featureTitles = getFeatureTitles(b);
 
                   return (
-                    <div
+                    <Link
                       key={b.id}
+                      href={`/business-profile/${b.id}`}
                       className="rounded-xl flex md:items-center flex-col md:flex-row font-['Helvetica'] bg-white md:bg-[#E5E5E5]"
                     >
                       {/* IMAGE / STATUS */}
@@ -555,7 +558,7 @@ export default function Page() {
                           <span className="text-sm">{getAddress(b)}</span>
                         </p>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </section>

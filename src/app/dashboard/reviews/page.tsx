@@ -187,7 +187,7 @@ export default function Page() {
               >
                 Private
               </label>
-              {userRole === "Admin" && (
+              {(userRole === "Admin" || userRole === "Business") && (
                 <>
                   {!review.approved ? (
                     <button

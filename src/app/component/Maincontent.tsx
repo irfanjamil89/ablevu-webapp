@@ -101,6 +101,20 @@ type BusinessCustomSection = {
   modified_at?: string;
 };
 
+type BusinessCustomSectionMedia = {
+  id: string;
+  business_id: string;
+  business_custom_section_id: string;
+  label?: string;
+  link: string;
+  description?: string;
+  active: boolean;
+  created_by: string;
+  modified_by: string;
+  created_at: string;
+  modified_at: string;
+};
+
 type BusinessMedia = {
   id: string;
   business_id: string;
@@ -214,6 +228,7 @@ type BusinessProfile = {
   businessQuestions?: BusinessQuestion[];
   businessPartners?: BusinessPartnerItem[];
   businessCustomSections?: BusinessCustomSection[];
+  businessCustomSectionsMedia?: BusinessCustomSectionMedia[];
   businessMedia?: BusinessMedia[];
   businessSchedule?: BusinessScheduleItem[];
   businessRecomendations?: any[];
@@ -283,16 +298,21 @@ interface MaincontentProps {
 
   onEditBusinessMedia?: (media: any) => void;
   onDeleteBusinessImage?: (image: BusinessImage) => void;
+  onDeleteCustomSectionMedia?: (media: BusinessCustomSectionMedia) => void;
+  onEditCustomSectionMedia?: (media: BusinessCustomSectionMedia) => void;
+  onAddCustomSectionMedia?: (sectionId: string) => void;
+
 
   // ⭐⭐ Global feedback handlers from Page
   showSuccess: (title: string, message: string, onClose?: () => void) => void;
   showError: (title: string, message: string, onClose?: () => void) => void;
+ 
 }
 
 export default function Maincontent({
   business,
   businessImages,
-   businessOwner,
+  businessOwner,
   loading,
   error,
   setOpenVirtualTour,
@@ -321,6 +341,9 @@ export default function Maincontent({
   onDeleteBusinessImage,
   setOpenAudioTourPopup,
   setCustomMediaPopup,
+  onDeleteCustomSectionMedia,
+  onEditCustomSectionMedia,
+  onAddCustomSectionMedia,
   showSuccess,
   showError,
 }: MaincontentProps) {
@@ -518,6 +541,7 @@ export default function Maincontent({
         )
       )
       : [];
+
 
   // ---------- Loading / Error ----------
   if (loading) {
@@ -1050,9 +1074,9 @@ export default function Maincontent({
                       </div>
 
                       <div className="text-gray-700 font-semibold">
-                      {q.show_name && q.created_by_name
-                      ? q.created_by_name
-                      : "Anonymous"}
+                        {q.show_name && q.created_by_name
+                          ? q.created_by_name
+                          : "Anonymous"}
                       </div>
                     </div>
 
@@ -1293,40 +1317,65 @@ export default function Maincontent({
           </div>
         </div>
 
-        <div className="p-6 bg-white border  rounded-3xl border-[#e5e5e7]">
-         
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Section Name</h1>
-            <a href="#" className="text-[#0519CE] text-md font-bold text-lg underline" onClick={()=> setCustomMediaPopup(true)}>
-              Add Media
-            </a>
-          </div>
+        <div className="p-6 bg-white border rounded-3xl border-[#e5e5e7]">
+          {business.businessCustomSections && business.businessCustomSections.length > 0 ? (
+            business.businessCustomSections.map((section) => (
+              <div key={section.id} className="mb-6">
+                {/* Section Header */}
+                <div className="flex justify-between items-center mb-4">
+                  <h1 className="text-2xl font-semibold text-gray-900">{section.label}</h1>
+                  <button
+                    onClick={() => { onAddCustomSectionMedia?.(section.id)
+                    }}
+                    className="text-[#0519CE] text-md font-bold text-lg underline"
+                  >
+                    Add Media
+                  </button>
+                </div>
 
-          {/* Card */}
-          <div className=" bg-white border p-6 rounded-3xl border-[#e5e5e7]">
-            {/* Icons Row */}
-            
-            <div className="flex justify-end gap-3 mb-4">
-              <CheckCircle className="w-6 h-6 text-green-500 cursor-pointer"  />
-              <Pencil className="w-6 h-6 text-yellow-500 cursor-pointer"  />
-              <Trash2 className="w-6 h-6 text-red-500 cursor-pointer"  />
+                {/* Section Card */}
+                <div className="bg-white border p-6 rounded-3xl border-[#e5e5e7]">
+                  {/* Media Items */}
+                  {business.businessCustomSectionsMedia
+                    ?.filter((media) => media.business_custom_section_id === section.id)
+                    .map((media) => (
+                      <div key={media.id} className="mb-6 border p-4 rounded-lg">
+                        <div className="flex justify-end gap-3 mb-4">
+                          <CheckCircle className="w-6 h-6 text-green-500 cursor-pointer" />
+                          < button onClick={() => onEditCustomSectionMedia?.(media)}>
+                          <Pencil className="w-6 h-6 text-yellow-500 cursor-pointer" />
+                          </button>
+                          <button onClick={() => onDeleteCustomSectionMedia?.(media)}>
+                            <Trash2
+                           className="w-6 h-6 text-red-500 cursor-pointer" />
+                          </button>
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">{media.label}</h2>
+                         <p className="text-gray-600 text-base mb-4">{media.description}</p>
+                        <a
+                          href={media.link}
+                          target="_blank"
+                          className="text-[#0519CE] text-md font-bold underline"
+                        >
+                          View
+                        </a>
+                      </div>
+                    ))}
+
+                  {business.businessCustomSectionsMedia?.filter(
+                    (media) => media.business_custom_section_id === section.id
+                  ).length === 0 && <p className="text-gray-500">No media added yet.</p>}
+                </div>
+              </div>
+            ))
+          ) : (
+             <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
+            <img src="/assets/images/blank.avif" alt="" />
+            <p className="mt-4 font-medium text-[#6d6d6d]">No custom sections available.</p>
             </div>
-             <div className="flex justify-end">
-              <a  href="#" className="text-[#0519CE] text-md font-bold text-base underline">
-              View
-            </a>
-             </div>
-
-            {/* Title */}
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Media Name</h2>
-
-            {/* Description */}
-            <p className="text-gray-600 text-base mb-4">Media Description</p>
-
-            {/* View Link */}
-           
-          </div>
+          )}
         </div>
+
 
         {/* {business.businessCustomSections &&
           business.businessCustomSections.length > 0 ? (

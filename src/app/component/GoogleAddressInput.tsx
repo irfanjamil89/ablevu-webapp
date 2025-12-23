@@ -82,6 +82,7 @@ export default function GoogleAddressInput({
       onChange={(e) => {
         onChangeText?.(e.target.value);
       }}
+      required
     />
   );
 }
