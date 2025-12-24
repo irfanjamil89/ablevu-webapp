@@ -3,6 +3,10 @@
 import React, { useEffect, useState } from "react";
 import AudioList from "./AudioList";
 import { CheckCircle, Pencil, Trash2 } from 'lucide-react';
+import Login from "./Login";
+import Signup from "./Signup";
+import ForgotPassword from "./Forgotpassword";
+import Successmodal from "./Successmodal";
 
 // ---- Types ----
 type VirtualTour = {
@@ -350,6 +354,12 @@ export default function Maincontent({
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [userId, setUserId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
+  const isLoggedIn = !!userId;
+  const isOwner = userId === businessOwner?.id;
+  const [openLoginModal, setOpenLoginModal] = useState(false);
+  const [openSignupModal, setOpenSignupModal] = useState(false);
+  const [openForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
+  const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
   const decodeJWT = (token: string) => {
     try {
@@ -576,6 +586,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Virtual Tours</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenVirtualTour(true)}
@@ -584,6 +595,7 @@ export default function Maincontent({
                 Add Virtual Tours
               </button>
             </div>
+            )}
           </div>
         </div>
         <p>
@@ -629,19 +641,23 @@ export default function Maincontent({
                     className="w-5 h-5 cursor-pointer"
                   />
                   {/* YELLOW PENCIL → edit popup */}
+                  {isOwner && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => onEditVirtualTour?.(tour)}
                   />
+                  )}
                   {/* RED DELETE → delete API */}
+                  {isOwner && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => onDeleteVirtualTour?.(tour)}
                   />
+                  )}
                 </div>
               </div>
             ))
@@ -658,6 +674,7 @@ export default function Maincontent({
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-[600] mb-4">Audio Tours</h3>
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAudioTourPopup(true)}
@@ -666,6 +683,7 @@ export default function Maincontent({
                 Add Audio Tour
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -688,6 +706,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Property Images</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenPropertyImagePopup(true)}
@@ -696,6 +715,7 @@ export default function Maincontent({
                 Add Property Images
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -721,18 +741,22 @@ export default function Maincontent({
                     alt="green-tick"
                     className="w-5 h-5 cursor-pointer"
                   />
+                  {isOwner && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => handleEditClick(image.id)}
                   />
+                  )}
+                  {isOwner && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => onDeleteBusinessImage?.(image)}
                   />
+                  )}
                 </div>
               </div>
             ))}
@@ -785,6 +809,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Accessibility Features</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAccessibilityFeaturePopup(true)}
@@ -793,6 +818,7 @@ export default function Maincontent({
                 Add Accessibility Features
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -808,6 +834,7 @@ export default function Maincontent({
                       alt="green-tick"
                       className="w-5 h-5 cursor-pointer"
                     />
+                    {isOwner && (
                     <img
                       src="/assets/images/red-delete.svg"
                       alt="red-delete"
@@ -816,6 +843,7 @@ export default function Maincontent({
                         onDeleteAccessibilityFeatureGroup?.(group)
                       }
                     />
+                    )}
                   </div>
                 </div>
 
@@ -863,6 +891,7 @@ export default function Maincontent({
           </h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenPartnerCertificationsPopup(true)}
@@ -871,6 +900,7 @@ export default function Maincontent({
                 Add Partner Certifications/Programs
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -903,12 +933,14 @@ export default function Maincontent({
                         alt="green-tick"
                         className="w-5 h-5 cursor-pointer"
                       />
+                      {isOwner && (
                       <img
                         src="/assets/images/red-delete.svg"
                         alt="red-delete"
                         className="w-5 h-5 cursor-pointer"
                         onClick={() => onDeletePartner?.(p.partner?.id)}
                       />
+                      )}
                     </div>
                   </div>
 
@@ -961,7 +993,13 @@ export default function Maincontent({
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setOpenWriteReviewsPopup(true)}
+                onClick={() => {
+                  if (!isLoggedIn) {
+                    setOpenLoginModal(true);
+                    return;
+                  }
+                  setOpenWriteReviewsPopup(true);
+                }}
                 className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
               >
                 Write Reviews
@@ -1014,12 +1052,14 @@ export default function Maincontent({
                           className="w-5 h-5 cursor-pointer"
                         />
                       )}
+                      {isOwner && (
                       <img
                         src="/assets/images/red-delete.svg"
                         alt="red-delete"
                         className="w-5 h-5 cursor-pointer"
                         onClick={() => onDeleteReview?.(r)}
                       />
+                      )}
                     </div>
                   </div>
 
@@ -1046,7 +1086,13 @@ export default function Maincontent({
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setOpenQuestionPopup(true)}
+                onClick={() =>{
+                 if (!isLoggedIn) {
+                    setOpenLoginModal(true);
+                    return;
+                  }
+                  setOpenQuestionPopup(true);
+                }}
                 className="px-3 py-2 text-md font-bold text-[#0519CE] rounded-full cursor-pointer underline transition"
               >
                 Add Questions
@@ -1086,12 +1132,14 @@ export default function Maincontent({
                         alt="green-tick"
                         className="w-5 h-5 cursor-pointer"
                       />
+                      {isOwner && (
                       <img
                         src="/assets/images/red-delete.svg"
                         alt="red-delete"
                         className="w-5 h-5 cursor-pointer"
                         onClick={() => onDeleteQuestion?.(q)}
                       />
+                      )}
                     </div>
                   </div>
 
@@ -1151,6 +1199,7 @@ export default function Maincontent({
             Additional Accessibility Resources
           </h3>
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAccessibilityResourcesPopup(true)}
@@ -1159,6 +1208,7 @@ export default function Maincontent({
                 Add Accessibility Resources
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -1176,18 +1226,22 @@ export default function Maincontent({
                     alt="green-tick"
                     className="w-5 h-5 cursor-pointer"
                   />
+                  {isOwner && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => onEditAdditionalResource?.(r)}
                   />
+                  )}
+                  {isOwner && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => onDeleteAdditionalResource?.(r)}
                   />
+                  )}
                 </div>
 
                 <div className="paragraph text-start items-center flex gap-5">
@@ -1229,6 +1283,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Accessibility Media</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAccessibilityMediaPopup(true)}
@@ -1237,6 +1292,7 @@ export default function Maincontent({
                 Add Accessibility Media
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -1253,18 +1309,22 @@ export default function Maincontent({
                     alt="green-tick"
                     className="w-5 h-5 cursor-pointer"
                   />
+                  {isOwner && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => onEditBusinessMedia?.(m)}
                   />
+                  )}
+                  {isOwner && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
                     className="w-5 h-5 cursor-pointer"
                     onClick={() => onDeleteBusinessMedia?.(m)}
                   />
+                  )}
                 </div>
 
                 <div className="heading flex justify-between items-start">
@@ -1306,6 +1366,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Custom Sections</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
+            {isOwner && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenCustonSectionPopup(true)}
@@ -1314,6 +1375,7 @@ export default function Maincontent({
                 Add Custom Sections
               </button>
             </div>
+            )}
           </div>
         </div>
 
@@ -1324,13 +1386,16 @@ export default function Maincontent({
                 {/* Section Header */}
                 <div className="flex justify-between items-center mb-4">
                   <h1 className="text-2xl font-semibold text-gray-900">{section.label}</h1>
+                  {isOwner && (
                   <button
-                    onClick={() => { onAddCustomSectionMedia?.(section.id)
+                    onClick={() => {
+                      onAddCustomSectionMedia?.(section.id)
                     }}
                     className="text-[#0519CE] text-md font-bold text-lg underline"
                   >
                     Add Media
                   </button>
+                  )}
                 </div>
 
                 {/* Section Card */}
@@ -1342,16 +1407,20 @@ export default function Maincontent({
                       <div key={media.id} className="mb-6 border p-4 rounded-lg">
                         <div className="flex justify-end gap-3 mb-4">
                           <CheckCircle className="w-6 h-6 text-green-500 cursor-pointer" />
+                          {isOwner && (
                           < button onClick={() => onEditCustomSectionMedia?.(media)}>
-                          <Pencil className="w-6 h-6 text-yellow-500 cursor-pointer" />
+                            <Pencil className="w-6 h-6 text-yellow-500 cursor-pointer" />
                           </button>
+                          )}
+                          {isOwner && (
                           <button onClick={() => onDeleteCustomSectionMedia?.(media)}>
                             <Trash2
-                           className="w-6 h-6 text-red-500 cursor-pointer" />
+                              className="w-6 h-6 text-red-500 cursor-pointer" />
                           </button>
+                          )}
                         </div>
                         <h2 className="text-2xl font-bold text-gray-900 mb-2">{media.label}</h2>
-                         <p className="text-gray-600 text-base mb-4">{media.description}</p>
+                        <p className="text-gray-600 text-base mb-4">{media.description}</p>
                         <a
                           href={media.link}
                           target="_blank"
@@ -1369,9 +1438,9 @@ export default function Maincontent({
               </div>
             ))
           ) : (
-             <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
-            <img src="/assets/images/blank.avif" alt="" />
-            <p className="mt-4 font-medium text-[#6d6d6d]">No custom sections available.</p>
+            <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
+              <img src="/assets/images/blank.avif" alt="" />
+              <p className="mt-4 font-medium text-[#6d6d6d]">No custom sections available.</p>
             </div>
           )}
         </div>
@@ -1403,6 +1472,34 @@ export default function Maincontent({
           </div>
         )} */}
       </div>
+      {openLoginModal && (
+  <Login
+    setOpenLoginModal={setOpenLoginModal}
+    setOpenSignupModal={setOpenSignupModal}
+    setOpenForgotPasswordModal={setOpenForgotPasswordModal}
+  />
+)}
+{openSignupModal && (
+        <Signup
+          setOpenSignupModal={setOpenSignupModal}
+          setOpenLoginModal={setOpenLoginModal}
+          setOpenSuccessModal={setOpenSuccessModal}
+        />
+      )}
+{openForgotPasswordModal && (
+        <ForgotPassword
+          setOpenForgotPasswordModal={setOpenForgotPasswordModal}
+          setOpenLoginModal={setOpenLoginModal}
+          setOpenSuccessModal={setOpenSuccessModal}
+        />
+      )}
+{openSuccessModal && (
+        <Successmodal
+          setOpenSuccessModal={setOpenSuccessModal}
+          setOpenLoginModal={setOpenLoginModal}
+          setOpenSignupModal={setOpenSignupModal}
+        />
+      )}
     </div>
   );
 }
