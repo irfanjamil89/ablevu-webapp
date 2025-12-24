@@ -39,7 +39,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 export default function Header() {
   // Use context for user state
   const { user, setUser, refreshUser } = useUser();
-  
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -105,10 +105,10 @@ export default function Header() {
 
   // Update imageKey when user profile picture changes
   useEffect(() => {
-  if (user?.profile_picture_url) setImageKey(Date.now());
-}, [user?.profile_picture_url]);
+    if (user?.profile_picture_url) setImageKey(Date.now());
+  }, [user?.profile_picture_url]);
 
-  
+
   // Run only after client-side hydration
   useEffect(() => {
     setIsMounted(true);
@@ -258,33 +258,33 @@ export default function Header() {
 
   // ✅ fetch cart
   const fetchCart = async () => {
-  if (!loggedIn) return;
+    if (!loggedIn) return;
 
-  try {
-    setCartLoading(true);
+    try {
+      setCartLoading(true);
 
-    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) throw new Error("Cart load failed");
+      if (!res.ok) throw new Error("Cart load failed");
 
-    const data = await res.json();
+      const data = await res.json();
 
-    const items = Array.isArray(data) ? data : data?.data ?? [];
-    const pendingOnly = items.filter(
-      (x: any) => (x.status || "").toLowerCase() === "pending"
-    );
+      const items = Array.isArray(data) ? data : data?.data ?? [];
+      const pendingOnly = items.filter(
+        (x: any) => (x.status || "").toLowerCase() === "pending"
+      );
 
-    setCartItems(pendingOnly);
-  } catch (e) {
-    console.error(e);
-  } finally {
-    setCartLoading(false);
-  }
-};
+      setCartItems(pendingOnly);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCartLoading(false);
+    }
+  };
 
 
   // ✅ remove item
@@ -449,7 +449,6 @@ export default function Header() {
                               setNotificationsOpen((prev) => !prev);
                               setCartOpen(false);
                               setDropdownOpen(false);
-
                               if (!notificationsOpen) fetchNotifications();
                             }}
                             className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
@@ -473,23 +472,11 @@ export default function Header() {
                           </button>
 
                           {notificationsOpen && (
-                            <div className="absolute top-10 right-0 mr-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                              {" "}
-                              {/* Increased width */}
-                              <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                            <div className="absolute right-0 top-10 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
+                              <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
                                 {notifications.length === 0 && (
                                   <li className="px-4 py-6 text-gray-500 text-sm text-center">
-                                    <div className="flex  items-center justify-center">
-                                      {/* <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-8 w-8 text-gray-400 mb-2"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                      >
-                                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM8 16a2 2 0 104 0H8z" />
-                                      </svg> */}
-                                      <p>No new notifications</p>
-                                    </div>
+                                    No new notifications
                                   </li>
                                 )}
 
@@ -497,9 +484,7 @@ export default function Header() {
                                   <li
                                     key={item.id}
                                     className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                    onClick={() =>
-                                      handleNotificationClick(item)
-                                    }
+                                    onClick={() => handleNotificationClick(item)}
                                   >
                                     <div className="w-full pr-2">
                                       <p className="text-sm font-medium">

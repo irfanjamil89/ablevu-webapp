@@ -465,7 +465,7 @@ export default function Header2() {
 
                       {notificationsOpen && (
                         <div className="absolute right-0 top-10 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                          <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                          <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
                             {notifications.length === 0 && (
                               <li className="px-4 py-6 text-gray-500 text-sm text-center">
                                 No new notifications
