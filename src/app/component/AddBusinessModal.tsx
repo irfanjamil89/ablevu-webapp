@@ -534,10 +534,25 @@ const startSubscriptionCheckout = async (
               </div>
 
               {/* ✅ Submit Button (NOW opens plan popup) */}
-              <div className="pt-2">
+              {/* <div className="pt-2">
                 <button
                   onClick={handleOpenPlanAfterValidation}
                   disabled={isCreating}
+                  className="w-full px-5 py-3 text-center text-sm font-bold bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
+                >
+                  {isCreating ? "Creating..." : "Create Business"}
+                </button>
+              </div> */}
+              {/* ✅ Submit Button (NOW opens plan popup) */}
+              <div className="pt-2">
+                <button
+                  onClick={handleOpenPlanAfterValidation}
+                  disabled={
+                    isCreating ||
+                    !newBusiness.name.trim() ||
+                    !selectedCategoryId ||
+                    !newBusiness.fullAddress.trim()
+                  }
                   className="w-full px-5 py-3 text-center text-sm font-bold bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
                 >
                   {isCreating ? "Creating..." : "Create Business"}

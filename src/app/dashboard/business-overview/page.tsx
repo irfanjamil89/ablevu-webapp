@@ -735,7 +735,7 @@ const getStatusInfo = (b: Business) => {
   // ---------- UI ----------
 
   return (
-    <div className="w-full h-screen">
+    <div className="w-full">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
           <div className="w-full min-h-screen bg-white px-6 py-5">

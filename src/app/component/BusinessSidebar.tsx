@@ -84,6 +84,9 @@ type SavedBusiness = {
 interface BusinessSidebarProps {
   business: BusinessProfile | null;
   businessTypes: BusinessType[];
+  businessOwner?: {
+    id: string;
+  };
   loading: boolean;
   error: string | null;
   setOpenDetailPopup: React.Dispatch<React.SetStateAction<boolean>>;
@@ -141,6 +144,7 @@ const getDayOrder = (day: string) => {
 export default function BusinessSidebar({
   business,
   businessTypes,
+  businessOwner,
   loading,
   error,
   setOpenDetailPopup,
@@ -166,6 +170,18 @@ export default function BusinessSidebar({
   const [likeCount, setLikeCount] = useState<number>(0);
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeId, setLikeId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const isOwner = userId === businessOwner?.id;
+
+
+     const decodeJWT = (token: string) => {
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch {
+      return null;
+    }
+  };
+
 
   // ⭐ SAVE STATE
   const [saved, setSaved] = useState(false);
@@ -262,6 +278,12 @@ export default function BusinessSidebar({
       setSaveLoading(false);
     }
   };
+   useEffect(() => {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+      const payload = decodeJWT(token);
+      setUserId(payload?.sub || null);
+    }, []);
 
   // ⭐ ON LOAD -> CHECK SAVED
   useEffect(() => {
@@ -755,6 +777,7 @@ export default function BusinessSidebar({
       </div>
 
       {/* Logo */}
+       {isOwner && (
       <BusinessImageUpload
         businessId={business.id}
         businessName={business.name}
@@ -763,6 +786,19 @@ export default function BusinessSidebar({
           refetchBusiness();
         }}
       />
+       )}
+       {!isOwner && business.logo_url && (
+  <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
+    <div className="flex justify-center p-6">
+      <img
+        src={business.logo_url}
+        alt={business.name}
+        className="w-80 object-contain cursor-default transition-opacity"
+      />
+    </div>
+  </div>
+)}
+
 
       {/* Info */}
       <div className="py-8">
@@ -830,7 +866,7 @@ export default function BusinessSidebar({
       <div>
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-4">Details</h3>
-
+           {isOwner && (
           <button
             type="button"
             onClick={() => setOpenDetailPopup(true)}
@@ -842,6 +878,7 @@ export default function BusinessSidebar({
               className="w-6 h-6"
             />
           </button>
+           )}
         </div>
 
         {business.website && (
@@ -886,7 +923,7 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Operating Hours</h3>
-
+           {isOwner && (
           <button
             type="button"
             onClick={() => setOpenOperatingHours(true)}
@@ -898,6 +935,7 @@ export default function BusinessSidebar({
               className="w-6 h-6"
             />
           </button>
+           )}
         </div>
 
         {sortedBusinessSchedule.length ? (
@@ -919,7 +957,7 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Social Links</h3>
-
+           {isOwner && (
           <button
             type="button"
             onClick={() => setOpenSocialLinks(true)}
@@ -931,6 +969,7 @@ export default function BusinessSidebar({
               className="w-6 h-6"
             />
           </button>
+           )}
         </div>
 
         <div className="flex">
@@ -962,7 +1001,7 @@ export default function BusinessSidebar({
       <div className="pb-10">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold my-6">About</h3>
-
+           {isOwner && (
           <button
             type="button"
             onClick={() => setOpenAboutModal(true)}
@@ -974,6 +1013,7 @@ export default function BusinessSidebar({
               className="w-6 h-6"
             />
           </button>
+           )}
         </div>
         <p>{business.description || "No description added yet."}</p>
       </div>
@@ -1044,6 +1084,7 @@ export default function BusinessSidebar({
       </div>
 
       {/* Delete Business button */}
+      {(isAdmin || isOwner) && (
       <div className="mt-3">
         <button
           type="button"
@@ -1057,11 +1098,13 @@ export default function BusinessSidebar({
           />
           Delete Business
         </button>
+        
 
         {deleteError && (
           <p className="text-red-500 text-sm mt-2">{deleteError}</p>
         )}
       </div>
+      )}
 
       {/* Delete Confirmation Popup */}
       {openDeleteModal && (

@@ -4,9 +4,10 @@ import axios from "axios";
 
 interface PartnerFormProps {
   setOpenFormModal: React.Dispatch<React.SetStateAction<boolean>>;
+  onPartnerCreated?: () => void;
 }
 
-const PartnerForm: React.FC<PartnerFormProps> = ({ setOpenFormModal }) => {
+const PartnerForm: React.FC<PartnerFormProps> = ({ setOpenFormModal, onPartnerCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -139,6 +140,12 @@ const PartnerForm: React.FC<PartnerFormProps> = ({ setOpenFormModal }) => {
 
       setSuccess("Partner added successfully!");
 
+      if (onPartnerCreated) {
+        onPartnerCreated();
+
+      }
+      setOpenFormModal(false);
+
       // Reset form
       setForm({
         name: "",
@@ -148,9 +155,7 @@ const PartnerForm: React.FC<PartnerFormProps> = ({ setOpenFormModal }) => {
       setImagePreview("");
 
       // Close modal after 2 seconds
-      setTimeout(() => {
-        setOpenFormModal(false);
-      }, 2000);
+      
     } catch (err: any) {
       setError(err.message || err.response?.data?.message || "Server error. Please try again.");
     } finally {
