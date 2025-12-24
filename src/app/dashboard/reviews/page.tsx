@@ -129,7 +129,7 @@ export default function Page() {
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
                   <img
-                    src={review.user_avatar || "/assets/images/Profile.avif"}
+                    src={review.user_avatar || "/assets/images/profile.avif"}
                     className="w-6 h-6 rounded-full"
                     alt="profile"
                   />
