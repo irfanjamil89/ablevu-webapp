@@ -61,7 +61,7 @@ export default function Page() {
         }
 
         const json = await res.json();
-        console.log("Questions API Response:", json);
+        
 
         if (Array.isArray(json.data)) {
           setQuestions(json.data);
@@ -103,7 +103,7 @@ export default function Page() {
 
 
       const json = await res.json();
-      console.log("Update Response:", json);
+      
 
       // Update local state
       setQuestions((prev) =>

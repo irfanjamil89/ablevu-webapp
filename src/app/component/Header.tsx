@@ -209,12 +209,6 @@ export default function Header() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
-        case 'new-question':
-      window.location.href = `/dashboard/questions`;
-       break;
-       case 'new-review':
-         window.location.href = `/dashboard/reviews`;
-         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -731,7 +725,6 @@ export default function Header() {
                             className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
                             onError={(e) => {
                               const target = e.currentTarget as HTMLImageElement;
-                              console.log("Header: Image load error, using fallback");
                               target.src = "/assets/images/profile.png";
                             }}
                           />

@@ -65,7 +65,6 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
         }
 
         const data = await response.json();
-        console.log('Fetched business image:', data);
         
         setBusinessImage(data);
         setAltText(data.name || "");
@@ -118,7 +117,6 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
   // Upload new image as base64 using the businessImageId as fileName
   const uploadImageBase64 = async (): Promise<string> => {
     try {
-      console.log('Uploading new image with businessImageId:', businessImageId);
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
         method: 'POST',
@@ -140,7 +138,6 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
       }
       
       const data = await response.json();
-      console.log('Upload image response:', data);
       
       if (data.ok && data.url) {
         return data.url;
@@ -184,7 +181,6 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
       }
 
       const data = await response.json();
-      console.log('Update business image response:', data);
       return data;
     } catch (err) {
       console.error('Error updating business image:', err);
@@ -208,9 +204,7 @@ const EditPropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
 
       // If user selected a new file, upload it first
       if (selectedFile && base64Data) {
-        console.log('Uploading new image...');
         imageUrl = await uploadImageBase64();
-        console.log('New image URL:', imageUrl);
       }
 
       // Update the business image record

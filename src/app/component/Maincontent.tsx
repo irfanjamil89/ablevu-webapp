@@ -360,6 +360,10 @@ export default function Maincontent({
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [openForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [openClaimModal, setOpenClaimModal] = useState(false);
+   const [userRole, setUserRole] = useState<string | null>(null);
+    const isAdmin = userRole === "Admin";
+
 
   const decodeJWT = (token: string) => {
     try {
@@ -521,7 +525,6 @@ export default function Maincontent({
   };
 
 
-  console.log(currentBusinessImages);
   // ⭐ groups pre-compute (same typeId -> same group)
   const featureGroups: AccessibilityFeatureGroup[] =
     business?.accessibilityFeatures && business.accessibilityFeatures.length > 0
@@ -552,6 +555,56 @@ export default function Maincontent({
       )
       : [];
 
+       useEffect(() => {
+          const fetchUserRole = async () => {
+            try {
+              if (typeof window === "undefined") return;
+      
+              const token = window.localStorage.getItem("access_token");      
+              if (!token) {
+                console.warn("No valid token skipping user role fetch");
+                return;
+              }
+    
+              const res = await fetch (
+              `${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+      
+              if (!res.ok) {
+                console.warn("User role fetch failed with status", res.status);
+                return;
+              }
+      
+              const data = await res.json();
+              if (data?.user_role) {
+                setUserRole(data.user_role);
+              }
+            } catch (err) {
+              console.error("Failed to fetch user role", err);
+            }
+          };
+      
+          fetchUserRole();
+        }, []);
+
+
+
+      useEffect(() => {
+  if (
+    business?.business_status === "approved" &&
+    !isOwner &&
+    !isAdmin
+  ) {
+    setOpenClaimModal(true);
+  }
+}, [business?.business_status, isOwner, isAdmin]);
+
+
 
   // ---------- Loading / Error ----------
   if (loading) {
@@ -579,7 +632,12 @@ export default function Maincontent({
   }
 
   return (
-    <div className="px-10 py-7 w-7/10">
+     <>
+      <div
+      className={`px-10 py-7 w-7/10 transition ${
+        openClaimModal ? "blur-sm pointer-events-none select-none" : ""
+      }`}
+    >
       {/* ---------- Virtual Tours ---------- */}
       <div className="tour border p-6 rounded-3xl border-[#e5e5e7] w-full ">
         <div className="flex justify-between items-center">
@@ -1501,5 +1559,26 @@ export default function Maincontent({
         />
       )}
     </div>
-  );
+    {openClaimModal && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="bg-white rounded-2xl shadow-2xl w-[420px] p-6 text-center">
+          <img
+        src="https://411bac323421e63611e34ce12875d6ae.cdn.bubble.io/f1741083224130x145020764348771740/Group%201000003980.svg"
+        alt="Profile locked"
+        className="mx-auto mb-4 w-20 h-20"
+      />
+          
+          <h2 className="text-xl font-bold mb-3">Profile Locked</h2>
+
+          <p className="text-sm font-bold  mb-4 ">
+            This profile is currently locked and is not claimed by any business.
+            If you are the owner of this business, please unlock and claim this profile.
+          </p>
+        </div>
+      </div>
+    )}
+  </>
+);
 }
+
+

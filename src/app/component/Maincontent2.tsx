@@ -419,7 +419,7 @@ export default function Maincontent({
   );
 
 
-  console.log(currentBusinessImages);
+  
   // ⭐ groups pre-compute (same typeId -> same group)
   const featureGroups: AccessibilityFeatureGroup[] =
     business?.accessibilityFeatures && business.accessibilityFeatures.length > 0

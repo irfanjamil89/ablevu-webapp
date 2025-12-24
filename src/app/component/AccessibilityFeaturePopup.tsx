@@ -100,7 +100,6 @@ const AccessibilityFeaturePopup: React.FC<AccessibilityFeaturePopupProps> = ({
         }
 
         const data = await res.json();
-        console.log("FEATURE TYPES RESPONSE:", data);
 
         let items: any[] = [];
         if (Array.isArray(data)) items = data;
@@ -139,7 +138,6 @@ const AccessibilityFeaturePopup: React.FC<AccessibilityFeaturePopupProps> = ({
         }
 
         const data = await res.json();
-        console.log("ACCESSIBLE FEATURES RESPONSE:", data);
 
         const items: AccessibleFeature[] = Array.isArray(data)
           ? data

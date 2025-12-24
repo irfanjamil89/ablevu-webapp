@@ -137,7 +137,7 @@ export default function Page() {
         
         
 
-        console.log(couponId);
+       
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}coupons/delete/${couponId}`, {
                 method: 'DELETE',

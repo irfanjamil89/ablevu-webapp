@@ -9,8 +9,7 @@ export default function Sidebar() {
     useEffect(() => {
         // Get token from localStorage
         const token = localStorage.getItem('access_token');
-        console.log('Token from localStorage:', process.env.NEXT_PUBLIC_API_BASE_URL);
-
+       
         if (!token) {
             console.error('No token found, please log in.');
             return; // Exit if no token is found
@@ -25,7 +24,7 @@ export default function Sidebar() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log('API response:', data);
+
                 if (data) {
                     setUser(data); // Set user data if fetched successfully
                 }
