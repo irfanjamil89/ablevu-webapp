@@ -841,7 +841,7 @@ export default function Maincontent({
                     <div className="flex items-center gap-3">
                       <div className="rounded-full bg-gray-200 flex items-center justify-center">
                         <img
-                          src="/assets/images/Profile.avif"
+                          src="/assets/images/profile.avif"
                           className="w-10 h-10"
                           alt="profile"
                         />
@@ -922,7 +922,7 @@ export default function Maincontent({
                     <div className="flex items-center gap-3">
                       <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
                         <img
-                          src="/assets/images/Profile.avif"
+                          src="/assets/images/profile.avif"
                           className="w-6 h-6"
                           alt="profile"
                         />

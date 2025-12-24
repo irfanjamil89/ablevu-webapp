@@ -277,7 +277,7 @@ export default function Page() {
                               <img
                                 src={
                                   fb.user?.profile_picture_url ||
-                                  "/assets/images/Profile.avif"
+                                  "/assets/images/profile.avif"
                                 }
                                 alt="User"
                                 className="w-12 h-12 rounded-full"

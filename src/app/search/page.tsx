@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Header from "../component/Header2";
 import Footer from "../component/Footer";
 import Link from "next/link";
-
+import { useRouter } from "next/navigation";
 
 // --------- TYPES ---------
 type BusinessTypeMaster = {
@@ -87,8 +87,11 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
 
   // ✅ Selected filters (multi-select)
-  const [selectedBusinessTypeIds, setSelectedBusinessTypeIds] = useState<string[]>([]);
+  const [selectedBusinessTypeIds, setSelectedBusinessTypeIds] = useState<
+    string[]
+  >([]);
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<string[]>([]);
+  const router = useRouter();
 
   // ---------- FETCHERS ----------
 
@@ -353,8 +356,8 @@ export default function Page() {
                 Looking for a specific business?
               </h3>
               <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                If you&apos;re looking for a specific business and cannot find it
-                on AbleVu yet, let us know and we will get it added.
+                If you&apos;re looking for a specific business and cannot find
+                it on AbleVu yet, let us know and we will get it added.
               </p>
               <button className="w-1/3 bg-blue-700 text-white text-sm py-2 rounded-full hover:bg-blue-800 transition">
                 Contact Us
@@ -368,12 +371,14 @@ export default function Page() {
               <h2 className="font-bold text-[24px] font-['Helvetica']">
                 Business List
               </h2>
-              <button className="flex items-center justify-between gap-[8px] text-sm bg-white px-3 py-2 rounded-full text-black">
-                <img src="/assets/images/location.png" className="w-3 h-3" />{" "}
+              <button
+                onClick={() => router.push("/")}
+                className="flex items-center justify-between gap-[8px] text-sm bg-white px-3 py-2 rounded-full text-black"
+              >
+                <img src="/assets/images/location.png" className="w-3 h-3" />
                 Search with Map
               </button>
             </div>
-
             {error && (
               <div className="mb-4 text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
                 {error}
@@ -426,10 +431,7 @@ export default function Page() {
                           <div className="flex flex-wrap md:flex-nowrap gap-2">
                             {/* Saved dummy */}
                             <label className="inline-flex items-center gap-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                className="peer hidden"
-                              />
+                              <input type="checkbox" className="peer hidden" />
                               <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -485,7 +487,8 @@ export default function Page() {
                                   d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
                                 />
                               </svg>
-                              {b.businessRecomendations.length}.0 Recommendations
+                              {b.businessRecomendations.length}.0
+                              Recommendations
                             </button>
                           </div>
                         </div>
@@ -517,18 +520,28 @@ export default function Page() {
                             <span className="font-medium pe-2">
                               Accessible Features
                             </span>
-                            <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
+                            <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-2 md:space-x-2 space-x-0">
                               {featureTitles.length ? (
-                                featureTitles.map((ft) => (
-                                  <li
-                                    key={ft}
-                                    className="bg-[#F7F7F7] rounded-full px-2"
-                                  >
-                                    {ft}
-                                  </li>
-                                ))
+                                <>
+                                  {/* Show only first 2 features */}
+                                  {featureTitles.slice(0, 2).map((ft) => (
+                                    <li
+                                      key={ft}
+                                      className="bg-[#F7F7F7] rounded-full px-2 text-xs"
+                                    >
+                                      {ft}
+                                    </li>
+                                  ))}
+
+                                  {/* Show +N if more than 2 */}
+                                  {featureTitles.length > 2 && (
+                                    <li className="bg-[#EAEAEA] rounded-full px-2 text-xs font-medium text-gray-600">
+                                      +{featureTitles.length - 2}
+                                    </li>
+                                  )}
+                                </>
                               ) : (
-                                <li className="text-gray-400">
+                                <li className="text-gray-400 text-xs">
                                   No features added
                                 </li>
                               )}
@@ -543,9 +556,7 @@ export default function Page() {
                             className="w-3 h-3"
                             alt="clock"
                           />
-                          <span className="text-sm">
-                            {getScheduleText(b)}
-                          </span>
+                          <span className="text-sm">{getScheduleText(b)}</span>
                         </p>
 
                         {/* Location */}
