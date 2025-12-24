@@ -8,6 +8,8 @@ import { ShoppingCart, Trash2 } from "lucide-react";
 import DashboardContent from '../component/DashboardContent';
 import { useUser } from "@/app/component/UserContext";
 
+
+
 type CartItem = {
   id: string;
   business_id: string;

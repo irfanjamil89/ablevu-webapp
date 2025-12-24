@@ -197,7 +197,9 @@ export default function Page() {
 
             {/* Add Partner Form Modal */}
             {openFormModal && (
-                <PartnerForm setOpenFormModal={setOpenFormModal} />
+                <PartnerForm setOpenFormModal={setOpenFormModal} 
+                onPartnerCreated={loadPartners}
+                />
             )}
 
             {/* Delete Confirmation Modal */}
