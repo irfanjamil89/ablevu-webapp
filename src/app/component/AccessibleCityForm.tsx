@@ -175,11 +175,9 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
         const createdCityId = result.id;
         setCityId(createdCityId);
 
-        console.log("City created with ID:", createdCityId);
 
         // STEP 2: UPLOAD IMAGE IF SELECTED
         if (selectedImage && createdCityId) {
-          console.log("Uploading image for city ID:", createdCityId);
 
           const base64Data = await convertToBase64(selectedImage);
 
@@ -199,7 +197,6 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
           });
 
           const imageResult = await imageRes.json();
-          console.log("Image upload response:", imageResult);
 
           if (!imageRes.ok) {
             console.error("Image upload failed:", imageResult);

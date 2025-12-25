@@ -199,7 +199,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
       if (res.ok) {
         // STEP 2: Upload new image if selected
         if (selectedImage && selectedCity?.id) {
-          console.log("Uploading new image for city ID:", selectedCity.id);
+          
 
           try {
             const base64Data = await convertToBase64(selectedImage);
@@ -210,11 +210,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
               fileName: selectedCity.id,
             };
 
-            console.log("Image upload payload:", {
-              folder: imagePayload.folder,
-              fileName: imagePayload.fileName,
-              dataLength: base64Data.length
-            });
+            
 
             const imageRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
               method: "POST",
@@ -225,10 +221,10 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
               body: JSON.stringify(imagePayload),
             });
 
-            console.log("Image upload status:", imageRes.status);
+            
             
             const imageResult = await imageRes.json();
-            console.log("Image upload response:", imageResult);
+           
 
             if (!imageRes.ok) {
               console.error("Image upload failed:", imageResult);

@@ -68,7 +68,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
         if (!res.ok) throw new Error("Failed to load review types");
 
         const data = await res.json();
-        console.log("Review type list:", data);
+        
 
         setReviewTypes(data.data || []);
       } catch (err: any) {
@@ -151,7 +151,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
       }
 
       const responseData = await res.json();
-      console.log("Review submitted:", responseData);
+      
 
       // 🔹 Ab sirf parent ko bol rahe hain: "refresh kar lo"
       onUpdated?.();

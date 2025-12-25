@@ -163,7 +163,6 @@ const startSubscriptionCheckout = async (
     fetch(base + "/business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Business type list API:", data);
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {
@@ -271,7 +270,6 @@ const startSubscriptionCheckout = async (
         }
       );
 
-      console.log("Create business – status:", res.status);
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}));
@@ -280,7 +278,6 @@ const startSubscriptionCheckout = async (
       }
 
       const responseData = await res.json();
-      console.log("Business created successfully:", responseData);
 
       const businessId = responseData.id;
 
@@ -307,7 +304,6 @@ const startSubscriptionCheckout = async (
             }
           );
 
-          console.log("Image upload – status:", imageRes.status);
 
           if (!imageRes.ok) {
             const imageError = await imageRes.json().catch(() => ({}));
@@ -316,7 +312,6 @@ const startSubscriptionCheckout = async (
           }
 
           const imageResponse = await imageRes.json();
-          console.log("Image uploaded successfully:", imageResponse);
         } catch (imageErr: any) {
           throw new Error(
             `Business created but image upload failed: ${imageErr.message}`

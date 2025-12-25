@@ -202,7 +202,7 @@ export default function Page() {
     fetch(base + "/business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Business type list API:", data);
+        
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {
@@ -212,7 +212,7 @@ export default function Page() {
     fetch(base + "/accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Accessible features API:", data);
+        
         setFeatures(data.items || []);
       })
       .catch((error) => {
@@ -222,7 +222,7 @@ export default function Page() {
     fetch(base + "/business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
-        console.log("Business schedules API:", data);
+       
         setSchedules(data.data || []);
       })
       .catch((error) => {
@@ -255,7 +255,7 @@ export default function Page() {
     try {
       const response = await fetch(url, { headers });
       const data = await response.json();
-      console.log("Business list API:", data);
+      
       const list: Business[] = data.data || [];
       setBusinesses(list);
     } catch (error) {

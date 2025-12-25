@@ -48,7 +48,6 @@ export default function BusinessTypeTable() {
   // Fetch all business types
   const fetchBusinessTypes = async () => {
     try {
-      console.log("Fetching business types...", process.env.NEXT_PUBLIC_API_BASE_URL);
       setLoading(true);
       const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + "/business-type/list/?page=1&limit=1000");
       setData(response.data.data || []);

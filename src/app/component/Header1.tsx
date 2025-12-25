@@ -12,7 +12,6 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
   useEffect(() => {
     // Get token from localStorage
     const token = localStorage.getItem('access_token');
-    console.log('Token from localStorage:', token); // Log the token value
 
     if (!token) {
       console.error('No token found, please log in.');
@@ -30,7 +29,6 @@ const [user, setUser] = useState<any | null>(null); // Initial state is null for
     })
       .then(response => response.json())
       .then(data => {
-        // console.log('API response:', data);
        
           setUser(data); 
         
