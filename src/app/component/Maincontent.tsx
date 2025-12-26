@@ -672,14 +672,6 @@ export default function Maincontent({
         {/* Use This Component to display Audio List */}
         <AudioList />
 
-        {/* You can use this in else part when no audio is present  */}
-
-        {/* <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
-          <img src="/assets/images/audio.avif" alt="" />
-          <p className="mt-4 font-medium text-[#6d6d6d]">
-            No Audio Tour to show
-          </p>
-        </div> */}
       </div>
 
       {/* ---------- Property Images ---------- */}
@@ -799,10 +791,10 @@ export default function Maincontent({
         {featureGroups.length > 0 ? (
           <div className="audios py-6 rounded-xl space-y-4">
             {featureGroups.map((group) => (
-              <div key={group.typeId} className="box flex items-center gap-3">
+              <div key={group.typeId} className="box flex lg:flex-nowrap sm:flex-wrap gap-3">
                 {/* left icons */}
-                <div className="w-[120px]">
-                  <div className="icon-box flex items-center gap-2 box-content w-full">
+                <div className="w-[90px]">
+                  <div className="icon-box w-[90px] flex items-center gap-2 box-content">
                     <img
                       src="/assets/images/green-tick.svg"
                       alt="green-tick"
@@ -820,14 +812,14 @@ export default function Maincontent({
                 </div>
 
                 {/* type name: Physical, Sensory, ... */}
-                <div className="heading box-content ">
+                <div className="heading box-content w-[170px]">
                   <h3 className="text-md text-gray-700 font-semibold">
                     {group.typeName}
                   </h3>
                 </div>
 
                 {/* selected features as pills */}
-                <div className="content flex flex-wrap items-start gap-2">
+                <div className="content flex flex-wrap items-start gap-2 sm:w-full ">
                   {group.items.map((f) => (
                     <div
                       key={f.id}
