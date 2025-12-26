@@ -15,6 +15,29 @@ export type BusinessProfile = {
     website: string | null;
 };
 
+type UploadResult = {
+    ok: boolean;
+    key: string;
+    url: string;
+    contentType: string;
+    size: number;
+};
+
+type CreateTourResponse = {
+    message: string;
+    data: {
+        id: string;
+        name: string;
+        link_url: string;
+        business_id: string;
+        active: boolean;
+        created_by: string;
+        modified_by: string;
+        created_at: string;
+        modified_at: string;
+    };
+};
+
 interface AudioTourPopupProps {
     businessId: string;
     setOpenAudioTourPopup: React.Dispatch<React.SetStateAction<boolean>>;
@@ -31,14 +54,17 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [fileName, setFileName] = useState('');
     const [aiVoiceConversion, setAiVoiceConversion] = useState<'yes' | 'no' | ''>('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [error, setError] = useState("");
     
+    const [OpenSuccessModal, setOpenSuccessModal] = useState(false);
     // Recording states
     const [isRecording, setIsRecording] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
     const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
     const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
-    
+
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,7 +80,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
+
             // Try to use the best supported format
             let options = { mimeType: 'audio/webm;codecs=opus' };
             if (!MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
@@ -66,7 +92,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                     options = { mimeType: 'audio/ogg;codecs=opus' };
                 }
             }
-            
+
             const mediaRecorder = new MediaRecorder(stream, options);
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
@@ -83,9 +109,9 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                 setRecordedBlob(blob);
                 const url = URL.createObjectURL(blob);
                 setRecordedUrl(url);
-                
+
                 console.log('Recorded format:', mimeType);
-                
+
                 // Stop all tracks
                 stream.getTracks().forEach(track => track.stop());
             };
@@ -93,14 +119,14 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
             mediaRecorder.start();
             setIsRecording(true);
             setIsPaused(false);
-            
+
             // Start timer
             timerRef.current = setInterval(() => {
                 setRecordingTime(prev => prev + 1);
             }, 1000);
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            alert('Could not access microphone. Please check permissions.');
+            setError('Could not access microphone. Please check permissions.');
         }
     };
 
@@ -149,90 +175,200 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
         return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const handleSaveUpload = () => {
-        console.log({
-            selectedFile,
-            fileName,
-            aiVoiceConversion,
-            businessId
-        });
-        setUploadAudioPopup(false);
-        setOpenAudioTourPopup(false);
-        onUpdated?.();
+    // Create Audio Tour
+    const createAudioTour = async (tourName: string): Promise<string> => {
+        try {
+            const response = await fetch('https://staging-api.qtpack.co.uk/business-audio-tour/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                },
+                body: JSON.stringify({
+                    name: tourName,
+                    businessId: businessId,
+                    active: false
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to create audio tour:', errorData);
+                throw new Error(`Failed to create audio tour: ${response.status} ${response.statusText}`);
+            }
+
+            const result: CreateTourResponse = await response.json();
+            console.log('Audio tour created:', result);
+            return result.data.id; // Return the tour ID
+        } catch (error) {
+            console.error('Error creating audio tour:', error);
+            throw error;
+        }
     };
 
-    const handleSaveRecording = async () => {
-        if (recordedBlob) {
-            try {
-                // Show loading state (you can add a loading spinner here)
-                console.log('Uploading audio...');
-                
-                // Convert blob to base64
-                const reader = new FileReader();
-                reader.readAsDataURL(recordedBlob);
-                
+    // Upload Audio to S3
+    const uploadAudio = async (audioBlob: Blob, tourId: string): Promise<UploadResult> => {
+        try {
+            // Convert blob to base64
+            const reader = new FileReader();
+
+            return new Promise<UploadResult>((resolve, reject) => {
                 reader.onloadend = async () => {
-                    const base64Audio = reader.result as string;
-                    // Remove the data:audio/webm;base64, prefix
-                    const base64Data = base64Audio.split(',')[1];
-                    
-                    // Prepare API payload
-                    const payload = {
-                        data: base64Data,
-                        fileName: 'audio123',
-                        folder: 'audio'
-                    };
-                    
                     try {
-                        // Upload to API
-                        const response = await fetch('https://staging-api.qtpack.co.uk/images/upload-base64', {
+                        const base64Audio = reader.result as string;
+                        // Remove the data URL prefix (e.g., "data:audio/webm;base64,")
+                        const base64Data = base64Audio.split(',')[1];
+
+                        // Get file extension from blob type
+                        const mimeType = audioBlob.type;
+                        let extension = 'webm';
+                        if (mimeType.includes('mpeg') || mimeType.includes('mp3')) extension = 'mp3';
+                        else if (mimeType.includes('wav')) extension = 'wav';
+                        else if (mimeType.includes('mp4')) extension = 'mp4';
+                        else if (mimeType.includes('ogg')) extension = 'ogg';
+
+                        const payload = {
+                            data: base64Data,
+                            fileName: `${tourId}`,
+                            folder: 'audios'
+                        };
+
+                        console.log('Uploading audio with payload:', {
+                            fileName: payload.fileName,
+                            folder: payload.folder,
+                            dataLength: base64Data.length,
+                            mimeType
+                        });
+
+                        const response = await fetch('https://staging-api.qtpack.co.uk/audio/upload-base64', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-
                             },
                             body: JSON.stringify(payload)
                         });
-                        
+
                         if (!response.ok) {
-                            throw new Error('Upload failed');
+                            const errorData = await response.json().catch(() => ({}));
+                            console.error('Upload failed:', errorData);
+                            throw new Error(`Audio upload failed: ${response.status} ${response.statusText}`);
                         }
-                        
-                        const result = await response.json();
-                        console.log('Upload successful:', result);
-                        
-                        // Log all the data including the uploaded URL
-                        console.log({
-                            uploadedUrl: result, // The API response
-                            fileName,
-                            aiVoiceConversion,
-                            businessId,
-                            duration: recordingTime,
-                            fileSize: recordedBlob.size
-                        });
-                        
-                        alert('Audio uploaded successfully!');
-                        
-                        setRecordAudioPopup(false);
-                        setOpenAudioTourPopup(false);
-                        onUpdated?.();
-                        
-                    } catch (uploadError) {
-                        console.error('Upload error:', uploadError);
-                        alert('Failed to upload audio. Please try again.');
+
+                        const result: UploadResult = await response.json();
+                        console.log('Audio uploaded successfully:', result);
+                        resolve(result);
+                    } catch (error) {
+                        console.error('Error in upload process:', error);
+                        reject(error);
                     }
                 };
-                
+
                 reader.onerror = () => {
-                    console.error('Error reading file');
-                    alert('Error processing audio file.');
+                    reject(new Error('Error reading file'));
                 };
-                
-            } catch (error) {
-                console.error('Error in handleSaveRecording:', error);
-                alert('An error occurred. Please try again.');
-            }
+
+                reader.readAsDataURL(audioBlob);
+            });
+        } catch (error) {
+            console.error('Upload error:', error);
+            throw error;
+        }
+    };
+
+    const handleSaveUpload = async () => {
+        if (!selectedFile || !fileName || !aiVoiceConversion) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        setIsUploading(true);
+
+        try {
+            // Step 1: Create Audio Tour
+            console.log('Creating audio tour with name:', fileName);
+            const tourId = await createAudioTour(fileName);
+            console.log('Tour created successfully with ID:', tourId);
+
+            // Step 2: Upload Audio File
+            console.log('Uploading audio file...');
+            const uploadResult = await uploadAudio(selectedFile, tourId);
+
+            console.log('Upload complete:', {
+                tourId,
+                tourName: fileName,
+                uploadedUrl: uploadResult.url,
+                s3Key: uploadResult.key,
+                contentType: uploadResult.contentType,
+                fileSize: uploadResult.size,
+                aiVoiceConversion,
+                businessId,
+                originalFileName: selectedFile.name
+            });
+
+            setOpenSuccessModal(true);
+
+            // Reset state and close
+            setSelectedFile(null);
+            setFileName('');
+            setAiVoiceConversion('');
+            setUploadAudioPopup(false);
+            setOpenAudioTourPopup(false);
+            onUpdated?.();
+
+        } catch (error) {
+            console.error('Error in handleSaveUpload:', error);
+            setError(`Failed to create audio tour: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleSaveRecording = async () => {
+        if (!recordedBlob || !fileName || !aiVoiceConversion) {
+            setError('Please fill in all fields');
+            return;
+        }
+
+        setIsUploading(true);
+
+        try {
+            // Step 1: Create Audio Tour
+            console.log('Creating audio tour with name:', fileName);
+            const tourId = await createAudioTour(fileName);
+            console.log('Tour created successfully with ID:', tourId);
+
+            // Step 2: Upload Recorded Audio
+            console.log('Uploading recorded audio...');
+            const uploadResult = await uploadAudio(recordedBlob, tourId);
+
+            console.log('Upload complete:', {
+                tourId,
+                tourName: fileName,
+                uploadedUrl: uploadResult.url,
+                s3Key: uploadResult.key,
+                contentType: uploadResult.contentType,
+                fileSize: uploadResult.size,
+                aiVoiceConversion,
+                businessId,
+                duration: recordingTime,
+                recordedBlobSize: recordedBlob.size
+            });
+
+            setOpenSuccessModal(true);
+
+
+            // Reset recording state
+            resetRecording();
+            setRecordAudioPopup(false);
+            setOpenAudioTourPopup(false);
+            onUpdated?.();
+
+        } catch (error) {
+            console.error('Error in handleSaveRecording:', error);
+            setError(`Failed to create audio tour: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -311,6 +447,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                 setOpenAudioTourPopup(false);
                             }}
                             className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                            disabled={isUploading}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -338,10 +475,11 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                 className="hidden"
                                 id="audio-upload"
                                 onChange={handleFileChange}
+                                disabled={isUploading}
                             />
                             <label
                                 htmlFor="audio-upload"
-                                className="block w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-center cursor-pointer hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                                className={`block w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-center ${isUploading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:border-gray-300 hover:bg-gray-50'} transition-colors`}
                             >
                                 {selectedFile ? (
                                     <span className="text-gray-700">{selectedFile.name}</span>
@@ -359,6 +497,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                 value={fileName}
                                 onChange={(e) => setFileName(e.target.value)}
                                 className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#0519CE] transition-colors"
+                                disabled={isUploading}
                             />
                         </div>
 
@@ -375,6 +514,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                         checked={aiVoiceConversion === 'yes'}
                                         onChange={(e) => setAiVoiceConversion(e.target.value as 'yes')}
                                         className="w-5 h-5 text-[#0519CE] border-2 border-gray-300 focus:ring-2 focus:ring-[#0519CE]"
+                                        disabled={isUploading}
                                     />
                                     <span className="text-gray-900">Yes</span>
                                 </label>
@@ -386,6 +526,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                         checked={aiVoiceConversion === 'no'}
                                         onChange={(e) => setAiVoiceConversion(e.target.value as 'no')}
                                         className="w-5 h-5 text-[#0519CE] border-2 border-gray-300 focus:ring-2 focus:ring-[#0519CE]"
+                                        disabled={isUploading}
                                     />
                                     <span className="text-gray-900">No</span>
                                 </label>
@@ -394,16 +535,18 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
 
                         <div className="flex gap-4">
                             <button
-                                className="flex-1 bg-white border-2 border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                                className="flex-1 bg-white border-2 border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={() => setUploadAudioPopup(false)}
+                                disabled={isUploading}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="flex-1 bg-[#0519CE] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#0416b8] transition-colors"
+                                className="flex-1 bg-[#0519CE] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#0416b8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={handleSaveUpload}
+                                disabled={isUploading || !selectedFile || !fileName || !aiVoiceConversion}
                             >
-                                Save
+                                {isUploading ? 'Uploading...' : 'Save'}
                             </button>
                         </div>
                     </div>
@@ -421,6 +564,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                 setRecordAudioPopup(false);
                             }}
                             className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+                            disabled={isUploading}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -435,6 +579,13 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                         </button>
 
                         <h2 className="text-2xl font-bold mb-4 text-gray-900">Record Audio Tour</h2>
+
+
+                        {error && (
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                                {error}
+                            </div>
+                        )}
 
                         <p className="text-gray-600 mb-6 leading-relaxed">
                             Click the microphone button to start recording your audio tour.
@@ -469,6 +620,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                     <button
                                         onClick={startRecording}
                                         className="bg-[#0519CE] text-white px-8 py-3 rounded-xl font-medium hover:bg-[#0416b8] transition-colors"
+                                        disabled={isUploading}
                                     >
                                         Start Recording
                                     </button>
@@ -500,7 +652,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                     </>
                                 )}
 
-                                {recordedBlob && (
+                                {recordedBlob && !isUploading && (
                                     <button
                                         onClick={resetRecording}
                                         className="bg-gray-500 text-white px-8 py-3 rounded-xl font-medium hover:bg-gray-600 transition-colors"
@@ -529,6 +681,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                         value={fileName}
                                         onChange={(e) => setFileName(e.target.value)}
                                         className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[#0519CE] transition-colors"
+                                        disabled={isUploading}
                                     />
                                 </div>
 
@@ -545,6 +698,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                                 checked={aiVoiceConversion === 'yes'}
                                                 onChange={(e) => setAiVoiceConversion(e.target.value as 'yes')}
                                                 className="w-5 h-5 text-[#0519CE] border-2 border-gray-300 focus:ring-2 focus:ring-[#0519CE]"
+                                                disabled={isUploading}
                                             />
                                             <span className="text-gray-900">Yes</span>
                                         </label>
@@ -556,6 +710,7 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
                                                 checked={aiVoiceConversion === 'no'}
                                                 onChange={(e) => setAiVoiceConversion(e.target.value as 'no')}
                                                 className="w-5 h-5 text-[#0519CE] border-2 border-gray-300 focus:ring-2 focus:ring-[#0519CE]"
+                                                disabled={isUploading}
                                             />
                                             <span className="text-gray-900">No</span>
                                         </label>
@@ -564,27 +719,59 @@ const AudioTourPopup: React.FC<AudioTourPopupProps> = ({
 
                                 <div className="flex gap-4">
                                     <button
-                                        className="flex-1 bg-white border-2 border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors"
+                                        className="flex-1 bg-white border-2 border-gray-200 text-gray-700 px-6 py-3 rounded-xl font-medium hover:border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={() => {
                                             resetRecording();
                                             setRecordAudioPopup(false);
                                         }}
+                                        disabled={isUploading}
                                     >
                                         Cancel
                                     </button>
                                     <button
                                         className="flex-1 bg-[#0519CE] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#0416b8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                         onClick={handleSaveRecording}
-                                        disabled={!fileName || !aiVoiceConversion}
+                                        disabled={isUploading || !fileName || !aiVoiceConversion}
                                     >
-                                        Save
+                                        {isUploading ? 'Uploading...' : 'Save'}
                                     </button>
                                 </div>
+
                             </>
                         )}
                     </div>
                 </div>
             )}
+
+            {/* Success Modal */}
+      {OpenSuccessModal && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#0519CE] rounded-full p-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-lg font-bold mb-2">Success!</h2>
+            <p className="mb-4">Audio tour created and uploaded successfully!</p>
+            <button
+              className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-[#0416b8]"
+              onClick={() => setOpenSuccessModal(false)}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
         </>
     );
 };
