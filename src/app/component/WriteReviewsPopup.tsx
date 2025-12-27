@@ -87,8 +87,8 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
 
-    if (selectedImages.length >= 2) {
-      setError("You can upload a maximum of 2 images");
+    if (selectedImages.length >= 3) {
+      setError("You can upload a maximum of 3 images");
       return;
     }
 
@@ -100,7 +100,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
       "image/gif",
     ];
 
-    const remainingSlots = 2 - selectedImages.length;
+    const remainingSlots = 3 - selectedImages.length;
     const allowedFiles = files.slice(0, remainingSlots);
 
     for (const file of allowedFiles) {
@@ -212,24 +212,29 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
       if (res.ok) {
         const createdReviewId = result.id;
         if (selectedImages.length > 0 && createdReviewId) {
-          selectedImages.forEach((img) => {
-            convertToBase64(img).then((base64Image) => {
-              fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
-                method: "POST",
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  data: base64Image,
-                  folder: "business-reviews",
-                  fileName: createdReviewId,
-                }),
-              }).catch((err) => {
-                console.error(" image upload failed", err);
+          Promise.all(selectedImages.map(img => convertToBase64(img)))
+            .then((base64Images) => {
+              fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64-multiple`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    images: base64Images,
+                    folder: "business-reviews",
+                    fileName: createdReviewId,
+                  }),
+                }
+              ).catch((err) => {
+                console.error("Image upload failed", err);
               });
+            })
+            .catch((err) => {
+              console.error("Network error comes", err);
             });
-          });
         }
       }
       // 🔹 Ab sirf parent ko bol rahe hain: "refresh kar lo"
@@ -322,7 +327,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
                 type="file"
                 accept=".svg,.png,.jpg,.gif"
                 multiple
-                disabled={selectedImages.length >= 2}
+                disabled={selectedImages.length >= 3}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={handleImageSelect}
               />
