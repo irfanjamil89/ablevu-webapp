@@ -103,7 +103,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
     const remainingSlots = 2 - selectedImages.length;
     const allowedFiles = files.slice(0, remainingSlots);
 
-    for (let file of allowedFiles) {
+    for (const file of allowedFiles) {
       if (!validTypes.includes(file.type)) {
         setError("Please select a valid image file (SVG, PNG, JPG, or GIF)");
         return;
