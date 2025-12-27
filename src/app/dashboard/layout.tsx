@@ -473,17 +473,18 @@ export default function DashboardLayout({
 
                 {notificationsOpen && (
                   <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                    <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
+                    <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                       {notifications.length === 0 && (
-                        <li className="px-4 py-6 text-gray-500 text-sm text-center">
-                          No new notifications
+                       <li className="flex items-center justify-center px-4 py-12">
+                           <p className="text-gray-500 text-m">No new notifications</p>
+                           
                         </li>
                       )}
 
                       {notifications.map((item) => (
                         <li
                           key={item.id}
-                          className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                           className="flex justify-between items-center px-4 py-4 hover:bg-gray-100 cursor-pointer"
                           onClick={() => handleNotificationClick(item)}
                         >
                           <div className="w-full pr-2">

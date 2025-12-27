@@ -520,6 +520,7 @@ export default function BusinessSidebar({
   const currentStatusLabel = STATUS_LABELS[normalizedStatus] || status;
 
   const isAdmin = userRole === "Admin";
+  const canEdit= isOwner || isAdmin;
   const isBusinessContributorOrUser =
   userRole === "Business" ||
   userRole === "Contributor" ||
@@ -732,7 +733,7 @@ export default function BusinessSidebar({
       </div>
 
       {/* Logo */}
-       {isOwner && (
+       {canEdit && (
       <BusinessImageUpload
         businessId={business.id}
         businessName={business.name}
@@ -742,7 +743,7 @@ export default function BusinessSidebar({
         }}
       />
        )}
-       {!isOwner && business.logo_url && (
+       {!canEdit && business.logo_url && (
   <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
     <div className="flex justify-center p-6">
       <img
@@ -811,7 +812,7 @@ export default function BusinessSidebar({
       <div>
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-4">Details</h3>
-           {isOwner && (
+           {canEdit && (
           <button
             type="button"
             onClick={() => setOpenDetailPopup(true)}
@@ -868,7 +869,7 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Operating Hours</h3>
-           {isOwner && (
+           {canEdit && (
           <button
             type="button"
             onClick={() => setOpenOperatingHours(true)}
@@ -902,7 +903,7 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Social Links</h3>
-           {isOwner && (
+           {canEdit && (
           <button
             type="button"
             onClick={() => setOpenSocialLinks(true)}
@@ -946,7 +947,7 @@ export default function BusinessSidebar({
       <div className="pb-10">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold my-6">About</h3>
-           {isOwner && (
+           {canEdit && (
           <button
             type="button"
             onClick={() => setOpenAboutModal(true)}
@@ -1029,7 +1030,7 @@ export default function BusinessSidebar({
       </div>
 
       {/* Delete Business button */}
-      {(isAdmin || isOwner) && (
+      {(canEdit) && (
       <div className="mt-3">
         <button
           type="button"
