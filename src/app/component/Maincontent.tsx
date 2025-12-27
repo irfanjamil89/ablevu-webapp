@@ -57,6 +57,7 @@ type BusinessReview = {
   modified_at: string;
   reviewer_name?: string;
   created_by_name: string;
+  image_url?: string;
   user?: { id: string; name: string };
 };
 
@@ -363,6 +364,10 @@ export default function Maincontent({
   const [openClaimModal, setOpenClaimModal] = useState(false);
    const [userRole, setUserRole] = useState<string | null>(null);
     const isAdmin = userRole === "Admin";
+    const canEdit= isOwner || isAdmin;
+     const [previewImage, setPreviewImage] = useState<string | null>(null);
+      const openPreview = (url: string) => setPreviewImage(url);
+      const closePreview = () => setPreviewImage(null);
 
 
   const decodeJWT = (token: string) => {
@@ -644,7 +649,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Virtual Tours</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenVirtualTour(true)}
@@ -699,7 +704,7 @@ export default function Maincontent({
                     className="w-5 h-5 cursor-pointer"
                   />
                   {/* YELLOW PENCIL → edit popup */}
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
@@ -708,7 +713,7 @@ export default function Maincontent({
                   />
                   )}
                   {/* RED DELETE → delete API */}
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
@@ -732,7 +737,7 @@ export default function Maincontent({
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-[600] mb-4">Audio Tours</h3>
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAudioTourPopup(true)}
@@ -764,7 +769,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Property Images</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenPropertyImagePopup(true)}
@@ -799,7 +804,7 @@ export default function Maincontent({
                     alt="green-tick"
                     className="w-5 h-5 cursor-pointer"
                   />
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
@@ -807,7 +812,7 @@ export default function Maincontent({
                     onClick={() => handleEditClick(image.id)}
                   />
                   )}
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
@@ -867,7 +872,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Accessibility Features</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAccessibilityFeaturePopup(true)}
@@ -892,7 +897,7 @@ export default function Maincontent({
                       alt="green-tick"
                       className="w-5 h-5 cursor-pointer"
                     />
-                    {isOwner && (
+                    {canEdit && (
                     <img
                       src="/assets/images/red-delete.svg"
                       alt="red-delete"
@@ -949,7 +954,7 @@ export default function Maincontent({
           </h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenPartnerCertificationsPopup(true)}
@@ -991,7 +996,7 @@ export default function Maincontent({
                         alt="green-tick"
                         className="w-5 h-5 cursor-pointer"
                       />
-                      {isOwner && (
+                      {canEdit && (
                       <img
                         src="/assets/images/red-delete.svg"
                         alt="red-delete"
@@ -1110,7 +1115,7 @@ export default function Maincontent({
                           className="w-5 h-5 cursor-pointer"
                         />
                       )}
-                      {isOwner && (
+                      {canEdit && (
                       <img
                         src="/assets/images/red-delete.svg"
                         alt="red-delete"
@@ -1122,6 +1127,16 @@ export default function Maincontent({
                   </div>
 
                   <p className="text-md text-gray-900 mb-2">{text}</p>
+                  <div className="flex gap-3 flex-wrap">
+              {(r.image_url ? JSON.parse(r.image_url) : []).map((url: string, idx: number) => (
+                <img
+                  key={idx}
+                  src={url}
+                  className="w-20 h-20 object-cover rounded-lg border cursor-pointer"
+                  onClick={() => openPreview(url)}
+                />
+              ))}
+            </div>
                 </section>
               );
             })}
@@ -1190,7 +1205,7 @@ export default function Maincontent({
                         alt="green-tick"
                         className="w-5 h-5 cursor-pointer"
                       />
-                      {isOwner && (
+                      {canEdit && (
                       <img
                         src="/assets/images/red-delete.svg"
                         alt="red-delete"
@@ -1257,7 +1272,7 @@ export default function Maincontent({
             Additional Accessibility Resources
           </h3>
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAccessibilityResourcesPopup(true)}
@@ -1284,7 +1299,7 @@ export default function Maincontent({
                     alt="green-tick"
                     className="w-5 h-5 cursor-pointer"
                   />
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
@@ -1292,7 +1307,7 @@ export default function Maincontent({
                     onClick={() => onEditAdditionalResource?.(r)}
                   />
                   )}
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
@@ -1341,7 +1356,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Accessibility Media</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenAccessibilityMediaPopup(true)}
@@ -1367,7 +1382,7 @@ export default function Maincontent({
                     alt="green-tick"
                     className="w-5 h-5 cursor-pointer"
                   />
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/yellow-pencil.svg"
                     alt="yellow-pencil"
@@ -1375,7 +1390,7 @@ export default function Maincontent({
                     onClick={() => onEditBusinessMedia?.(m)}
                   />
                   )}
-                  {isOwner && (
+                  {canEdit && (
                   <img
                     src="/assets/images/red-delete.svg"
                     alt="red-delete"
@@ -1424,7 +1439,7 @@ export default function Maincontent({
           <h3 className="text-xl font-[600] mb-4">Custom Sections</h3>
 
           <div className="flex flex-wrap gap-y-4 lg:flex-nowrap items-center justify-between mb-8">
-            {isOwner && (
+            {canEdit && (
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setOpenCustonSectionPopup(true)}
@@ -1444,7 +1459,7 @@ export default function Maincontent({
                 {/* Section Header */}
                 <div className="flex justify-between items-center mb-4">
                   <h1 className="text-2xl font-semibold text-gray-900">{section.label}</h1>
-                  {isOwner && (
+                  {canEdit && (
                   <button
                     onClick={() => {
                       onAddCustomSectionMedia?.(section.id)
@@ -1465,12 +1480,12 @@ export default function Maincontent({
                       <div key={media.id} className="mb-6 border p-4 rounded-lg">
                         <div className="flex justify-end gap-3 mb-4">
                           <CheckCircle className="w-6 h-6 text-green-500 cursor-pointer" />
-                          {isOwner && (
+                          {canEdit && (
                           < button onClick={() => onEditCustomSectionMedia?.(media)}>
                             <Pencil className="w-6 h-6 text-yellow-500 cursor-pointer" />
                           </button>
                           )}
-                          {isOwner && (
+                          {canEdit && (
                           <button onClick={() => onDeleteCustomSectionMedia?.(media)}>
                             <Trash2
                               className="w-6 h-6 text-red-500 cursor-pointer" />
@@ -1551,6 +1566,30 @@ export default function Maincontent({
           setOpenSuccessModal={setOpenSuccessModal}
         />
       )}
+ {previewImage && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl max-w-4xl w-[500px] mx-auto overflow-hidden shadow-2xl relative">
+      
+      {/* Close Button */}
+      <div className="flex justify-end items-center p-4 border-b">
+        <button
+          onClick={closePreview}
+          className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Image */}
+      <div className="p-4 flex justify-center items-center">
+        <img
+          src={previewImage}
+          className="max-w-full max-h-[70vh] rounded-lg object-contain"
+        />
+      </div>
+    </div>
+  </div>
+)}
 {openSuccessModal && (
         <Successmodal
           setOpenSuccessModal={setOpenSuccessModal}

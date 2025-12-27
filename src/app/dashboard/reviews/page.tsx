@@ -16,6 +16,7 @@ interface Review {
   review_type_title: string;
   user_avatar?: string;
   business_avatar?: string;
+  image_url?: string;
 }
 
 export default function Page() {
@@ -25,6 +26,10 @@ export default function Page() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const openPreview = (url: string) => setPreviewImage(url);
+  const closePreview = () => setPreviewImage(null);
+
 
 
   const fetchReviews = async () => {
@@ -178,7 +183,17 @@ export default function Page() {
             <div className="py-4">
               <p>{review.description}</p>
             </div>
-
+            {/* Review Images */}
+            <div className="flex gap-3 flex-wrap">
+              {(review.image_url ? JSON.parse(review.image_url) : []).map((url: string, idx: number) => (
+                <img
+                  key={idx}
+                  src={url}
+                  className="w-20 h-20 object-cover rounded-lg border cursor-pointer"
+                  onClick={() => openPreview(url)}
+                />
+              ))}
+            </div>
             {/* Buttons */}
             <div className="flex justify-end gap-3 pt-2">
               <label
@@ -241,6 +256,30 @@ export default function Page() {
           </div>
         </div>
       )}
+     {previewImage && (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl max-w-4xl w-[500px] mx-auto overflow-hidden shadow-2xl relative">
+      
+      {/* Close Button */}
+      <div className="flex justify-end items-center p-4 border-b">
+        <button
+          onClick={closePreview}
+          className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Image */}
+      <div className="p-4 flex justify-center items-center">
+        <img
+          src={previewImage}
+          className="max-w-full max-h-[70vh] rounded-lg object-contain"
+        />
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
