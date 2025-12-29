@@ -104,8 +104,7 @@ export default function AccessibilityFeatureForm({ onSuccess }: { onSuccess?: ()
   };
   return (
     <div className="flex items-center gap-3">
-      {/* Loading State */}
-      {loading && <div>Loading...</div>}
+      
 
       {/* Error State */}
       {error && <div className="text-red-500">{error}</div>}
