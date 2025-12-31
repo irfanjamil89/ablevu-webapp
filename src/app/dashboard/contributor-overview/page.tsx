@@ -170,6 +170,15 @@ export default function Page() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
+  useEffect(() => {
+  const t = setTimeout(() => {
+    setAppliedSearch(searchTerm.trim());
+    setCurrentPage(1);
+  }, 350);
+
+  return () => clearTimeout(t);
+}, [searchTerm]);
+
   const statusFilterLabel =
     statusFilter === "draft"
       ? "Draft"
@@ -196,7 +205,7 @@ export default function Page() {
     setIsOnboardingLoading(true);
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/stripe/create-account`,
       {
         method: "POST",
         headers: {
@@ -418,13 +427,13 @@ export default function Page() {
       bg: "#FFEFD5",
       text: "#B46A00",
     },
-    approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+    approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
     "pending acclaim": {
       label: "Pending Acclaim",
       bg: "#EEF2FF",
       text: "#3730A3",
     },
-    claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+    claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
   };
 
   const toCanonicalStatus = (raw: string, b: Business): StatusKey | null => {
@@ -936,12 +945,7 @@ export default function Page() {
                     placeholder="Search by Name, City, Country"
                     className="w-full border-none focus:outline-none focus:ring-0 font-medium text-sm text-gray-700 placeholder-gray-500 ml-2"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        setAppliedSearch(searchTerm);
-                      }
-                    }}
+                    onChange={(e) => setSearchTerm(e.target.value)}                    
                   />
                 </div>
 
@@ -1497,7 +1501,7 @@ export default function Page() {
       {OpenAddBusinessModal && (
         <AddBusinessModal
           setOpenAddBusinessModal={setOpenAddBusinessModal}
-          onBusinessCreated={handleBusinessCreated} // ✅ refresh on create
+          onBusinessCreated={() => {}}
         />
       )}
     </div>

@@ -672,9 +672,9 @@ export default function Page({
                 }
             }
         );
-    }; // ← This closing brace was missing
+    }; 
 
-    // ⭐ NEW: Business Image delete handler
+    //  NEW: Business Image delete handler
 
     const handleDeleteBusinessImage = (image: BusinessImage) => {
         if (!API_BASE_URL || !business) return;

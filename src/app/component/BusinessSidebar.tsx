@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { AiOutlineLike,AiFillLike } from "react-icons/ai";
+import { AiOutlineLike, AiFillLike } from "react-icons/ai";
 import {
   BsBookmark,
   BsBookmarkFill,
@@ -100,7 +100,10 @@ interface BusinessSidebarProps {
 
 // ---------- Status helper ----------
 const normalizeStatus = (status: string) =>
-  status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
+  status
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_-]+/g, " ");
 
 type StatusKey =
   | "draft"
@@ -173,8 +176,7 @@ export default function BusinessSidebar({
   const [userId, setUserId] = useState<string | null>(null);
   const isOwner = userId === businessOwner?.id;
 
-
-     const decodeJWT = (token: string) => {
+  const decodeJWT = (token: string) => {
     try {
       return JSON.parse(atob(token.split(".")[1]));
     } catch {
@@ -182,11 +184,62 @@ export default function BusinessSidebar({
     }
   };
 
-
   // ⭐ SAVE STATE
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveId, setSaveId] = useState<string | null>(null);
+
+  const fetchLikesFromApi = async () => {
+    if (!business?.id || !API_BASE_URL) return;
+
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("access_token")
+        : null;
+
+    const userId = getUserIdFromToken(token);
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/business-recomendations/list?businessId=${business.id}&page=1&limit=1000`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.warn("Likes list fetch failed", res.status);
+        return;
+      }
+
+      const body = await res.json();
+      const items = body?.data || body?.items || [];
+
+      const likes = items.filter(
+        (rec: any) => rec?.label === "like" && rec?.active !== false
+      );
+
+      setLikeCount(likes.length);
+
+      if (userId) {
+        const mine = likes.find((rec: any) => rec?.created_by === userId);
+        setLikedByUser(!!mine);
+        setLikeId(mine?.id || null);
+      } else {
+        setLikedByUser(false);
+        setLikeId(null);
+      }
+    } catch (err) {
+      console.error("Failed to fetch likes from API", err);
+    }
+  };
+  useEffect(() => {
+    fetchLikesFromApi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [business?.id, API_BASE_URL]);
 
   // ---------- TOKEN HELPER ----------
   function getUserIdFromToken(token: string | null): string | null {
@@ -278,12 +331,12 @@ export default function BusinessSidebar({
       setSaveLoading(false);
     }
   };
-   useEffect(() => {
-      const token = localStorage.getItem("access_token");
-      if (!token) return;
-      const payload = decodeJWT(token);
-      setUserId(payload?.sub || null);
-    }, []);
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    const payload = decodeJWT(token);
+    setUserId(payload?.sub || null);
+  }, []);
 
   // ⭐ ON LOAD -> CHECK SAVED
   useEffect(() => {
@@ -343,77 +396,68 @@ export default function BusinessSidebar({
   }, [business?.id, API_BASE_URL]);
 
   const handleRecommendClick = async () => {
-  if (!business || likeLoading) return;
+    if (!business || likeLoading) return;
 
-  const token =
-    typeof window !== "undefined"
-      ? window.localStorage.getItem("access_token")
-      : null;
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("access_token")
+        : null;
 
-  if (!token) {
-    showError("Login Required", "Please login to like this business.");
-    return;
-  }
-
-  try {
-    setLikeLoading(true);
-
-    // 🔴 UNLIKE
-    if (likedByUser && likeId) {
-      const res = await fetch(
-        `${API_BASE_URL}/business-recomendations/delete/${likeId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to remove like");
-
-      setLikedByUser(false);
-      setLikeId(null);
-      setLikeCount((prev) => Math.max(0, prev - 1));
-
-      showSuccess("Removed", "Like removed successfully.");
+    if (!token) {
+      showError("Login Required", "Please login to like this business.");
       return;
     }
 
-    // 🟢 LIKE
-    const res = await fetch(
-      `${API_BASE_URL}/business-recomendations/create`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          businessId: business.id,
-          label: "like",
-          active: true,
-        }),
+    try {
+      setLikeLoading(true);
+
+      // 🔴 UNLIKE
+      if (likedByUser && likeId) {
+        const res = await fetch(
+          `${API_BASE_URL}/business-recomendations/delete/${likeId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to remove like");
+
+        await fetchLikesFromApi();
+        showSuccess("Removed", "Like removed successfully.");
+        return;
       }
-    );
 
-    if (!res.ok) throw new Error("Failed to like");
+      // 🟢 LIKE
+      const res = await fetch(
+        `${API_BASE_URL}/business-recomendations/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            businessId: business.id,
+            label: "like",
+            active: true,
+          }),
+        }
+      );
 
-    const data = await res.json();
-    const createdLike = data?.data || data;
+      if (!res.ok) throw new Error("Failed to like");
 
-    setLikedByUser(true);
-    setLikeId(createdLike?.id || null);
-    setLikeCount((prev) => prev + 1);
+      await fetchLikesFromApi();
 
-    showSuccess("Liked", "You liked this business.");
-  } catch (err: any) {
-    showError("Error", err.message || "Action failed");
-  } finally {
-    setLikeLoading(false);
-  }
-};
-
+      showSuccess("Liked", "You liked this business.");
+    } catch (err: any) {
+      showError("Error", err.message || "Action failed");
+    } finally {
+      setLikeLoading(false);
+    }
+  };
 
   const handleShare = async () => {
     try {
@@ -425,41 +469,39 @@ export default function BusinessSidebar({
     }
   };
 
-  useEffect(() => {
-  if (!business?.businessRecomendations) {
-    setLikedByUser(false);
-    setLikeId(null);
-    setLikeCount(0);
-    return;
-  }
+  // useEffect(() => {
+  //   if (!business?.businessRecomendations) {
+  //     setLikedByUser(false);
+  //     setLikeId(null);
+  //     setLikeCount(0);
+  //     return;
+  //   }
 
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("access_token")
-      : null;
+  //   const token =
+  //     typeof window !== "undefined"
+  //       ? localStorage.getItem("access_token")
+  //       : null;
 
-  const userId = getUserIdFromToken(token);
+  //   const userId = getUserIdFromToken(token);
 
-  let found = false;
-  let foundLikeId: string | null = null;
+  //   let found = false;
+  //   let foundLikeId: string | null = null;
 
-  const count = business.businessRecomendations.filter((rec: any) => {
-    const isLike = rec.label === "like" && rec.active !== false;
+  //   const count = business.businessRecomendations.filter((rec: any) => {
+  //     const isLike = rec.label === "like" && rec.active !== false;
 
-    if (isLike && rec.created_by === userId) {
-      found = true;
-      foundLikeId = rec.id; // 🔥 THIS IS IMPORTANT
-    }
+  //     if (isLike && rec.created_by === userId) {
+  //       found = true;
+  //       foundLikeId = rec.id; // 🔥 THIS IS IMPORTANT
+  //     }
 
-    return isLike;
-  }).length;
+  //     return isLike;
+  //   }).length;
 
-  setLikeCount(count);
-  setLikedByUser(found);
-  setLikeId(foundLikeId);
-}, [business?.businessRecomendations]);
-
-
+  //   setLikeCount(count);
+  //   setLikedByUser(found);
+  //   setLikeId(foundLikeId);
+  // }, [business?.businessRecomendations]);
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -470,7 +512,9 @@ export default function BusinessSidebar({
         const userId = getUserIdFromToken(token);
 
         if (!token || !userId) {
-          console.warn("No valid token / userId found, skipping user role fetch");
+          console.warn(
+            "No valid token / userId found, skipping user role fetch"
+          );
           return;
         }
 
@@ -566,9 +610,9 @@ export default function BusinessSidebar({
 
   const isAdmin = userRole === "Admin";
   const isBusinessContributorOrUser =
-  userRole === "Business" ||
-  userRole === "Contributor" ||
-  userRole === "User";
+    userRole === "Business" ||
+    userRole === "Contributor" ||
+    userRole === "User";
 
   // ✅ Admin dropdown options: all statuses
   const adminStatusOptions = useMemo(() => {
@@ -602,26 +646,25 @@ export default function BusinessSidebar({
   ];
 
   const availableActions = useMemo(() => {
-  if (!userRole) return [];
-  if (isAdmin) return []; // admin uses dropdown
+    if (!userRole) return [];
+    if (isAdmin) return []; // admin uses dropdown
 
-  const role = userRole as any;
+    const role = userRole as any;
 
-  if (!["Business", "Contributor", "User"].includes(role)) return [];
+    if (!["Business", "Contributor", "User"].includes(role)) return [];
 
-  const byStatus: Record<StatusKey, Array<StatusAction["key"]>> = {
-    draft: ["submit_approval"],
-    "pending approval": [],
-    approved: ["submit_acclaim"],
-    "pending acclaim": [],
-    claimed: [],
-  };
+    const byStatus: Record<StatusKey, Array<StatusAction["key"]>> = {
+      draft: ["submit_approval"],
+      "pending approval": [],
+      approved: ["submit_acclaim"],
+      "pending acclaim": [],
+      claimed: [],
+    };
 
-  const allowedKeys = byStatus[normalizedStatus] || [];
+    const allowedKeys = byStatus[normalizedStatus] || [];
 
-  return ACTIONS.filter((a) => allowedKeys.includes(a.key));
-}, [userRole, isAdmin, normalizedStatus]);
-
+    return ACTIONS.filter((a) => allowedKeys.includes(a.key));
+  }, [userRole, isAdmin, normalizedStatus]);
 
   const confirmDeleteAction = async () => {
     if (!business) return;
@@ -777,28 +820,27 @@ export default function BusinessSidebar({
       </div>
 
       {/* Logo */}
-       {isOwner && (
-      <BusinessImageUpload
-        businessId={business.id}
-        businessName={business.name}
-        initialImageUrl={business.logo_url}
-        onUploadSuccess={() => {
-          refetchBusiness();
-        }}
-      />
-       )}
-       {!isOwner && business.logo_url && (
-  <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
-    <div className="flex justify-center p-6">
-      <img
-        src={business.logo_url}
-        alt={business.name}
-        className="w-80 object-contain cursor-default transition-opacity"
-      />
-    </div>
-  </div>
-)}
-
+      {isOwner && (
+        <BusinessImageUpload
+          businessId={business.id}
+          businessName={business.name}
+          initialImageUrl={business.logo_url}
+          onUploadSuccess={() => {
+            refetchBusiness();
+          }}
+        />
+      )}
+      {!isOwner && business.logo_url && (
+        <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
+          <div className="flex justify-center p-6">
+            <img
+              src={business.logo_url}
+              alt={business.name}
+              className="w-80 object-contain cursor-default transition-opacity"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Info */}
       <div className="py-8">
@@ -808,23 +850,22 @@ export default function BusinessSidebar({
           <div className="flex items-center gap-3">
             {/* LIKE BUTTON */}
             <button
-  onClick={handleRecommendClick}
-  disabled={likeLoading}
-  className={`flex items-center gap-1 py-1 px-3 rounded-2xl
-    ${
-      likedByUser
-        ? "bg-[#0205d3] text-white"
-        : "bg-[#f0f1ff] text-[#0205d3]"
-    }`}
->
-  {likedByUser ? (
-    <AiFillLike className="w-5 h-5" />
-  ) : (
-    <AiOutlineLike className="w-5 h-5" />
-  )}
-  <span>{likeCount}</span>
-</button>
-
+              onClick={handleRecommendClick}
+              disabled={likeLoading}
+              className={`flex items-center gap-1 py-1 px-3 rounded-2xl
+              ${
+                likedByUser
+                  ? "bg-[#0205d3] text-white"
+                  : "bg-[#f0f1ff] text-[#0205d3]"
+              }`}
+            >
+              {likedByUser ? (
+                <AiFillLike className="w-5 h-5" />
+              ) : (
+                <AiOutlineLike className="w-5 h-5" />
+              )}
+              <span>{likeCount}</span>
+            </button>
 
             {/* SAVE / BOOKMARK BUTTON */}
             <button
@@ -866,19 +907,19 @@ export default function BusinessSidebar({
       <div>
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-4">Details</h3>
-           {isOwner && (
-          <button
-            type="button"
-            onClick={() => setOpenDetailPopup(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => setOpenDetailPopup(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-6 h-6"
+              />
+            </button>
+          )}
         </div>
 
         {business.website && (
@@ -907,9 +948,7 @@ export default function BusinessSidebar({
         {business.phone_number && (
           <p className="flex items-center mb-3">
             <BsTelephone className="w-5 h-5 mr-3 text-[#0205d3]" />
-            <a href={`tel:${business.phone_number}`}>
-              {business.phone_number}
-            </a>
+            <a href={`tel:${business.phone_number}`}>{business.phone_number}</a>
           </p>
         )}
 
@@ -923,19 +962,19 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Operating Hours</h3>
-           {isOwner && (
-          <button
-            type="button"
-            onClick={() => setOpenOperatingHours(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => setOpenOperatingHours(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-6 h-6"
+              />
+            </button>
+          )}
         </div>
 
         {sortedBusinessSchedule.length ? (
@@ -957,19 +996,19 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Social Links</h3>
-           {isOwner && (
-          <button
-            type="button"
-            onClick={() => setOpenSocialLinks(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => setOpenSocialLinks(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-6 h-6"
+              />
+            </button>
+          )}
         </div>
 
         <div className="flex">
@@ -1001,19 +1040,19 @@ export default function BusinessSidebar({
       <div className="pb-10">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold my-6">About</h3>
-           {isOwner && (
-          <button
-            type="button"
-            onClick={() => setOpenAboutModal(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          {isOwner && (
+            <button
+              type="button"
+              onClick={() => setOpenAboutModal(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-6 h-6"
+              />
+            </button>
+          )}
         </div>
         <p>{business.description || "No description added yet."}</p>
       </div>
@@ -1085,25 +1124,24 @@ export default function BusinessSidebar({
 
       {/* Delete Business button */}
       {(isAdmin || isOwner) && (
-      <div className="mt-3">
-        <button
-          type="button"
-          onClick={() => setOpenDeleteModal(true)}
-          className="flex justify-center items-center gap-2 px-5 py-2.5 w-full text-center text-md font-bold bg-[#FFEBEB] text-[#DD3820] rounded-full cursor-pointer"
-        >
-          <img
-            src="/assets/images/red-delete.svg"
-            alt="red-delete"
-            className="w-5 h-5"
-          />
-          Delete Business
-        </button>
-        
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setOpenDeleteModal(true)}
+            className="flex justify-center items-center gap-2 px-5 py-2.5 w-full text-center text-md font-bold bg-[#FFEBEB] text-[#DD3820] rounded-full cursor-pointer"
+          >
+            <img
+              src="/assets/images/red-delete.svg"
+              alt="red-delete"
+              className="w-5 h-5"
+            />
+            Delete Business
+          </button>
 
-        {deleteError && (
-          <p className="text-red-500 text-sm mt-2">{deleteError}</p>
-        )}
-      </div>
+          {deleteError && (
+            <p className="text-red-500 text-sm mt-2">{deleteError}</p>
+          )}
+        </div>
       )}
 
       {/* Delete Confirmation Popup */}

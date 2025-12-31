@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { GoogleMap, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import Link from "next/link";
 import Login from "./Login";
 import Signup from "./Signup";
@@ -39,8 +39,8 @@ interface ApiResponse {
 }
 
 const mapContainerStyle = {
-  width: '100%',
-  height: '100%'
+  width: "100%",
+  height: "100%",
 };
 
 const defaultCenter = {
@@ -72,14 +72,18 @@ export default function Mapsections() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
+    null
+  );
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [mapZoom, setMapZoom] = useState<number>(10);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [shouldFitBounds, setShouldFitBounds] = useState<boolean>(true);
 
   // Old modal (login/signup)
-  const [businessForModal, setBusinessForModal] = useState<Business | null>(null);
+  const [businessForModal, setBusinessForModal] = useState<Business | null>(
+    null
+  );
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
@@ -98,7 +102,19 @@ export default function Mapsections() {
 
   const isTokenValid = () => {
     const token = getToken();
-    return !!token && token !== "undefined" && token !== "null" && token.length > 10;
+    return (
+      !!token && token !== "undefined" && token !== "null" && token.length > 10
+    );
+  };
+  const getUserFromSession = () => {
+    if (typeof window === "undefined") return null;
+    const u = sessionStorage.getItem("user");
+    return u ? JSON.parse(u) : null;
+  };
+
+  const isNormalUser = () => {
+    const u = getUserFromSession();
+    return u?.user_role === "User";
   };
 
   const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -129,12 +145,17 @@ export default function Mapsections() {
 
   // Filter businesses with valid coordinates for map display
   const validBusinesses = filteredBusinesses
-    .map(business => {
+    .map((business) => {
       const coords = validateCoordinates(business.latitude, business.longitude);
-      return coords ? { ...business, validLat: coords.lat, validLng: coords.lng } : null;
+      return coords
+        ? { ...business, validLat: coords.lat, validLng: coords.lng }
+        : null;
     })
-    .filter((business): business is Business & { validLat: number; validLng: number } => 
-      business !== null
+    .filter(
+      (
+        business
+      ): business is Business & { validLat: number; validLng: number } =>
+        business !== null
     );
 
   useEffect(() => {
@@ -194,11 +215,19 @@ export default function Mapsections() {
 
   // ✅ Approved Business Click
   const handleApprovedBusinessClick = (business: Business) => {
+    // Not logged in -> locked modal
     if (!isTokenValid()) {
       setBusinessForModal(business);
       return;
     }
 
+    // ✅ Logged in but role is normal User -> locked modal (NO claim)
+    if (isNormalUser()) {
+      setBusinessForModal(business); // show "This business is locked"
+      return;
+    }
+
+    // ✅ Business/Contributor/Owner etc -> allow claim flow
     setBusinessForModal(null);
     setClaimBusiness(business);
     setClaimConfirmOpen(true);
@@ -208,10 +237,13 @@ export default function Mapsections() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list1`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business/list1`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to fetch businesses");
 
@@ -230,12 +262,12 @@ export default function Mapsections() {
     if (!map || validBusinesses.length === 0) return;
 
     const bounds = new google.maps.LatLngBounds();
-    validBusinesses.forEach(business => {
+    validBusinesses.forEach((business) => {
       bounds.extend({ lat: business.validLat, lng: business.validLng });
     });
 
     map.fitBounds(bounds);
-    
+
     if (validBusinesses.length === 1) {
       setTimeout(() => map.setZoom(15), 100);
     }
@@ -248,7 +280,7 @@ export default function Mapsections() {
       setSelectedBusiness(business);
       setMapCenter({ lat: coords.lat, lng: coords.lng });
       setMapZoom(15);
-      
+
       if (map) {
         map.panTo({ lat: coords.lat, lng: coords.lng });
         map.setZoom(15);
@@ -261,23 +293,23 @@ export default function Mapsections() {
   };
 
   const getMarkerIcon = (isApproved: boolean) => {
-    if (typeof google !== 'undefined') {
+    if (typeof google !== "undefined") {
       if (isApproved) {
         return {
-          url: '/assets/images/lock.png',
+          url: "/assets/images/lock.png",
           scaledSize: new google.maps.Size(32, 42),
           anchor: new google.maps.Point(16, 42),
         };
       }
       return {
-        url: '/assets/images/marker.png',
+        url: "/assets/images/marker.png",
         scaledSize: new google.maps.Size(32, 42),
         anchor: new google.maps.Point(16, 42),
       };
     }
     return undefined;
   };
-  
+
   return (
     <section className="w-5/6 custom-container lg:mx-auto px-4 py-12 mt-10">
       <h1 className="font-['Helvetica'] md:text-4xl lg:text-[48px] text-4xl font-bold mb-8">
@@ -309,76 +341,104 @@ export default function Mapsections() {
               }}
             >
               {validBusinesses.map((business) => {
-                const isApproved = business.business_status?.toLowerCase() === "approved";
+                const isApproved =
+                  business.business_status?.toLowerCase() === "approved";
                 return (
                   <Marker
                     key={business.id}
-                    position={{ lat: business.validLat, lng: business.validLng }}
+                    position={{
+                      lat: business.validLat,
+                      lng: business.validLng,
+                    }}
                     onClick={() => setSelectedBusiness(business)}
                     icon={getMarkerIcon(isApproved)}
                   />
                 );
               })}
 
-              {selectedBusiness && (() => {
-                const coords = validateCoordinates(selectedBusiness.latitude, selectedBusiness.longitude);
-                if (!coords) return null;
-                
-                const isApproved = selectedBusiness.business_status?.toLowerCase() === "approved";
+              {selectedBusiness &&
+                (() => {
+                  const coords = validateCoordinates(
+                    selectedBusiness.latitude,
+                    selectedBusiness.longitude
+                  );
+                  if (!coords) return null;
 
-                return (
-                  <InfoWindow
-                    position={{ lat: coords.lat, lng: coords.lng }}
-                    onCloseClick={() => setSelectedBusiness(null)}
-                  >
-                    <div style={{ padding: '8px', maxWidth: '250px' }}>
-                      <h3 style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '4px' }}>
-                        {selectedBusiness.name}
-                      </h3>
-                      {selectedBusiness.business_status && (
-                        <span style={{
-                          display: 'inline-block',
-                          padding: '2px 8px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          borderRadius: '4px',
-                          marginBottom: '8px',
-                          backgroundColor: isApproved ? '#fee2e2' : '#dbeafe',
-                          color: isApproved ? '#991b1b' : '#1e40af'
-                        }}>
-                          {selectedBusiness.business_status.toUpperCase()}
-                        </span>
-                      )}
-                      <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>
-                        {selectedBusiness.address}
-                      </p>
-                      {selectedBusiness.phone_number && (
-                        <p style={{ fontSize: '14px', color: '#4b5563' }}>
-                          {selectedBusiness.phone_number}
-                        </p>
-                      )}
-                      {isApproved && (
-                        <button
-                          onClick={() => handleApprovedBusinessClick(selectedBusiness)}
+                  const isApproved =
+                    selectedBusiness.business_status?.toLowerCase() ===
+                    "approved";
+
+                  return (
+                    <InfoWindow
+                      position={{ lat: coords.lat, lng: coords.lng }}
+                      onCloseClick={() => setSelectedBusiness(null)}
+                    >
+                      <div style={{ padding: "8px", maxWidth: "250px" }}>
+                        <h3
                           style={{
-                            backgroundColor: '#b91c1c',
-                            color: 'white',
-                            padding: '12px 16px',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            width: '100%',
-                            marginTop: '8px',
-                            fontSize: '14px'
+                            fontWeight: "bold",
+                            fontSize: "16px",
+                            marginBottom: "4px",
                           }}
                         >
-                          Claim Business
-                        </button>
-                      )}
-                    </div>
-                  </InfoWindow>
-                );
-              })()}
+                          {selectedBusiness.name}
+                        </h3>
+                        {selectedBusiness.business_status && (
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "2px 8px",
+                              fontSize: "12px",
+                              fontWeight: "600",
+                              borderRadius: "4px",
+                              marginBottom: "8px",
+                              backgroundColor: isApproved
+                                ? "#fee2e2"
+                                : "#dbeafe",
+                              color: isApproved ? "#991b1b" : "#1e40af",
+                            }}
+                          >
+                            {selectedBusiness.business_status.toUpperCase()}
+                          </span>
+                        )}
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            color: "#4b5563",
+                            marginBottom: "8px",
+                          }}
+                        >
+                          {selectedBusiness.address}
+                        </p>
+                        {selectedBusiness.phone_number && (
+                          <p style={{ fontSize: "14px", color: "#4b5563" }}>
+                            {selectedBusiness.phone_number}
+                          </p>
+                        )}
+                        {isApproved && (
+                          <button
+                            onClick={() =>
+                              handleApprovedBusinessClick(selectedBusiness)
+                            }
+                            style={{
+                              backgroundColor: "#b91c1c",
+                              color: "white",
+                              padding: "12px 16px",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              width: "100%",
+                              marginTop: "8px",
+                              fontSize: "14px",
+                            }}
+                          >
+                            Claim Business
+                          </button>
+                        )}
+                      </div>
+                    </InfoWindow>
+                  );
+                })()}
             </GoogleMap>
           )}
         </div>
@@ -414,14 +474,21 @@ export default function Mapsections() {
           {/* Location List */}
           <div className="space-y-4 overflow-y-auto pr-2">
             {loading ? (
-              <p className="text-center text-gray-500 py-4">Loading businesses...</p>
+              <p className="text-center text-gray-500 py-4">
+                Loading businesses...
+              </p>
             ) : error ? (
-              <p className="text-center text-red-500 py-4">Failed to load businesses</p>
+              <p className="text-center text-red-500 py-4">
+                Failed to load businesses
+              </p>
             ) : filteredBusinesses.length === 0 ? (
-              <p className="text-center text-gray-500 py-4">No businesses found</p>
+              <p className="text-center text-gray-500 py-4">
+                No businesses found
+              </p>
             ) : (
               filteredBusinesses.map((business) => {
-                const isApproved = business.business_status?.toLowerCase() === "approved";
+                const isApproved =
+                  business.business_status?.toLowerCase() === "approved";
 
                 if (isApproved) {
                   return (
@@ -441,11 +508,13 @@ export default function Mapsections() {
                           <h3 className="font-semibold text-lg">
                             {business.name}
                           </h3>
-                          <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-red-100 text-red-800">
+                          <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-blue-100 text-blue-800">
                             {business.business_status}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600">{business.address}</p>
+                        <p className="text-sm text-gray-600">
+                          {business.address}
+                        </p>
                       </div>
                     </div>
                   );
@@ -466,14 +535,18 @@ export default function Mapsections() {
 
                     <div className="pe-2 flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg">{business.name}</h3>
+                        <h3 className="font-semibold text-lg">
+                          {business.name}
+                        </h3>
                         {business.business_status && (
-                          <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-blue-100 text-blue-800">
+                          <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-green-100 text-green-800">
                             {business.business_status}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-600">{business.address}</p>
+                      <p className="text-sm text-gray-600">
+                        {business.address}
+                      </p>
                     </div>
                   </Link>
                 );
@@ -501,8 +574,9 @@ export default function Mapsections() {
               Claim this business?
             </h3>
             <p className="text-gray-600 mb-5">
-              Do you want to claim{" "}
-              <span className="font-semibold">{claimBusiness.name}</span>?
+              Would you like to claim{" "}
+              <span className="font-semibold">{claimBusiness.name}</span> and
+              manage its details?
             </p>
 
             <div className="flex gap-3 justify-end">
@@ -561,10 +635,12 @@ export default function Mapsections() {
                 ✓
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Added to cart</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Added to cart
+                </h3>
                 <p className="text-gray-600">
-                  <span className="font-semibold">{claimBusiness.name}</span> has
-                  been added to your claim cart.
+                  <span className="font-semibold">{claimBusiness.name}</span>{" "}
+                  has been added to your claim cart.
                 </p>
               </div>
             </div>
@@ -626,7 +702,9 @@ export default function Mapsections() {
                   <span className="text-gray-600 font-semibold">
                     Business Name:{" "}
                   </span>
-                  <span className="text-gray-900">{businessForModal?.name}</span>
+                  <span className="text-gray-900">
+                    {businessForModal?.name}
+                  </span>
                 </div>
                 <div className="mb-3">
                   <span className="text-gray-600 font-semibold">

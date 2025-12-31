@@ -64,6 +64,8 @@ export default function Header2() {
   const cartRef = useRef<HTMLLIElement | null>(null);
   const notifRef = useRef<HTMLLIElement | null>(null);
   const userRef = useRef<HTMLDivElement | null>(null);
+  const isNormalUser = user?.user_role === "User";
+
 
 
   const token =
@@ -510,19 +512,21 @@ export default function Header2() {
                     </li>
 
                     {/* Cart Dropdown (✅ integrated) */}
-                    <li className="relative" ref={cartRef}>
-                      <button
-                        onClick={async () => {
-                          setCartOpen(!cartOpen);
-                          setNotificationsOpen(false);
-                          setDropdownOpen(false);
+                    {!isNormalUser && (
+  <li className="relative" ref={cartRef}>
+    <button
+      onClick={async () => {
+        setCartOpen(!cartOpen);
+        setNotificationsOpen(false);
+        setDropdownOpen(false);
 
-                          if (!cartOpen) {
-                            await fetchCart(); // ✅ fresh cart
-                          }
-                        }}
-                        className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
-                      >
+        if (!cartOpen) {
+          await fetchCart(); // ✅ fresh cart
+        }
+      }}
+      className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+    >
+
                         <ShoppingCart className="h-6 w-6" />
 
                         {cartItems.length > 0 && (
@@ -637,6 +641,7 @@ export default function Header2() {
                         </div>
                       )}
                     </li>
+                    )}
                   </ul>
 
                   {/* Auth Buttons / Logged-in Dropdown */}

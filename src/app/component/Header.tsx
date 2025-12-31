@@ -35,11 +35,10 @@ type BusinessMini = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-
 export default function Header() {
   // Use context for user state
   const { user, setUser, refreshUser } = useUser();
-  
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -58,7 +57,7 @@ export default function Header() {
   const cartRef = useRef<HTMLLIElement | null>(null);
   const notifRef = useRef<HTMLLIElement | null>(null);
   const userRef = useRef<HTMLDivElement | null>(null);
-
+  const isNormalUser = user?.user_role === "User";
 
   const getUserFromSession = (): User | null => {
     const userData = sessionStorage.getItem("user");
@@ -105,10 +104,9 @@ export default function Header() {
 
   // Update imageKey when user profile picture changes
   useEffect(() => {
-  if (user?.profile_picture_url) setImageKey(Date.now());
-}, [user?.profile_picture_url]);
+    if (user?.profile_picture_url) setImageKey(Date.now());
+  }, [user?.profile_picture_url]);
 
-  
   // Run only after client-side hydration
   useEffect(() => {
     setIsMounted(true);
@@ -127,16 +125,16 @@ export default function Header() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.user-dropdown')) {
+      if (!target.closest(".user-dropdown")) {
         setDropdownOpen(false);
       }
-      if (!target.closest('.notifications-dropdown')) {
+      if (!target.closest(".notifications-dropdown")) {
         setNotificationsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -209,12 +207,12 @@ export default function Header() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
-        case 'new-question':
-      window.location.href = `/dashboard/questions`;
-       break;
-       case 'new-review':
-         window.location.href = `/dashboard/reviews`;
-         break;
+      case "new-question":
+        window.location.href = `/dashboard/questions`;
+        break;
+      case "new-review":
+        window.location.href = `/dashboard/reviews`;
+        break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -264,34 +262,33 @@ export default function Header() {
 
   // ✅ fetch cart
   const fetchCart = async () => {
-  if (!loggedIn) return;
+    if (!loggedIn) return;
 
-  try {
-    setCartLoading(true);
+    try {
+      setCartLoading(true);
 
-    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) throw new Error("Cart load failed");
+      if (!res.ok) throw new Error("Cart load failed");
 
-    const data = await res.json();
+      const data = await res.json();
 
-    const items = Array.isArray(data) ? data : data?.data ?? [];
-    const pendingOnly = items.filter(
-      (x: any) => (x.status || "").toLowerCase() === "pending"
-    );
+      const items = Array.isArray(data) ? data : data?.data ?? [];
+      const pendingOnly = items.filter(
+        (x: any) => (x.status || "").toLowerCase() === "pending"
+      );
 
-    setCartItems(pendingOnly);
-  } catch (e) {
-    console.error(e);
-  } finally {
-    setCartLoading(false);
-  }
-};
-
+      setCartItems(pendingOnly);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCartLoading(false);
+    }
+  };
 
   // ✅ remove item
   const removeFromCart = async (id: string) => {
@@ -331,7 +328,7 @@ export default function Header() {
     }
     // Add timestamp for cache busting
     const url = user.profile_picture_url;
-    const separator = url.includes('?') ? '&' : '?';
+    const separator = url.includes("?") ? "&" : "?";
     return `${url}${separator}t=${imageKey}`;
   };
 
@@ -440,14 +437,16 @@ export default function Header() {
                           </span>
                         </li>
 
-                        <li
-                          onClick={() => setOpenAddBusinessModal(true)}
-                          className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                        >
-                          <span className="group-hover:text-black-800 relative">
-                            Add Business
-                          </span>
-                        </li>
+                        {isLoggedIn && user?.user_role !== "User" && (
+                          <li
+                            onClick={() => setOpenAddBusinessModal(true)}
+                            className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                          >
+                            <span className="group-hover:text-black-800 relative">
+                              Add Business
+                            </span>
+                          </li>
+                        )}
                         {/* Notifications Dropdown */}
                         <li className="relative m-right-0" ref={notifRef}>
                           <button
@@ -533,19 +532,20 @@ export default function Header() {
                         </li>
 
                         {/* Cart Dropdown */}
-                        <li className="relative" ref={cartRef}>
-                          <button
-                            onClick={async () => {
-                              setCartOpen(!cartOpen);
-                              setNotificationsOpen(false);
-                              setDropdownOpen(false);
+                        {!isNormalUser && (
+  <li className="relative" ref={cartRef}>
+    <button
+      onClick={async () => {
+        setCartOpen(!cartOpen);
+        setNotificationsOpen(false);
+        setDropdownOpen(false);
 
-                              if (!cartOpen) {
-                                await fetchCart(); // ✅ fresh cart
-                              }
-                            }}
-                            className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
-                          >
+        if (!cartOpen) {
+          await fetchCart(); // ✅ fresh cart
+        }
+      }}
+      className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+    >
                             <ShoppingCart className="h-6 w-6" />
 
                             {cartItems.length > 0 && (
@@ -663,7 +663,8 @@ export default function Header() {
                             </div>
                           )}
                         </li>
-                      </>
+                        )}
+                      </>                                        
                     )}
                   </ul>
 
@@ -730,8 +731,11 @@ export default function Header() {
                             alt={user?.first_name || "User"}
                             className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
                             onError={(e) => {
-                              const target = e.currentTarget as HTMLImageElement;
-                              console.log("Header: Image load error, using fallback");
+                              const target =
+                                e.currentTarget as HTMLImageElement;
+                              console.log(
+                                "Header: Image load error, using fallback"
+                              );
                               target.src = "/assets/images/profile.png";
                             }}
                           />

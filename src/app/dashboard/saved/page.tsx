@@ -327,12 +327,12 @@ export default function Page() {
       text = "#B46A00";
     } else if (status === "claimed") {
       label = "Claimed";
-      bg = "#E0F7FF";
-      text = "#0369A1";
+      bg = "#dff7ed";
+      text = "#03543f";
     } else if (status === "approved") {
       label = "Approved";
-      bg = "#D1FAE5";
-      text = "#065F46";
+      bg = "#e3f1ff";
+      text = "#1e429e";
     } else {
       label = "";
       bg = "";
