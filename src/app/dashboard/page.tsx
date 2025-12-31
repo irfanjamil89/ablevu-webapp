@@ -346,7 +346,7 @@ export default function Page() {
           console.error("Users fetch failed:", uRes.status, uRes.statusText);
         } else {
           const uJson = await uRes.json();
-          console.log("USERS RESPONSE >>>", uJson);
+          
 
           let usersArr: User[] = [];
 

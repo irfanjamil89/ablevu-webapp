@@ -93,7 +93,7 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
       }
 
       const data = await response.json();
-      console.log('Create business image response:', data); // Debug log
+
       
       // Return the ID of the created business image
       if (data.id) {
@@ -110,7 +110,7 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
   // Step 2: Upload image as base64 using the businessImageId as fileName
   const uploadImageBase64 = async (businessImageId: string): Promise<string> => {
     try {
-      console.log('Uploading image with businessImageId:', businessImageId); // Debug log
+      
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
         method: 'POST',
@@ -132,7 +132,7 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
       }
       
       const data = await response.json();
-      console.log('Upload image response:', data); // Debug log
+      
       
       // Return the URL from the response
       if (data.ok && data.url) {
@@ -170,11 +170,11 @@ const PropertyImagePopup: React.FC<PropertyImagePopupProps> = ({
     try {
       // Step 1: Create business image record and get the businessImageId
       const businessImageId = await createBusinessImageRecord();
-      console.log('Business Image ID received:', businessImageId); // Debug log
+      
 
       // Step 2: Upload image using the businessImageId as fileName
       const imageUrl = await uploadImageBase64(businessImageId);
-      console.log('Image URL received:', imageUrl); // Debug log
+      
 
       // Show success message
       setSuccessMessage('Property image created successfully!');

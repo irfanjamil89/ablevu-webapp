@@ -42,8 +42,9 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
   const [reviewTypes, setReviewTypes] = useState<ReviewType[]>([]);
   const [selectedReviewTypeId, setSelectedReviewTypeId] = useState("");
   const [description, setDescription] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
 
   const [loadingTypes, setLoadingTypes] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -68,7 +69,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
         if (!res.ok) throw new Error("Failed to load review types");
 
         const data = await res.json();
-        console.log("Review type list:", data);
+
 
         setReviewTypes(data.data || []);
       } catch (err: any) {
@@ -83,12 +84,70 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
   }, [API_BASE_URL]);
 
   // ---------- Handle File Upload ----------
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const uploaded = e.target.files?.[0];
-    if (uploaded) {
-      setFile(uploaded);
-      setFilePreview(URL.createObjectURL(uploaded));
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    if (selectedImages.length >= 3) {
+      setError("You can upload a maximum of 3 images");
+      return;
     }
+
+    const validTypes = [
+      "image/svg+xml",
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/gif",
+    ];
+
+    const remainingSlots = 3 - selectedImages.length;
+    const allowedFiles = files.slice(0, remainingSlots);
+
+    for (const file of allowedFiles) {
+      if (!validTypes.includes(file.type)) {
+        setError("Please select a valid image file (SVG, PNG, JPG, or GIF)");
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Each image size should be less than 5MB");
+        return;
+      }
+    }
+
+    setError("");
+
+    const newPreviews: string[] = [];
+
+    allowedFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newPreviews.push(reader.result as string);
+
+        if (newPreviews.length === allowedFiles.length) {
+          setSelectedImages((prev) => [...prev, ...allowedFiles]);
+          setImagePreviews((prev) => [...prev, ...newPreviews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = "";
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   // ---------- Submit Review ----------
@@ -149,19 +208,40 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
         }
         throw new Error(errMsg);
       }
-
-      const responseData = await res.json();
-      console.log("Review submitted:", responseData);
-
+      const result = await res.json();
+      if (res.ok) {
+        const createdReviewId = result.id;
+        if (selectedImages.length > 0 && createdReviewId) {
+          Promise.all(selectedImages.map(img => convertToBase64(img)))
+            .then((base64Images) => {
+              fetch(
+                `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64-multiple`,
+                {
+                  method: "POST",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    images: base64Images,
+                    folder: "business-reviews",
+                    fileName: createdReviewId,
+                  }),
+                }
+              ).catch((err) => {
+                console.error("Image upload failed", err);
+              });
+            })
+            .catch((err) => {
+              console.error("Network error comes", err);
+            });
+        }
+      }
       // 🔹 Ab sirf parent ko bol rahe hain: "refresh kar lo"
       onUpdated?.();
-
       // Reset form (optional)
       setSelectedReviewTypeId("");
       setDescription("");
-      setFile(null);
-      setFilePreview(null);
-
       setOpenWriteReviewsPopup(false);
     } catch (err: any) {
       console.error(err);
@@ -238,42 +318,49 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
           {/* Upload Picture */}
           <div>
             <label className="block text-md font-medium text-gray-700 mb-2">
-              Upload Picture
+              Upload Pictures
             </label>
 
-            <div className="relative">
+            {/* Upload Box */}
+            <div className="relative mb-3">
               <input
                 type="file"
-                accept="image/*"
+                accept=".svg,.png,.jpg,.gif"
+                multiple
+                disabled={selectedImages.length >= 3}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                onChange={onFileChange}
+                onChange={handleImageSelect}
               />
-
-              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer">
-                {filePreview ? (
-                  <img
-                    src={filePreview}
-                    alt="preview"
-                    className="w-32 h-32 object-cover rounded-lg mb-2"
-                  />
-                ) : (
-                  <>
-                    <img
-                      src="/assets/images/upload-icon.avif"
-                      className="w-10 h-10"
-                    />
-                    <p className="text-[#0519CE] font-semibold text-sm">
-                      Click to upload{" "}
-                      <span className="text-gray-500 text-xs">
-                        or drag & drop
-                      </span>
-                    </p>
-                  </>
-                )}
+              <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text-center hover:bg-gray-50 cursor-pointer h-fit">
+                <img src="/assets/images/upload-icon.avif" alt="upload-icon" className="w-10 h-10" />
+                <p className="text-[#0519CE] font-semibold text-sm">
+                  Click to upload <span className="text-gray-500 text-xs">or drag and drop</span>
+                </p>
+                <p className="text-gray-500 text-xs mt-1">SVG, PNG, JPG or GIF (max. 800×400px)</p>
               </div>
             </div>
           </div>
+          {/* Image Previews */}
+          {imagePreviews.length > 0 && (
+            <div className="flex gap-3 flex-wrap">
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative w-24 h-24">
+                  <img
+                    src={preview}
+                    className="w-full h-full object-cover rounded-lg border"
+                  />
 
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(index)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {/* BUTTONS */}
           <div className="flex justify-center gap-3 pt-2">
             <label

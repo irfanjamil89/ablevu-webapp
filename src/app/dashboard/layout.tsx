@@ -237,7 +237,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    console.log("Token from localStorage:", token);
+    
 
     if (!token) {
       setError("Please log in to continue.");
@@ -247,7 +247,7 @@ export default function DashboardLayout({
     }
 
     if (isTokenExpired(token)) {
-      console.log("Token expired, logging out...");
+      
       handleLogout();
       return;
     }
@@ -271,7 +271,7 @@ export default function DashboardLayout({
     })
       .then((response) => {
         if (response.status === 401) {
-          console.log("Token invalid or expired (401), logging out...");
+      
           handleLogout();
           return null;
         }
@@ -309,7 +309,7 @@ export default function DashboardLayout({
     const tokenCheckInterval = setInterval(() => {
       const currentToken = localStorage.getItem("access_token");
       if (!currentToken || isTokenExpired(currentToken)) {
-        console.log("Token expired during session, logging out...");
+        
         clearInterval(tokenCheckInterval);
         handleLogout();
       }
@@ -379,12 +379,6 @@ export default function DashboardLayout({
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
-      case 'new-question':
-      window.location.href = `/dashboard/questions`;
-       break;
-       case 'new-review':
-         window.location.href = `/dashboard/reviews`;
-         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -481,17 +475,18 @@ export default function DashboardLayout({
 
                 {notificationsOpen && (
                   <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                    <ul className="divide-y divide-gray-200 max-h-96 min-h-[90px] overflow-y-auto">
+                    <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                       {notifications.length === 0 && (
-                        <li className="px-4 py-6 text-gray-500 text-sm text-center">
-                          No new notifications
+                       <li className="flex items-center justify-center px-4 py-12">
+                           <p className="text-gray-500 text-m">No new notifications</p>
+                           
                         </li>
                       )}
 
                       {notifications.map((item) => (
                         <li
                           key={item.id}
-                          className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                           className="flex justify-between items-center px-4 py-4 hover:bg-gray-100 cursor-pointer"
                           onClick={() => handleNotificationClick(item)}
                         >
                           <div className="w-full pr-2">
@@ -1444,7 +1439,7 @@ export default function DashboardLayout({
                     onError={(e) => {
                       const target = e.currentTarget as HTMLImageElement;
                       if (target.src !== "/assets/images/profile.png") {
-                        console.log("Header: Image load error, using fallback");
+                        
                         target.src = "/assets/images/profile.png";
                       }
                     }}

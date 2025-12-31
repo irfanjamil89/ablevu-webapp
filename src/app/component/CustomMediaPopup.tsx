@@ -44,7 +44,6 @@ const CustomMediaModal: React.FC<CustomMediaPopupProps> = ({
   const isEdit = !!media?.id;
 
    useEffect(() => {
-    console.log("media in modal:", media);
       if (media) {
         setlabel(media.label);
         setDescription(media.description);

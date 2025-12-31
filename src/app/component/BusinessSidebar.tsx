@@ -609,6 +609,7 @@ export default function BusinessSidebar({
   const currentStatusLabel = STATUS_LABELS[normalizedStatus] || status;
 
   const isAdmin = userRole === "Admin";
+  const canEdit= isOwner || isAdmin;
   const isBusinessContributorOrUser =
     userRole === "Business" ||
     userRole === "Contributor" ||
@@ -820,27 +821,28 @@ export default function BusinessSidebar({
       </div>
 
       {/* Logo */}
-      {isOwner && (
-        <BusinessImageUpload
-          businessId={business.id}
-          businessName={business.name}
-          initialImageUrl={business.logo_url}
-          onUploadSuccess={() => {
-            refetchBusiness();
-          }}
-        />
-      )}
-      {!isOwner && business.logo_url && (
-        <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
-          <div className="flex justify-center p-6">
-            <img
-              src={business.logo_url}
-              alt={business.name}
-              className="w-80 object-contain cursor-default transition-opacity"
-            />
-          </div>
-        </div>
-      )}
+       {canEdit && (
+      <BusinessImageUpload
+        businessId={business.id}
+        businessName={business.name}
+        initialImageUrl={business.logo_url}
+        onUploadSuccess={() => {
+          refetchBusiness();
+        }}
+      />
+       )}
+       {!canEdit && business.logo_url && (
+  <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
+    <div className="flex justify-center p-6">
+      <img
+        src={business.logo_url}
+        alt={business.name}
+        className="w-80 object-contain cursor-default transition-opacity"
+      />
+    </div>
+  </div>
+)}
+
 
       {/* Info */}
       <div className="py-8">
@@ -907,19 +909,19 @@ export default function BusinessSidebar({
       <div>
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-4">Details</h3>
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => setOpenDetailPopup(true)}
-              className="text-sm text-gray-800 cursor-pointer font-bold"
-            >
-              <img
-                src="/assets/images/writing-svgrepo-com.svg"
-                alt="Edit"
-                className="w-6 h-6"
-              />
-            </button>
-          )}
+           {canEdit && (
+          <button
+            type="button"
+            onClick={() => setOpenDetailPopup(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+           )}
         </div>
 
         {business.website && (
@@ -962,19 +964,19 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Operating Hours</h3>
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => setOpenOperatingHours(true)}
-              className="text-sm text-gray-800 cursor-pointer font-bold"
-            >
-              <img
-                src="/assets/images/writing-svgrepo-com.svg"
-                alt="Edit"
-                className="w-6 h-6"
-              />
-            </button>
-          )}
+           {canEdit && (
+          <button
+            type="button"
+            onClick={() => setOpenOperatingHours(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+           )}
         </div>
 
         {sortedBusinessSchedule.length ? (
@@ -996,19 +998,19 @@ export default function BusinessSidebar({
       <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold mb-6">Social Links</h3>
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => setOpenSocialLinks(true)}
-              className="text-sm text-gray-800 cursor-pointer font-bold"
-            >
-              <img
-                src="/assets/images/writing-svgrepo-com.svg"
-                alt="Edit"
-                className="w-6 h-6"
-              />
-            </button>
-          )}
+           {canEdit && (
+          <button
+            type="button"
+            onClick={() => setOpenSocialLinks(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+           )}
         </div>
 
         <div className="flex">
@@ -1040,19 +1042,19 @@ export default function BusinessSidebar({
       <div className="pb-10">
         <div className="flex justify-between items-center">
           <h3 className="text-xl font-semibold my-6">About</h3>
-          {isOwner && (
-            <button
-              type="button"
-              onClick={() => setOpenAboutModal(true)}
-              className="text-sm text-gray-800 cursor-pointer font-bold"
-            >
-              <img
-                src="/assets/images/writing-svgrepo-com.svg"
-                alt="Edit"
-                className="w-6 h-6"
-              />
-            </button>
-          )}
+           {canEdit && (
+          <button
+            type="button"
+            onClick={() => setOpenAboutModal(true)}
+            className="text-sm text-gray-800 cursor-pointer font-bold"
+          >
+            <img
+              src="/assets/images/writing-svgrepo-com.svg"
+              alt="Edit"
+              className="w-6 h-6"
+            />
+          </button>
+           )}
         </div>
         <p>{business.description || "No description added yet."}</p>
       </div>
@@ -1123,20 +1125,21 @@ export default function BusinessSidebar({
       </div>
 
       {/* Delete Business button */}
-      {(isAdmin || isOwner) && (
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() => setOpenDeleteModal(true)}
-            className="flex justify-center items-center gap-2 px-5 py-2.5 w-full text-center text-md font-bold bg-[#FFEBEB] text-[#DD3820] rounded-full cursor-pointer"
-          >
-            <img
-              src="/assets/images/red-delete.svg"
-              alt="red-delete"
-              className="w-5 h-5"
-            />
-            Delete Business
-          </button>
+      {(canEdit) && (
+      <div className="mt-3">
+        <button
+          type="button"
+          onClick={() => setOpenDeleteModal(true)}
+          className="flex justify-center items-center gap-2 px-5 py-2.5 w-full text-center text-md font-bold bg-[#FFEBEB] text-[#DD3820] rounded-full cursor-pointer"
+        >
+          <img
+            src="/assets/images/red-delete.svg"
+            alt="red-delete"
+            className="w-5 h-5"
+          />
+          Delete Business
+        </button>
+        
 
           {deleteError && (
             <p className="text-red-500 text-sm mt-2">{deleteError}</p>

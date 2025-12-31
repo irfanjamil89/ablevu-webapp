@@ -58,7 +58,6 @@ export default function ImageUpload() {
                 reader.onerror = reject;
             });
 
-            console.log("Uploading image for user:", user.id);
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`, {
                 method: "POST",
@@ -78,7 +77,6 @@ export default function ImageUpload() {
             }
 
             const text = await response.text();
-            console.log("API Response:", text);
 
             let result;
             try {
@@ -93,7 +91,6 @@ export default function ImageUpload() {
                 throw new Error("No image URL in response");
             }
 
-            console.log("New image URL:", newImageUrl);
 
             // Update user context with new image URL
             updateUser({ profile_picture_url: newImageUrl });
@@ -143,7 +140,6 @@ export default function ImageUpload() {
                     alt="Profile Picture"
                     className="rounded-full w-30 h-30 object-cover"
                     onError={(e) => {
-                        console.log("Image load error, using fallback");
                         (e.target as HTMLImageElement).src = "/assets/images/profile.png";
                     }}
                 />

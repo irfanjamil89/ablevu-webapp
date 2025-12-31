@@ -246,7 +246,7 @@ export default function Page() {
     fetch(base + "/business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Business type list API:", data);
+        
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {
@@ -256,7 +256,7 @@ export default function Page() {
     fetch(base + "/accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Accessible features API:", data);
+        
         setFeatures(data.items || []);
       })
       .catch((error) => {
@@ -266,7 +266,7 @@ export default function Page() {
     fetch(base + "/business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
-        console.log("Business schedules API:", data);
+       
         setSchedules(data.data || []);
       })
       .catch((error) => {
@@ -299,7 +299,7 @@ export default function Page() {
     fetch(url, { headers })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Business list API:", data);
+        
         const list: Business[] = data.data || [];
         setBusinesses(list);
       })
@@ -336,7 +336,7 @@ export default function Page() {
     try {
       const response = await fetch(url, { headers });
       const data = await response.json();
-      console.log("Business list API:", data);
+      
       const list: Business[] = data.data || [];
       setBusinesses(list);
     } catch (error) {
@@ -674,7 +674,7 @@ export default function Page() {
         }
       );
 
-      console.log("Create business – status:", res.status);
+      
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}));
@@ -1021,7 +1021,7 @@ export default function Page() {
                             }))
                           }
                           onSelect={(result) => {
-                            console.log("Selected place:", result);
+                           
 
                             const { city, state, country, zipcode } =
                               extractAddressParts(result);
@@ -1052,10 +1052,7 @@ export default function Page() {
                             accept=".svg,.png,.jpg,.gif"
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             onChange={(e) => {
-                              console.log(
-                                "logo file selected",
-                                e.target.files?.[0]
-                              );
+                              
                             }}
                           />
                           <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text:center hover:bg-gray-50 cursor-pointer h-fit">

@@ -105,7 +105,7 @@ const QuestionPopup: React.FC<QuestionPopupProps> = ({
       }
 
       const responseData = await res.json();
-      console.log("Question created:", responseData);
+  
 
       // parent ko bolo "data refresh kar lo"
       onUpdated?.();

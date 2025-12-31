@@ -107,6 +107,7 @@ export default function Header() {
     if (user?.profile_picture_url) setImageKey(Date.now());
   }, [user?.profile_picture_url]);
 
+
   // Run only after client-side hydration
   useEffect(() => {
     setIsMounted(true);
@@ -121,22 +122,7 @@ export default function Header() {
     setIsLoggedIn(isUserLoggedIn);
   }, [isMounted, user]);
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest(".user-dropdown")) {
-        setDropdownOpen(false);
-      }
-      if (!target.closest(".notifications-dropdown")) {
-        setNotificationsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
+ 
   const handleLogout = () => {
     setLoading(true);
     localStorage.removeItem("access_token");
@@ -207,12 +193,6 @@ export default function Header() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
-      case "new-question":
-        window.location.href = `/dashboard/questions`;
-        break;
-      case "new-review":
-        window.location.href = `/dashboard/reviews`;
-        break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -223,11 +203,7 @@ export default function Header() {
     if (!isLoggedIn) return;
 
     fetchNotifications();
-
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30000);
-
+    const interval = setInterval(() => fetchNotifications(), 30000);
     return () => clearInterval(interval);
   }, [isLoggedIn]);
 
@@ -454,7 +430,6 @@ export default function Header() {
                               setNotificationsOpen((prev) => !prev);
                               setCartOpen(false);
                               setDropdownOpen(false);
-
                               if (!notificationsOpen) fetchNotifications();
                             }}
                             className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
@@ -478,33 +453,19 @@ export default function Header() {
                           </button>
 
                           {notificationsOpen && (
-                            <div className="absolute top-10 right-0 mr-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                              {" "}
-                              {/* Increased width */}
+                            <div className="absolute right-0 top-10 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
                               <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                                 {notifications.length === 0 && (
-                                  <li className="px-4 py-6 text-gray-500 text-sm text-center">
-                                    <div className="flex  items-center justify-center">
-                                      {/* <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-8 w-8 text-gray-400 mb-2"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                      >
-                                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM8 16a2 2 0 104 0H8z" />
-                                      </svg> */}
-                                      <p>No new notifications</p>
-                                    </div>
+                                  <li className="flex items-center justify-center px-4 py-12">
+                                    <p className="text-gray-500 text-m">No new notifications</p>
                                   </li>
                                 )}
 
                                 {notifications.map((item) => (
                                   <li
                                     key={item.id}
-                                    className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                                    onClick={() =>
-                                      handleNotificationClick(item)
-                                    }
+                                    className="flex justify-between items-center px-4 py-4 hover:bg-gray-100 cursor-pointer"
+                                    onClick={() => handleNotificationClick(item)}
                                   >
                                     <div className="w-full pr-2">
                                       <p className="text-sm font-medium">
@@ -530,7 +491,6 @@ export default function Header() {
                             </div>
                           )}
                         </li>
-
                         {/* Cart Dropdown */}
                         {!isNormalUser && (
   <li className="relative" ref={cartRef}>
@@ -731,11 +691,7 @@ export default function Header() {
                             alt={user?.first_name || "User"}
                             className="cursor-pointer h-10 w-10 mr-1 rounded-full object-cover"
                             onError={(e) => {
-                              const target =
-                                e.currentTarget as HTMLImageElement;
-                              console.log(
-                                "Header: Image load error, using fallback"
-                              );
+                              const target = e.currentTarget as HTMLImageElement;
                               target.src = "/assets/images/profile.png";
                             }}
                           />

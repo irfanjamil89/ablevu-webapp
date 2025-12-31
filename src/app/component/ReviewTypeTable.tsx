@@ -375,7 +375,7 @@ export default function ReviewTypeTable({ refresh }: { refresh: number }) {
                     fetchReviews();
                     setOpenSuccessModal(true);
                   } catch (error) {
-                    console.log("Delete error:", error);
+            
                     
                   } finally {
                     setLoadingDelete(false);

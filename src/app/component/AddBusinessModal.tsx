@@ -192,7 +192,6 @@ const startSubscriptionCheckout = async (plan: PlanKey) => {
     fetch(base + "/business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Business type list API:", data);
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {

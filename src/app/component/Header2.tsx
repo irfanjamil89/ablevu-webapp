@@ -172,47 +172,47 @@ export default function Header2() {
   // ✅ Fetch Cart (my-cart)
   // -----------------------------
   const fetchCart = useCallback(async () => {
-  try {
-    if (!token || token === "null" || token === "undefined") {
+    try {
+      if (!token || token === "null" || token === "undefined") {
+        setCartItems([]);
+        return;
+      }
+
+      setCartLoading(true);
+
+      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        setCartItems([]);
+        return;
+      }
+
+      const json = await res.json();
+      const rows: CartItem[] = Array.isArray(json)
+        ? json
+        : Array.isArray(json?.data)
+          ? json.data
+          : [];
+
+      // ✅ only pending
+      const pendingOnly = rows.filter(
+        (x: any) => (x.status || "").toLowerCase() === "pending"
+      );
+
+      setCartItems(pendingOnly);
+    } catch (e) {
+      console.error("fetchCart error:", e);
       setCartItems([]);
-      return;
+    } finally {
+      setCartLoading(false);
     }
-
-    setCartLoading(true);
-
-    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) {
-      setCartItems([]);
-      return;
-    }
-
-    const json = await res.json();
-    const rows: CartItem[] = Array.isArray(json)
-      ? json
-      : Array.isArray(json?.data)
-      ? json.data
-      : [];
-
-    // ✅ only pending
-    const pendingOnly = rows.filter(
-      (x: any) => (x.status || "").toLowerCase() === "pending"
-    );
-
-    setCartItems(pendingOnly);
-  } catch (e) {
-    console.error("fetchCart error:", e);
-    setCartItems([]);
-  } finally {
-    setCartLoading(false);
-  }
-}, [token]);
+  }, [token]);
 
   // ✅ When cart opens => load cart + business names
   useEffect(() => {
@@ -312,12 +312,6 @@ export default function Header2() {
       case "business-status":
         window.location.href = `/business-profile/${meta.id}`;
         break;
-        case 'new-question':
-      window.location.href = `/dashboard/questions`;
-       break;
-       case 'new-review':
-         window.location.href = `/dashboard/reviews`;
-         break;
       default:
         console.log("Unhandled notification type:", meta.type);
     }
@@ -423,14 +417,14 @@ export default function Header2() {
                           <span className="relative">Share Feedback</span>
                         </li>
 
-                        { user?.user_role !== "User" ? (
+                        {user?.user_role !== "User" ? (
                           <li
                             onClick={() => setOpenAddBusinessModal(true)}
                             className="cursor-pointer"
                           >
                             <span className="relative">Add Business</span>
                           </li>
-                        ) : null }
+                        ) : null}
                       </div>
                     ) : null}
 
@@ -475,15 +469,15 @@ export default function Header2() {
                         <div className="absolute right-0 top-10 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
                           <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
                             {notifications.length === 0 && (
-                              <li className="px-4 py-6 text-gray-500 text-sm text-center">
-                                No new notifications
+                              <li className="flex items-center justify-center px-4 py-12">
+                                <p className="text-gray-500 text-m">No new notifications</p>
                               </li>
                             )}
 
                             {notifications.map((item) => (
                               <li
                                 key={item.id}
-                                className="flex justify-between items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                className="flex justify-between items-center px-4 py-4 hover:bg-gray-100 cursor-pointer"
                                 onClick={() => handleNotificationClick(item)}
                               >
                                 <div className="w-full pr-2">
@@ -725,7 +719,7 @@ export default function Header2() {
                                   onClick={handleLogout}
                                   className="flex w-full text-left px-4 py-2 hover:text-red-600 hover:bg-[#ffebeb]"
                                 >
-                                   <svg
+                                  <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24"
                                     fill="currentColor"
