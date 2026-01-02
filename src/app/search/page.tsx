@@ -5,7 +5,6 @@ import Header from "../component/Header2";
 import Footer from "../component/Footer";
 import Link from "next/link";
 
-
 // --------- TYPES ---------
 type BusinessTypeMaster = {
   id: string;
@@ -87,7 +86,9 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
 
   // ✅ Selected filters (multi-select)
-  const [selectedBusinessTypeIds, setSelectedBusinessTypeIds] = useState<string[]>([]);
+  const [selectedBusinessTypeIds, setSelectedBusinessTypeIds] = useState<
+    string[]
+  >([]);
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<string[]>([]);
 
   // Pagination states
@@ -116,8 +117,6 @@ export default function Page() {
       setCurrentPage(currentPage - 1);
     }
   };
-
-
 
   // ---------- FETCHERS ----------
 
@@ -288,7 +287,6 @@ export default function Page() {
     setSelectedFeatureIds([]);
   };
 
-
   // Helper function to generate page numbers
   const getPageNumbers = () => {
     const pages = [];
@@ -303,29 +301,27 @@ export default function Page() {
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         pages.push(currentPage - 1);
         pages.push(currentPage);
         pages.push(currentPage + 1);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
 
     return pages;
   };
-
-
 
   return (
     <div>
@@ -341,13 +337,13 @@ export default function Page() {
                 </h2>
                 {(selectedBusinessTypeIds.length > 0 ||
                   selectedFeatureIds.length > 0) && (
-                    <button
-                      onClick={clearAllFilters}
-                      className="text-xs text-blue-700 underline"
-                    >
-                      Clear All
-                    </button>
-                  )}
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-xs text-blue-700 underline"
+                  >
+                    Clear All
+                  </button>
+                )}
               </div>
 
               {/* Category – dynamic from business-type/list */}
@@ -366,10 +362,11 @@ export default function Page() {
                           key={type.id}
                           type="button"
                           onClick={() => toggleBusinessType(type.id)}
-                          className={`text-sm text-left px-3 py-1 rounded-full border transition ${isSelected
-                            ? "bg-[#0519CE] text-white border-[#0519CE]"
-                            : "bg-white text-gray-700 border-gray-200 hover:bg-blue-50"
-                            }`}
+                          className={`text-sm text-left px-3 py-1 rounded-full border transition ${
+                            isSelected
+                              ? "bg-[#0519CE] text-white border-[#0519CE]"
+                              : "bg-white text-gray-700 border-gray-200 hover:bg-blue-50"
+                          }`}
                         >
                           {type.name}
                         </button>
@@ -420,8 +417,8 @@ export default function Page() {
                 Looking for a specific business?
               </h3>
               <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                If you&apos;re looking for a specific business and cannot find it
-                on AbleVu yet, let us know and we will get it added.
+                If you&apos;re looking for a specific business and cannot find
+                it on AbleVu yet, let us know and we will get it added.
               </p>
               <button className="w-1/3 bg-blue-700 text-white text-sm py-2 rounded-full hover:bg-blue-800 transition">
                 Contact Us
@@ -493,10 +490,7 @@ export default function Page() {
                           <div className="flex flex-wrap md:flex-nowrap gap-2">
                             {/* Saved dummy */}
                             <label className="inline-flex items-center gap-1 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                className="peer hidden"
-                              />
+                              <input type="checkbox" className="peer hidden" />
                               <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -552,7 +546,8 @@ export default function Page() {
                                   d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
                                 />
                               </svg>
-                              {b.businessRecomendations.length}.0 Recommendations
+                              {b.businessRecomendations.length}.0
+                              Recommendations
                             </button>
                           </div>
                         </div>
@@ -579,30 +574,49 @@ export default function Page() {
                         </div>
 
                         {/* Accessible Features – titles only, no UUID */}
+                        {/* Accessible Features – max 2 + count */}
                         <div className="text-xs text-gray-500 mt-2">
                           <div className="flex flex-wrap md:gap-0 gap-2">
                             <span className="font-medium pe-2">
                               Accessible Features
                             </span>
+
                             <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                              {featureTitles.length ? (
-                                featureTitles.map((ft) => (
-                                  <li
-                                    key={ft}
-                                    className="bg-[#F7F7F7] rounded-full px-2"
-                                  >
-                                    {ft}
-                                  </li>
-                                ))
-                              ) : (
-                                <li className="text-gray-400">
-                                  No features added
-                                </li>
-                              )}
+                              {(() => {
+                                const count = featureTitles.length;
+
+                                if (count === 0) {
+                                  return (
+                                    <li className="text-gray-400">
+                                      No features added
+                                    </li>
+                                  );
+                                }
+
+                                const firstTwo = featureTitles.slice(0, 2);
+
+                                return (
+                                  <>
+                                    {firstTwo.map((ft) => (
+                                      <li
+                                        key={ft}
+                                        className="bg-[#F7F7F7] rounded-full px-2"
+                                      >
+                                        {ft}
+                                      </li>
+                                    ))}
+
+                                    {count > 2 && (
+                                      <li className="bg-[#F7F7F7] rounded-full px-2">
+                                        +{count - 2}
+                                      </li>
+                                    )}
+                                  </>
+                                );
+                              })()}
                             </ul>
                           </div>
                         </div>
-
                         {/* Operating hours */}
                         <p className="flex items-center space-x-2 text-xs text-gray-500 mt-2">
                           <img
@@ -610,9 +624,7 @@ export default function Page() {
                             className="w-3 h-3"
                             alt="clock"
                           />
-                          <span className="text-sm">
-                            {getScheduleText(b)}
-                          </span>
+                          <span className="text-sm">{getScheduleText(b)}</span>
                         </p>
 
                         {/* Location */}
@@ -631,7 +643,9 @@ export default function Page() {
                 {currentData.length > 0 && (
                   <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
                     <div className="text-sm text-gray-600">
-                      Showing {startIndex + 1} to {Math.min(endIndex, currentData.length)} of {currentData.length} entries
+                      Showing {startIndex + 1} to{" "}
+                      {Math.min(endIndex, currentData.length)} of{" "}
+                      {currentData.length} entries
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -639,10 +653,11 @@ export default function Page() {
                       <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                          currentPage === 1
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                       >
                         Previous
                       </button>
@@ -651,15 +666,18 @@ export default function Page() {
                       <div className="flex items-center gap-1">
                         {getPageNumbers().map((page, idx) => (
                           <React.Fragment key={idx}>
-                            {page === '...' ? (
-                              <span className="px-3 py-1 text-gray-500">...</span>
+                            {page === "..." ? (
+                              <span className="px-3 py-1 text-gray-500">
+                                ...
+                              </span>
                             ) : (
                               <button
                                 onClick={() => goToPage(page as number)}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
-                                  ? "bg-[#0519CE] text-white"
-                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                  }`}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                                  currentPage === page
+                                    ? "bg-[#0519CE] text-white"
+                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                }`}
                               >
                                 {page}
                               </button>
@@ -672,10 +690,11 @@ export default function Page() {
                       <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                          currentPage === totalPages
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                       >
                         Next
                       </button>
@@ -683,10 +702,8 @@ export default function Page() {
                   </div>
                 )}
               </section>
-
             )}
           </section>
-
         </main>
       </div>
       <Footer />

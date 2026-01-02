@@ -297,7 +297,6 @@ export default function BusinessSidebar({
 
         setSaved(false);
         setSaveId(null);
-        showSuccess("Removed", "Business removed from saved list.");
         return;
       }
 
@@ -324,7 +323,6 @@ export default function BusinessSidebar({
         setSaveId(created.id);
       }
 
-      showSuccess("Saved", "Business added to your saved list.");
     } catch (err: any) {
       showError("Error", err.message || "Save failed");
     } finally {
@@ -425,8 +423,7 @@ export default function BusinessSidebar({
 
         if (!res.ok) throw new Error("Failed to remove like");
 
-        await fetchLikesFromApi();
-        showSuccess("Removed", "Like removed successfully.");
+        await fetchLikesFromApi();        
         return;
       }
 
@@ -451,7 +448,6 @@ export default function BusinessSidebar({
 
       await fetchLikesFromApi();
 
-      showSuccess("Liked", "You liked this business.");
     } catch (err: any) {
       showError("Error", err.message || "Action failed");
     } finally {
