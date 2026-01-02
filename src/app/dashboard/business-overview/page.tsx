@@ -369,13 +369,13 @@ const STATUS_BADGE: Record<
     bg: "#FFEFD5",
     text: "#B46A00",
   },
-  approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+  approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
   "pending acclaim": {
     label: "Pending Acclaim",
     bg: "#EEF2FF",
     text: "#3730A3",
   },
-  claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+  claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
 };
 
 const toCanonicalStatus = (raw: string, b: Business): StatusKey | null => {
@@ -553,6 +553,16 @@ const getStatusInfo = (b: Business) => {
 
     return key || "Unknown feature";
   };
+
+  useEffect(() => {
+  const t = setTimeout(() => {
+    setAppliedSearch(searchTerm.trim());
+    setCurrentPage(1);
+  }, 350);
+
+  return () => clearTimeout(t);
+}, [searchTerm]);
+
 
   // ---------- Create business ----------
 
@@ -959,12 +969,7 @@ const getStatusInfo = (b: Business) => {
                     placeholder="Search by Name, City, Country"
                     className="w-full border-none focus:outline-none focus:ring-0 font-medium text-sm text-gray-700 placeholder-gray-500 ml-2"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        setAppliedSearch(searchTerm);
-                      }
-                    }}
+                    onChange={(e) => setSearchTerm(e.target.value)}                  
                   />
                 </div>
 
@@ -1417,7 +1422,7 @@ const getStatusInfo = (b: Business) => {
       {OpenAddBusinessModal && (
                     <AddBusinessModal
                       setOpenAddBusinessModal={setOpenAddBusinessModal}
-                      onBusinessCreated={handleBusinessCreated} // ✅ refresh on create
+                      onBusinessCreated={() => {}}
                     />
                   )}
     </div>

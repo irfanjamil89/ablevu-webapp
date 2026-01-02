@@ -68,7 +68,6 @@ interface AddBusinessProps {
 
 export default function AddBusinessModal({
   setOpenAddBusinessModal,
-  onBusinessCreated,
 }: AddBusinessProps) {
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [newBusiness, setNewBusiness] = useState<NewBusinessForm>({
@@ -105,10 +104,7 @@ export default function AddBusinessModal({
   return "";
 };
 
-const startSubscriptionCheckout = async (
-  plan: PlanKey,
-  businessId: string
-) => {
+const startSubscriptionCheckout = async (plan: PlanKey) => {
   const token =
     typeof window !== "undefined"
       ? localStorage.getItem("access_token")
@@ -120,14 +116,45 @@ const startSubscriptionCheckout = async (
   }
 
   const priceId = getPriceIdByPlan(plan);
-
   if (!priceId) {
     setCreateError("Stripe price id missing.");
     return;
   }
 
+  // ✅ Build draft payload (NO business create here)
+  const businessDraftPayload = {
+    name: newBusiness.name.trim(),
+    business_type: [selectedCategoryId],
+    description: newBusiness.description || "",
+
+    address: newBusiness.fullAddress,
+    place_id: newBusiness.place_id,
+    latitude: newBusiness.latitude,
+    longitude: newBusiness.longitude,
+
+    city: newBusiness.city || "",
+    state: newBusiness.state || "",
+    country: newBusiness.country || "",
+    zipcode: newBusiness.zipcode || "",
+
+    active: false,
+    business_status: "draft",
+    subscription_plan: plan, // optional (if you want stored in payload)
+  };
+
+  // ✅ image base64 (optional)
+  let businessImageBase64: string | null = null;
+  try {
+    if (selectedImage) {
+      businessImageBase64 = await fileToBase64(selectedImage);
+    }
+  } catch (e: any) {
+    setCreateError(e?.message || "Failed to read image");
+    return;
+  }
+
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions/checkout`,
     {
       method: "POST",
       headers: {
@@ -135,9 +162,10 @@ const startSubscriptionCheckout = async (
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        business_id: businessId,
-        package: plan,
         price_id: priceId,
+        package: plan,
+        businessDraftPayload,
+        businessImageBase64,
       }),
     }
   );
@@ -150,8 +178,9 @@ const startSubscriptionCheckout = async (
   }
 
   if (data?.url) {
-    // ✅ STRIPE REDIRECT
-    window.location.href = data.url;
+    window.location.href = data.url; // ✅ Stripe redirect
+  } else {
+    setCreateError("Stripe URL missing");
   }
 };
 
@@ -216,119 +245,7 @@ const startSubscriptionCheckout = async (
     setSelectedPlan(null);
     setOpenPlanModal(true);
   };
-
-  // ---------- Create business handler (NOW depends on plan) ----------
-  const handleCreateBusiness = async (plan: PlanKey): Promise<string | null> => {
-    setCreateError(null);
-    setSuccessMessage(null);
-
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
-
-    if (!token) {
-      setCreateError("You must be logged in before creating a business.");
-      return null;
-    }
-
-    const payload = {
-      name: newBusiness.name.trim(),
-      business_type: [selectedCategoryId],
-      description: newBusiness.description || "",
-
-      address: newBusiness.fullAddress,
-      place_id: newBusiness.place_id,
-      latitude: newBusiness.latitude,
-      longitude: newBusiness.longitude,
-
-      city: newBusiness.city || "",
-      state: newBusiness.state || "",
-      country: newBusiness.country || "",
-      zipcode: newBusiness.zipcode || "",
-
-      active: false,
-      business_status: "draft",
-
-      // ✅ add selected plan
-      subscription_plan: plan, // "monthly" | "yearly"
-    };
-
-    try {
-      setIsCreating(true);
-
-      // Step 1: Create business
-      const res = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-
-      if (!res.ok) {
-        const errorBody = await res.json().catch(() => ({}));
-        console.error("Create business error:", errorBody);
-        throw new Error(errorBody.message || "Failed to create business");
-      }
-
-      const responseData = await res.json();
-
-      const businessId = responseData.id;
-
-      // Step 2: Upload image if selected
-      if (selectedImage && businessId) {
-        try {
-          const base64Image = await fileToBase64(selectedImage);
-
-          const imageUploadPayload = {
-            data: base64Image,
-            folder: "business",
-            fileName: businessId,
-          };
-
-          const imageRes = await fetch(
-            `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify(imageUploadPayload),
-            }
-          );
-
-
-          if (!imageRes.ok) {
-            const imageError = await imageRes.json().catch(() => ({}));
-            console.error("Image upload error:", imageError);
-            throw new Error(imageError.message || "Failed to upload image");
-          }
-
-          const imageResponse = await imageRes.json();
-        } catch (imageErr: any) {
-          throw new Error(
-            `Business created but image upload failed: ${imageErr.message}`
-          );
-        }
-      }
-       return businessId;
-      
-
-    } catch (err: any) {
-      setCreateError(err.message || "Something went wrong");
-      return null;
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
+  
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget && !isCreating) {
       setOpenAddBusinessModal(false);
@@ -343,15 +260,14 @@ const startSubscriptionCheckout = async (
   setIsCreating(true);
 
   try {
-    const businessId = await handleCreateBusiness(plan);
-    if (!businessId) return;
-
-    await startSubscriptionCheckout(plan, businessId);
+    // ✅ ONLY start checkout (draft will be created in backend)
+    await startSubscriptionCheckout(plan);
   } finally {
     // Stripe redirect ho jata hai, warna yahan OFF ho jayega
     setIsCreating(false);
   }
 };
+
 
 
 

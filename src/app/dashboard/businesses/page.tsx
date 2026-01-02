@@ -127,13 +127,13 @@ const STATUS_UI: Record<
     bg: "#FFEFD5",
     text: "#B46A00",
   },
-  approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+  approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
   "pending acclaim": {
     label: "Pending Acclaim",
     bg: "#EDE9FE",
     text: "#5B21B6",
   },
-  claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+  claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
 };
 
 
@@ -176,9 +176,19 @@ export default function Page() {
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
 
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
-
+  const firstLoadRef = React.useRef(true);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+
+  useEffect(() => {
+  const t = setTimeout(() => {
+    setAppliedSearch(searchTerm.trim());
+    setCurrentPage(1);
+  }, 350);
+
+  return () => clearTimeout(t);
+}, [searchTerm]);
+
 
   const statusFilterLabel =
   statusFilter === "draft"
@@ -250,7 +260,9 @@ export default function Page() {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    if (firstLoadRef.current) {
     setLoading(true);
+  }
 
     try {
       const response = await fetch(url, { headers });
@@ -360,13 +372,13 @@ export default function Page() {
       bg: "#FFEFD5",
       text: "#B46A00",
     },
-    approved: { label: "Approved", bg: "#D1FAE5", text: "#065F46" },
+    approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
     "pending acclaim": {
       label: "Pending Acclaim",
       bg: "#EDE9FE",
       text: "#5B21B6",
     },
-    claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+    claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
   };
 
   return uiMap[key];
@@ -835,12 +847,7 @@ export default function Page() {
                     placeholder="Search by Name, City, Country"
                     className="w-full border-none focus:outline-none focus:ring-0 font-medium text-sm text-gray-700 placeholder-gray-500 ml-2"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        setAppliedSearch(searchTerm);
-                      }
-                    }}
+                    onChange={(e) => setSearchTerm(e.target.value)}                    
                   />
                 </div>
 
@@ -1103,7 +1110,7 @@ export default function Page() {
       {OpenAddBusinessModal && (
         <AddBusinessModal
           setOpenAddBusinessModal={setOpenAddBusinessModal}
-          onBusinessCreated={handleBusinessCreated} // ✅ refresh on create
+          onBusinessCreated={() => {}}
         />
       )}
     </div>

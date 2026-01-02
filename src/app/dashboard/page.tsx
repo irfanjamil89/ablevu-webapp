@@ -58,7 +58,12 @@ type FeatureType = {
   slug?: string;
 };
 
-type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
+type SortOption =
+  | ""
+  | "name-asc"
+  | "name-desc"
+  | "created-asc"
+  | "created-desc";
 
 // 🔹 Business Schedule types
 type BusinessSchedule = {
@@ -136,7 +141,10 @@ const formatFullAddress = (b: Business) => {
 
 // 🔹 same normalize logic jaisa BusinessSidebar mein
 const normalizeStatus = (status?: string | null) =>
-  (status || "").toLowerCase().trim().replace(/[\s_-]+/g, " ");
+  (status || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_-]+/g, " ");
 
 // 🔹 status badge info – updated to use new statuses
 type StatusKey =
@@ -156,13 +164,13 @@ const STATUS_BADGE: Record<
     bg: "#FFEFD5",
     text: "#B46A00",
   },
-  approved: { label: "Approved", bg: "#ECFDF3", text: "#039855" },
+  approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
   "pending acclaim": {
     label: "Pending Acclaim",
     bg: "#EEF2FF",
     text: "#3730A3",
   },
-  claimed: { label: "Claimed", bg: "#E0F7FF", text: "#0369A1" },
+  claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
 };
 
 // backend aliases ko canonical banane ke liye
@@ -171,7 +179,8 @@ const toCanonicalStatus = (raw: string, b?: Business): StatusKey | null => {
 
   // aliases
   if (s === "pending" || s === "pending approved") return "pending approval";
-  if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
+  if (s === "pending acclaim" || s === "pending claim")
+    return "pending acclaim";
 
   if (s === "draft") return "draft";
   if (s === "pending approval") return "pending approval";
@@ -208,9 +217,6 @@ export default function Page() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
-
-
-
 
   // ---------- Maps (ID -> Name) ----------
 
@@ -464,8 +470,7 @@ export default function Page() {
       case "created-asc":
         arr.sort(
           (a, b) =>
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime()
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
         break;
 
@@ -473,8 +478,7 @@ export default function Page() {
       default:
         arr.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         break;
     }
@@ -510,32 +514,25 @@ export default function Page() {
     ); // Show loading message while the data is being fetched
   }
 
+  const totalPages = Math.ceil(filteredBusinesses.length / itemsPerPage);
+  const safePage = Math.min(currentPage, Math.max(totalPages, 1));
 
-
-
-
-  const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
+  const startIndex = (safePage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentbusiness = sortedBusinesses.slice(startIndex, endIndex);
+
+  const currentbusiness = filteredBusinesses.slice(startIndex, endIndex);
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
   };
 
   const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
+    if (safePage < totalPages) setCurrentPage(safePage + 1);
   };
 
   const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
+    if (safePage > 1) setCurrentPage(safePage - 1);
   };
-
-
 
   const getPageNumbers = () => {
     const pages = [];
@@ -550,28 +547,27 @@ export default function Page() {
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         pages.push(currentPage - 1);
         pages.push(currentPage);
         pages.push(currentPage + 1);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
 
     return pages;
   };
-
 
   return (
     <div className="w-full  overflow-y-auto">
@@ -803,36 +799,36 @@ export default function Page() {
                               Accessible Features
                             </span>
                             <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                          {(() => {
-                            const list = business.accessibilityFeatures || [];
-                            const count = list.length;
+                              {(() => {
+                                const list =
+                                  business.accessibilityFeatures || [];
+                                const count = list.length;
 
-                            if (count === 0) return <li>No features</li>;
+                                if (count === 0) return <li>No features</li>;
 
-                            // Only first 2 items
-                            const firstTwo = list.slice(0, 2);
+                                // Only first 2 items
+                                const firstTwo = list.slice(0, 2);
 
-                            return (
-                              <>
-                                {firstTwo.map((feature) => (
-                                  <li
-                                    key={feature.id}
-                                    className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
-                                  >
-                                    {getFeatureName(feature)}
-                                  </li>
-                                ))}
+                                return (
+                                  <>
+                                    {firstTwo.map((feature) => (
+                                      <li
+                                        key={feature.id}
+                                        className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
+                                      >
+                                        {getFeatureName(feature)}
+                                      </li>
+                                    ))}
 
-                                {count > 2 && (
-                                  <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
-                                    +{count - 2}
-                                  </li>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </ul>
-
+                                    {count > 2 && (
+                                      <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
+                                        +{count - 2}
+                                      </li>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </ul>
                           </div>
                         </div>
 
@@ -871,7 +867,9 @@ export default function Page() {
                   <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
                     {/* Left side: Entry counter */}
                     <div className="text-sm text-gray-600">
-                      Showing {startIndex + 1} to {Math.min(endIndex, currentbusiness.length)} of {currentbusiness.length} entries
+                      Showing {startIndex + 1} to{" "}
+                      {Math.min(endIndex, currentbusiness.length)} of{" "}
+                      {currentbusiness.length} entries
                     </div>
 
                     {/* Right side: Pagination buttons */}
@@ -880,10 +878,11 @@ export default function Page() {
                       <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                          currentPage === 1
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                       >
                         Previous
                       </button>
@@ -892,15 +891,18 @@ export default function Page() {
                       <div className="flex items-center gap-1">
                         {getPageNumbers().map((page, idx) => (
                           <React.Fragment key={idx}>
-                            {page === '...' ? (
-                              <span className="px-3 py-1 text-gray-500">...</span>
+                            {page === "..." ? (
+                              <span className="px-3 py-1 text-gray-500">
+                                ...
+                              </span>
                             ) : (
                               <button
                                 onClick={() => goToPage(page as number)}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
-                                  ? "bg-[#0519CE] text-white"
-                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                  }`}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                                  safePage === page
+                                    ? "bg-[#0519CE] text-white"
+                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                }`}
                               >
                                 {page}
                               </button>
@@ -913,10 +915,11 @@ export default function Page() {
                       <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                          currentPage === totalPages
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                       >
                         Next
                       </button>

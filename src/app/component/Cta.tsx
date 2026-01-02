@@ -1,11 +1,21 @@
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import AddBusinessModal from "./AddBusinessModal";
 import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
+
+type User = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  user_role: string;
+  paid_contributor: boolean;
+  email: string;
+  profile_picture_url?: string;
+};
 
 export default function Cta() {
   const [openAddBusinessModal, setOpenAddBusinessModal] = useState(false);
@@ -15,23 +25,34 @@ export default function Cta() {
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
   const [OpenAlertModal, setOpenAlertModal] = useState(false);
 
-  
   const handleBusinessCreated = () => {
     setOpenAddBusinessModal(false);
-
   };
 
+  // ✅ read session user + token
+  const { token, sessionUser } = useMemo(() => {
+    if (typeof window === "undefined") return { token: null, sessionUser: null as User | null };
+
+    const t = localStorage.getItem("access_token");
+    const u = sessionStorage.getItem("user");
+    return {
+      token: t,
+      sessionUser: u ? (JSON.parse(u) as User) : null,
+    };
+  }, []);
+
+  // ✅ hide "Add your Business" button if logged in as normal User
+  const hideAddBusinessBtn = !!token && sessionUser?.user_role === "User";
+
   const handleOpenPopup = () => {
-    const token =
+    const t =
       typeof window !== "undefined"
         ? localStorage.getItem("access_token")
         : null;
 
-    if (token) {
-      
+    if (t) {
       setOpenAddBusinessModal(true);
     } else {
-      
       setOpenAlertModal(true);
     }
   };
@@ -53,12 +74,15 @@ export default function Cta() {
 
           {/* ------ Buttons ------ */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center font-['Helvetica']">
-            <button
-              onClick={handleOpenPopup}
-              className="bg-white text-black font-semibold py-3 px-16 cursor-pointer rounded-full shadow hover:bg-sky-50 transition text-[16px]"
-            >
-              Add your Business
-            </button>
+            {/* ✅ Only show for non-User OR not logged in */}
+            {!hideAddBusinessBtn && (
+              <button
+                onClick={handleOpenPopup}
+                className="bg-white text-black font-semibold py-3 px-16 cursor-pointer rounded-full shadow hover:bg-sky-50 transition text-[16px]"
+              >
+                Add your Business
+              </button>
+            )}
 
             <button
               onClick={handleOpenPopup}

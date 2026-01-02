@@ -35,7 +35,6 @@ type BusinessMini = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-
 export default function Header() {
   // Use context for user state
   const { user, setUser, refreshUser } = useUser();
@@ -58,7 +57,7 @@ export default function Header() {
   const cartRef = useRef<HTMLLIElement | null>(null);
   const notifRef = useRef<HTMLLIElement | null>(null);
   const userRef = useRef<HTMLDivElement | null>(null);
-
+  const isNormalUser = user?.user_role === "User";
 
   const getUserFromSession = (): User | null => {
     const userData = sessionStorage.getItem("user");
@@ -267,7 +266,6 @@ export default function Header() {
     }
   };
 
-
   // ✅ remove item
   const removeFromCart = async (id: string) => {
     try {
@@ -306,7 +304,7 @@ export default function Header() {
     }
     // Add timestamp for cache busting
     const url = user.profile_picture_url;
-    const separator = url.includes('?') ? '&' : '?';
+    const separator = url.includes("?") ? "&" : "?";
     return `${url}${separator}t=${imageKey}`;
   };
 
@@ -415,14 +413,16 @@ export default function Header() {
                           </span>
                         </li>
 
-                        <li
-                          onClick={() => setOpenAddBusinessModal(true)}
-                          className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
-                        >
-                          <span className="group-hover:text-black-800 relative">
-                            Add Business
-                          </span>
-                        </li>
+                        {isLoggedIn && user?.user_role !== "User" && (
+                          <li
+                            onClick={() => setOpenAddBusinessModal(true)}
+                            className="before:bg-black-100 group cursor-pointer relative before:absolute before:inset-x-0 before:bottom-0 before:h-2 before:origin-right before:scale-x-0 before:transition before:duration-200 hover:before:origin-left hover:before:scale-x-100"
+                          >
+                            <span className="group-hover:text-black-800 relative">
+                              Add Business
+                            </span>
+                          </li>
+                        )}
                         {/* Notifications Dropdown */}
                         <li className="relative m-right-0" ref={notifRef}>
                           <button
@@ -492,19 +492,20 @@ export default function Header() {
                           )}
                         </li>
                         {/* Cart Dropdown */}
-                        <li className="relative" ref={cartRef}>
-                          <button
-                            onClick={async () => {
-                              setCartOpen(!cartOpen);
-                              setNotificationsOpen(false);
-                              setDropdownOpen(false);
+                        {!isNormalUser && (
+  <li className="relative" ref={cartRef}>
+    <button
+      onClick={async () => {
+        setCartOpen(!cartOpen);
+        setNotificationsOpen(false);
+        setDropdownOpen(false);
 
-                              if (!cartOpen) {
-                                await fetchCart(); // ✅ fresh cart
-                              }
-                            }}
-                            className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
-                          >
+        if (!cartOpen) {
+          await fetchCart(); // ✅ fresh cart
+        }
+      }}
+      className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+    >
                             <ShoppingCart className="h-6 w-6" />
 
                             {cartItems.length > 0 && (
@@ -622,7 +623,8 @@ export default function Header() {
                             </div>
                           )}
                         </li>
-                      </>
+                        )}
+                      </>                                        
                     )}
                   </ul>
 
