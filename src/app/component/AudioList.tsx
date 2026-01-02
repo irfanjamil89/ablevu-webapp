@@ -13,26 +13,16 @@ interface AudioTour {
   modified_at: string;
 }
 
-interface ApiResponse {
-  data: AudioTour[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
 interface AudioListProps {
-  businessId?: string;
+  items: AudioTour[];
   onAudioDeleted?: (id: string) => void;
 }
 
 const AudioList: React.FC<AudioListProps> = ({
-  businessId = '42900dc5-99ab-4ca0-a21b-9d3fe85cfdad',
+  items,
   onAudioDeleted
 }) => {
   const [audioTours, setAudioTours] = useState<AudioTour[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [durations, setDurations] = useState<Record<string, number>>({});
@@ -53,34 +43,18 @@ const AudioList: React.FC<AudioListProps> = ({
       default: return 'Unknown media error';
     }
   };
-
-  // Fetch audio tours
-  useEffect(() => {
-    fetchAudioTours();
-  }, [businessId]);
-
-  const fetchAudioTours = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch('https://staging-api.qtpack.co.uk/business-audio-tour/list', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch audio tours: ${response.status}`);
-      }
-
-      const result: ApiResponse = await response.json();
-
       // Filter out tours without audio files
-      const toursWithAudio = result.data.filter(tour => tour.link_url);
+      useEffect(() => {
+       const toursWithAudio = (items ?? []).filter(t => t.link_url);
       setAudioTours(toursWithAudio);
+        const validIds = new Set(toursWithAudio.map(t => t.id));
+        Object.keys(audioRefs.current).forEach(id => {
+    if (!validIds.has(id)) {
+      audioRefs.current[id].pause();
+      audioRefs.current[id].src = '';
+      delete audioRefs.current[id];
+    }
+  });
 
       // Initialize progress and muted state
       const initialProgress: Record<string, number> = {};
@@ -91,14 +65,7 @@ const AudioList: React.FC<AudioListProps> = ({
       });
       setProgress(initialProgress);
       setMuted(initialMuted);
-
-    } catch (err) {
-      console.error('Error fetching audio tours:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load audio tours');
-    } finally {
-      setLoading(false);
-    }
-  };
+      }, [items]);
 
   // Initialize audio element for a tour
   const getAudioElement = (tour: AudioTour): HTMLAudioElement => {
@@ -130,8 +97,6 @@ const AudioList: React.FC<AudioListProps> = ({
         const errorMsg = audio.error 
           ? `Error code ${audio.error.code}: ${getMediaErrorMessage(audio.error.code)}`
           : 'Unknown error';
-        console.error(`Error loading audio for ${tour.name}:`, errorMsg);
-        console.error('Audio URL:', tour.link_url);
         setPlayingId(null);
       };
 
@@ -166,7 +131,6 @@ const AudioList: React.FC<AudioListProps> = ({
         // Ignore AbortError which happens when play is interrupted
         if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Error playing audio:', err);
-          setError('Failed to play audio. Please try again.');
         }
         setPlayingId(null);
       }
@@ -218,7 +182,7 @@ const AudioList: React.FC<AudioListProps> = ({
       setAudioTours(prev => prev.filter(tour => tour.id !== deleteTargetId));
       onAudioDeleted?.(deleteTargetId);
 
-      await fetch(`https://staging-api.qtpack.co.uk/business-audio-tour/delete/${deleteTargetId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business-audio-tour/delete/${deleteTargetId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
       });
@@ -229,7 +193,6 @@ const AudioList: React.FC<AudioListProps> = ({
 
     } catch (err) {
       console.error('Error deleting audio tour:', err);
-      setError('Failed to delete audio tour');
       setOpenDeleteModal(false);
     }
   };
@@ -251,35 +214,6 @@ const AudioList: React.FC<AudioListProps> = ({
       });
     };
   }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-[400px]">
-        <img
-          src="/assets/images/favicon.png"
-          className="w-15 h-15 animate-spin"
-          alt="Favicon"
-        />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          <p className="font-medium">Error loading audio tours</p>
-          <p className="text-sm mt-1">{error}</p>
-          <button
-            onClick={fetchAudioTours}
-            className="mt-3 text-sm underline hover:no-underline"
-          >
-            Try again
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (audioTours.length === 0) {
     return (
