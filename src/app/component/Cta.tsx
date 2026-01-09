@@ -6,6 +6,7 @@ import Login from "./Login";
 import Signup from "./Signup";
 import ForgotPassword from "./Forgotpassword";
 import Successmodal from "./Successmodal";
+import Link from "next/link";
 
 type User = {
   id: string;
@@ -31,7 +32,8 @@ export default function Cta() {
 
   // ✅ read session user + token
   const { token, sessionUser } = useMemo(() => {
-    if (typeof window === "undefined") return { token: null, sessionUser: null as User | null };
+    if (typeof window === "undefined")
+      return { token: null, sessionUser: null as User | null };
 
     const t = localStorage.getItem("access_token");
     const u = sessionStorage.getItem("user");
@@ -84,12 +86,11 @@ export default function Cta() {
               </button>
             )}
 
-            <button
-              onClick={handleOpenPopup}
-              className="bg-white text-black font-semibold py-3 px-6 cursor-pointer rounded-full shadow hover:bg-sky-50 transition text-[16px]"
-            >
-              Become an Access-friendly City
-            </button>
+            <Link href="/access-friendly-city">
+              <button className="bg-white text-black font-semibold py-3 px-6 cursor-pointer rounded-full shadow hover:bg-sky-50 transition text-[16px]">
+                Become an Access-friendly City
+              </button>
+            </Link>
           </div>
         </div>
       </section>
