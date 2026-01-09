@@ -37,6 +37,7 @@ type Business = {
   business_status?: string | null;
   views: number;
   created_at: Date | string;
+  modified_at: Date | string;
   city: string;
   state: string;
   zipcode: string;
@@ -346,7 +347,7 @@ export default function Page() {
           console.error("Users fetch failed:", uRes.status, uRes.statusText);
         } else {
           const uJson = await uRes.json();
-          
+
 
           let usersArr: User[] = [];
 
@@ -569,6 +570,17 @@ export default function Page() {
     return pages;
   };
 
+
+
+  const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
+    if (!url) return '';
+    const t = timestamp ? new Date(timestamp).getTime() : Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_t=${t}`;
+  };
+
+
+
   return (
     <div className="w-full  overflow-y-auto">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
@@ -685,7 +697,7 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(${business?.logo_url})`,
+                          backgroundImage: `url(${getCacheBustedUrl(business?.logo_url, business.modified_at || business.created_at)})`,
                         }}
                       >
                         {statusInfo.label && (
@@ -878,11 +890,10 @@ export default function Page() {
                       <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === 1
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
                             ? "border-gray-200 text-gray-400 cursor-not-allowed"
                             : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                          }`}
                       >
                         Previous
                       </button>
@@ -898,11 +909,10 @@ export default function Page() {
                             ) : (
                               <button
                                 onClick={() => goToPage(page as number)}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                                  safePage === page
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${safePage === page
                                     ? "bg-[#0519CE] text-white"
                                     : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                }`}
+                                  }`}
                               >
                                 {page}
                               </button>
@@ -915,11 +925,10 @@ export default function Page() {
                       <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === totalPages
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
                             ? "border-gray-200 text-gray-400 cursor-not-allowed"
                             : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                          }`}
                       >
                         Next
                       </button>
