@@ -482,6 +482,19 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
                           className="border border-gray-300 cursor-pointer rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-600"
                         />
                       </td>
+                      <td className="px-4 py-3 text-center cursor-pointer text-gray-500 hover:text-gray-800">
+                        <button
+                          type="button"
+                          onClick={() => handlePasteFromMonday(index)}
+                          title="Copy Monday hours"
+                        >
+                          <img
+                            src="/assets/images/copy.svg"
+                            alt="copy"
+                            className="w-8 h-8 inline-block"
+                          />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

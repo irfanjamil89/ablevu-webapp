@@ -22,7 +22,6 @@ type Business = {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-
 export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loadingCart, setLoadingCart] = useState(true);
@@ -88,8 +87,9 @@ export default function CheckoutPage() {
 
         const data = await res.json();
         const items = Array.isArray(data) ? data : data?.data ?? [];
-        setCart(Array.isArray(data) ? data : data?.data ?? []);
-        setCart(items.filter((x: any) => (x.status || "").toLowerCase() === "pending"));
+        setCart(
+          items.filter((x: any) => (x.status || "").toLowerCase() === "pending")
+        );
       } catch (e: any) {
         setError(e.message || "Something went wrong");
       } finally {
@@ -158,42 +158,43 @@ export default function CheckoutPage() {
   };
 
   const startCheckout = async () => {
-  setPayLoading(true);
-  setError(null);
+    setPayLoading(true);
+    setError(null);
 
-  try {
-    if (!token || token === "null" || token === "undefined") {
-      throw new Error("Please login first.");
+    try {
+      if (!token || token === "null" || token === "undefined") {
+        throw new Error("Please login first.");
+      }
+
+      if (!cart.length) {
+        throw new Error("Your cart is empty.");
+      }
+
+      const batch_id = cart[0]?.batch_id;
+      if (!batch_id) throw new Error("batch_id not found in cart.");
+
+      const res = await fetch(`${API_BASE}stripe/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ batch_id }),
+      });
+
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data?.message || "Failed to create checkout session");
+
+      // ✅ UI: remove this batch from cart (pending list)
+      setCart((prev) => prev.filter((i) => i.batch_id !== batch_id));
+
+      window.location.href = data.url;
+    } catch (e: any) {
+      setError(e.message || "Something went wrong");
+      setPayLoading(false);
     }
-
-    if (!cart.length) {
-      throw new Error("Your cart is empty.");
-    }
-
-    const batch_id = cart[0]?.batch_id;
-    if (!batch_id) throw new Error("batch_id not found in cart.");
-
-    const res = await fetch(`${API_BASE}/stripe/checkout`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ batch_id }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.message || "Failed to create checkout session");
-
-    // ✅ UI: remove this batch from cart (pending list)
-    setCart((prev) => prev.filter((i) => i.batch_id !== batch_id));
-
-    window.location.href = data.url;
-  } catch (e: any) {
-    setError(e.message || "Something went wrong");
-    setPayLoading(false);
-  }
-};
+  };
 
   return (
     <div>

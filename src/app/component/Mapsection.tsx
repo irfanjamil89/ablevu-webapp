@@ -30,6 +30,8 @@ interface Business {
   business_status: string | null;
 }
 
+type PlanKey = "monthly" | "yearly";
+
 interface ApiResponse {
   data: Business[];
   total: number;
@@ -95,6 +97,10 @@ export default function Mapsections() {
   const [addedToCartOpen, setAddedToCartOpen] = useState(false);
   const [claimBusiness, setClaimBusiness] = useState<Business | null>(null);
   const [claimLoading, setClaimLoading] = useState(false);
+
+  // ✅ Plan modal states (same like AddBusinessModal)
+  const [openPlanModal, setOpenPlanModal] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
 
   // ===== Helpers =====
   const getToken = () =>
@@ -183,13 +189,16 @@ export default function Mapsections() {
   }, [map, validBusinesses, shouldFitBounds]);
 
   // ✅ Backend create API hit
-  const addBusinessToClaimCart = async (business: Business) => {
+  const addBusinessToClaimCart = async (business: Business, plan: PlanKey) => {
     const token = getToken();
     if (!token || token === "undefined" || token === "null") {
       throw new Error("Not logged in");
     }
 
     const batch_id = getOrCreateBatchId();
+
+    // ✅ plan based amount (apne hisaab se set kar lena)
+    const amount = plan === "monthly" ? 29 : 299;
 
     const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-claim-cart/create`;
     const res = await fetch(url, {
@@ -201,7 +210,8 @@ export default function Mapsections() {
       body: JSON.stringify({
         business_id: business.id,
         batch_id,
-        amount: 100.0,
+        amount,
+        package: plan, // ✅ optional (backend handle kare to)
       }),
     });
 
@@ -215,22 +225,40 @@ export default function Mapsections() {
 
   // ✅ Approved Business Click
   const handleApprovedBusinessClick = (business: Business) => {
-    // Not logged in -> locked modal
     if (!isTokenValid()) {
       setBusinessForModal(business);
       return;
     }
 
-    // ✅ Logged in but role is normal User -> locked modal (NO claim)
     if (isNormalUser()) {
-      setBusinessForModal(business); // show "This business is locked"
+      setBusinessForModal(business);
       return;
     }
 
-    // ✅ Business/Contributor/Owner etc -> allow claim flow
     setBusinessForModal(null);
+
+    // ✅ Step-1: confirm popup
     setClaimBusiness(business);
     setClaimConfirmOpen(true);
+  };
+
+  const handleConfirmPlan = async (plan: PlanKey) => {
+    if (!claimBusiness) return;
+
+    try {
+      setClaimLoading(true);
+      await addBusinessToClaimCart(claimBusiness, plan);
+
+      setOpenPlanModal(false);
+      setClaimBusiness(null);
+
+      window.location.href = "/checkout";
+    } catch (err) {
+      console.error(err);
+      alert("Failed to add to cart. Please try again.");
+    } finally {
+      setClaimLoading(false);
+    }
   };
 
   const fetchBusinesses = async () => {
@@ -558,8 +586,8 @@ export default function Mapsections() {
 
       {/* ✅ Claim Confirm Modal */}
       {claimConfirmOpen && claimBusiness && (
-        <div className="fixed inset-0 z-[3500] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 relative shadow-2xl mx-4">
+        <div className="fixed inset-0 z-[10005] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
             <button
               onClick={() => {
                 setClaimConfirmOpen(false);
@@ -573,45 +601,179 @@ export default function Mapsections() {
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               Claim this business?
             </h3>
+
             <p className="text-gray-600 mb-5">
-              Would you like to claim{" "}
-              <span className="font-semibold">{claimBusiness.name}</span> and
-              manage its details?
+              Do you want to claim{" "}
+              <span className="font-semibold">{claimBusiness.name}</span>?
             </p>
 
             <div className="flex gap-3 justify-end">
+              {/* Cancel */}
               <button
                 onClick={() => {
                   setClaimConfirmOpen(false);
-                  setClaimBusiness(null);
+                  setClaimBusiness(null); // ✅ back to normal
                 }}
                 className="px-5 py-2 rounded-full border font-semibold hover:bg-gray-50"
               >
-                No
+                Cancel
               </button>
 
+              {/* Yes -> open plan */}
               <button
-                disabled={claimLoading}
-                onClick={async () => {
-                  try {
-                    setClaimLoading(true);
-                    await addBusinessToClaimCart(claimBusiness);
-                    setClaimConfirmOpen(false);
-                    setAddedToCartOpen(true);
-                  } catch (err) {
-                    console.error(err);
-                    alert("Failed to add to cart. Please try again.");
-                  } finally {
-                    setClaimLoading(false);
-                  }
+                onClick={() => {
+                  setClaimConfirmOpen(false);
+                  setSelectedPlan(null);
+                  setOpenPlanModal(true); // ✅ now show subscription plans
                 }}
-                className={`px-5 py-2 rounded-full bg-[#0519ce] text-white font-semibold hover:opacity-90 ${
-                  claimLoading ? "opacity-60 cursor-not-allowed" : ""
-                }`}
+                className="px-5 py-2 rounded-full bg-[#0519ce] text-white font-semibold hover:opacity-90"
               >
-                {claimLoading ? "Adding..." : "Yes, claim"}
+                Yes, continue
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Subscription Plan Popup (Mapsections) */}
+      {openPlanModal && claimBusiness && (
+        <div className="fixed inset-0 z-[10010] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-1xl p-6 relative">
+            <button
+              type="button"
+              disabled={claimLoading}
+              onClick={() => !claimLoading && setOpenPlanModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+
+            <h3 className="text-2xl font-bold text-gray-900 text-center mb-2">
+              Choose a Subscription Plan
+            </h3>
+
+            <p className="text-center text-gray-600 mb-6">
+              Claiming:{" "}
+              <span className="font-semibold">{claimBusiness.name}</span>
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Monthly */}
+              <div
+                className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${
+                  selectedPlan === "monthly"
+                    ? "ring-4 ring-blue-400"
+                    : "hover:shadow-xl"
+                }`}
+                onClick={() => setSelectedPlan("monthly")}
+              >
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
+                  Monthly
+                </div>
+
+                <div className="p-8 pt-20 flex-1">
+                  <div className="text-center text-5xl font-extrabold text-gray-900 mb-8">
+                    $29
+                  </div>
+
+                  <ul className="space-y-4 text-gray-700">
+                    <li className="flex gap-3 items-start">
+                      <span className="text-blue-500 text-xl">✓</span>
+                      Upload 30+ photos & videos.
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="text-blue-500 text-xl">✓</span>
+                      Integrate your 360° virtual tour.
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="text-blue-500 text-xl">✓</span>
+                      Answer customer questions
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-6 mt-auto">
+                  <button
+                    type="button"
+                    className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConfirmPlan("monthly");
+                    }}
+                    disabled={claimLoading}
+                  >
+                    Choose Plan
+                  </button>
+                </div>
+              </div>
+
+              {/* Yearly */}
+              <div
+                className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${
+                  selectedPlan === "yearly"
+                    ? "ring-4 ring-blue-400"
+                    : "hover:shadow-xl"
+                }`}
+                onClick={() => setSelectedPlan("yearly")}
+              >
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
+                  Yearly
+                </div>
+
+                <div className="bg-[#06A7E8] text-white p-8 pt-20 flex-1 rounded-[36px]">
+                  <div className="text-center text-5xl font-extrabold mb-8">
+                    $299
+                  </div>
+
+                  <ul className="space-y-4">
+                    <li className="flex gap-3 items-start">
+                      <span className="text-white text-xl">✓</span>
+                      Upload 30+ photos & videos.
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="text-white text-xl">✓</span>
+                      Integrate your 360° virtual tour.
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="text-white text-xl">✓</span>
+                      Answer customer questions
+                    </li>
+                    <li className="flex gap-3 items-start">
+                      <span className="text-white text-xl">✓</span>
+                      Most cost-effective
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-6 bg-white mt-auto rounded-b-[36px]">
+                  <button
+                    type="button"
+                    className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleConfirmPlan("yearly");
+                    }}
+                    disabled={claimLoading}
+                  >
+                    Choose Plan
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Fullscreen loader */}
+      {claimLoading && (
+        <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center">
+          <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl flex flex-col items-center gap-3">
+            <img
+              src="/assets/images/favicon.png"
+              className="w-12 h-12 animate-spin"
+              alt="Loading"
+            />
+            <p className="text-gray-700 font-semibold">Processing...</p>
           </div>
         </div>
       )}
