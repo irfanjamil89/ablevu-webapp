@@ -395,6 +395,9 @@ export default function Mapsections() {
                   const isApproved =
                     selectedBusiness.business_status?.toLowerCase() ===
                     "approved";
+                  const isClaimed =
+                    selectedBusiness.business_status?.toLowerCase() ===
+                    "claimed";
 
                   return (
                     <InfoWindow
@@ -443,6 +446,28 @@ export default function Mapsections() {
                             {selectedBusiness.phone_number}
                           </p>
                         )}
+                        {isClaimed && (
+                          <button
+                            onClick={() => {
+                              setSelectedBusiness(null); // popup close (optional)
+                              window.location.href = `/business-profile/${selectedBusiness.id}`;
+                            }}
+                            style={{
+                              backgroundColor: "#1e40b0",
+                              color: "white",
+                              padding: "12px 16px",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              width: "100%",
+                              marginTop: "10px",
+                              fontSize: "14px",
+                            }}
+                          >
+                            View Details
+                          </button>
+                        )}
+
                         {isApproved && (
                           <button
                             onClick={() =>
