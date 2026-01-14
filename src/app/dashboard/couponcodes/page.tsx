@@ -106,7 +106,7 @@ export default function Page() {
                 active: true
             };
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/coupons/create`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}coupons/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ export default function Page() {
     const handleDelete = async (couponId: string): Promise<void> => {
         
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/coupons/delete/${couponId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}coupons/delete/${couponId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
