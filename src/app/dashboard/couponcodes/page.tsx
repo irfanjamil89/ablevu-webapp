@@ -135,9 +135,6 @@ export default function Page() {
 
     const handleDelete = async (couponId: string): Promise<void> => {
         
-        
-
-       
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}coupons/delete/${couponId}`, {
                 method: 'DELETE',
