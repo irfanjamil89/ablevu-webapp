@@ -795,7 +795,7 @@ export default function BusinessSidebar({
   return (
     <div className="w-full lg:w-3/10 px-4 sm:px-6 lg:px-10 py-5 lg:py-7 border-b lg:border-b-0 lg:border-r border-[#e5e5e7]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+      <div className="flex sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
         <div className="flex items-center text-xl sm:text-2xl font-semibold">
           <button onClick={() => router.back()}>
             <BsArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
@@ -976,7 +976,7 @@ export default function BusinessSidebar({
 
         {sortedBusinessSchedule.length ? (
           sortedBusinessSchedule.map((s) => (
-            <p key={s.id} className="flex flex-col sm:flex-row items-start sm:items-center mb-3 text-sm sm:text-base">
+            <p key={s.id} className="flex sm:flex-row items-start sm:items-center mb-3 text-sm sm:text-base">
               <BsClock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-[#0205d3] flex-shrink-0 mt-0.5 sm:mt-0" />
               <span className="min-w-[90px] font-medium">{formatDay(s.day)}</span>
               <span className="sm:ml-4 text-gray-600">
