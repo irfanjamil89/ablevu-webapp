@@ -337,7 +337,7 @@ export default function Headertest() {
                     <div className="flex w-full items-center justify-between rounded-full bg-white px-5 md:px-4 py-2">
                         {/* Logo */}
                         <div className="flex-shrink-0">
-                            <a href="/" className="flex items-center">
+                            <Link href="/" className="flex items-center">
                                 <img
                                     src="/assets/images/logo.png"
                                     alt="Ablevu"
@@ -346,23 +346,23 @@ export default function Headertest() {
                                         e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="120" height="40"%3E%3Ctext x="10" y="25" font-size="20" fill="%230519ce" font-weight="bold"%3EAblevu%3C/text%3E%3C/svg%3E';
                                     }}
                                 />
-                            </a>
+                            </Link>
                         </div>
 
                         {/* Desktop Navigation */}
                         <nav className="hidden lg:flex items-center space-x-1">
-                            <a href="/" className="px-4 py-2 text-sm font-semibold text-gray-900 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
+                            <Link href="/" className="px-4 py-2 text-sm font-semibold text-gray-900 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Home
-                            </a>
-                            <a href="/business" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
+                            </Link>
+                            <Link href="/business" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Businesses
-                            </a>
-                            <a href="/contributor" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
+                            </Link>
+                            <Link href="/contributor" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Contributor
-                            </a>
-                            <a href="/access-friendly-city" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
+                            </Link>
+                            <Link href="/access-friendly-city" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Access Friendly Cities
-                            </a>
+                            </Link>
                             {isLoggedIn && (
                                 <>
                                     <button
@@ -703,34 +703,34 @@ export default function Headertest() {
 
                         {/* Navigation Links */}
                         <nav className="p-4 space-y-1">
-                            <a
+                            <Link
                                 href="/"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Home
-                            </a>
-                            <a
+                            </Link>
+                            <Link
                                 href="/business"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Businesses
-                            </a>
-                            <a
+                            </Link>
+                            <Link
                                 href="/contributor"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Contributor
-                            </a>
-                            <a
+                            </Link>
+                            <Link
                                 href="/access-friendly-city"
                                 onClick={() => setMobileMenuOpen(false)}
                                 className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Access Friendly Cities
-                            </a>
+                            </Link>
 
                             {isLoggedIn && (
                                 <>
