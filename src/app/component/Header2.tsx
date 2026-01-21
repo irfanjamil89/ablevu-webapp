@@ -341,7 +341,7 @@ export default function Headertest() {
                                 <img
                                     src="/assets/images/logo.png"
                                     alt="Ablevu"
-                                    className="h-8 md:h-20 w-auto"
+                                    className="h-12 md:h-20 w-auto"
                                     onError={(e) => {
                                         e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="120" height="40"%3E%3Ctext x="10" y="25" font-size="20" fill="%230519ce" font-weight="bold"%3EAblevu%3C/text%3E%3C/svg%3E';
                                     }}
@@ -351,30 +351,30 @@ export default function Headertest() {
 
                         {/* Desktop Navigation */}
                         <nav className="hidden lg:flex items-center space-x-1">
-                            <a href="/" className="px-4 py-2 text-sm font-semibold text-gray-900 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+                            <a href="/" className="px-4 py-2 text-sm font-semibold text-gray-900 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Home
                             </a>
-                            <a href="/business" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+                            <a href="/business" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Businesses
                             </a>
-                            <a href="/contributor" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+                            <a href="/contributor" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Contributor
                             </a>
-                            <a href="/access-friendly-city" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50">
+                            <a href="/access-friendly-city" className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50">
                                 Access Friendly Cities
                             </a>
                             {isLoggedIn && (
                                 <>
                                     <button
                                         onClick={() => setOpenFeedbackModal(true)}
-                                        className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+                                        className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50"
                                     >
                                         Share Feedback
                                     </button>
                                     {user?.user_role !== "User" && (
                                         <button
                                             onClick={() => setOpenAddBusinessModal(true)}
-                                            className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
+                                            className="px-4 py-2 text-sm font-semibold text-gray-700 hover:text-[#0519ce] transition-colors rounded-lg hover:bg-blue-50"
                                         >
                                             Add Business
                                         </button>
@@ -396,7 +396,7 @@ export default function Headertest() {
                                                 setDropdownOpen(false);
                                                 if (!notificationsOpen) fetchNotifications();
                                             }}
-                                            className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            className="relative p-2 text-gray-600 hover:text-[#0519ce] hover:bg-blue-50 rounded-lg transition-colors"
                                         >
                                             <Bell className="h-5 w-5 md:h-6 md:w-6" />
                                             {notifications.length > 0 && (
@@ -455,7 +455,7 @@ export default function Headertest() {
                                                     setDropdownOpen(false);
                                                     if (!cartOpen) await fetchCart();
                                                 }}
-                                                className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                className="relative p-2 text-gray-600 hover:text-[#0519ce] hover:bg-blue-50 rounded-lg transition-colors"
                                             >
                                                 <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
                                                 {cartItems.length > 0 && (
@@ -527,7 +527,7 @@ export default function Headertest() {
                                                             <div className="p-4 border-t bg-gray-50">
                                                                 <button
                                                                     onClick={() => window.location.href = "/checkout"}
-                                                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-sm"
+                                                                    className="w-full bg-[#0519ce] hover:bg-[#0519ce] text-white font-semibold py-3 px-4 rounded-lg transition-colors shadow-sm"
                                                                 >
                                                                     Proceed to Checkout
                                                                 </button>
@@ -567,7 +567,7 @@ export default function Headertest() {
                                                         setDropdownOpen(false);
                                                         window.location.href = "/dashboard";
                                                     }}
-                                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] transition-colors"
                                                 >
                                                     <LayoutDashboard className="h-4 w-4" />
                                                     Dashboard
@@ -636,7 +636,7 @@ export default function Headertest() {
                             {/* Mobile Menu Button */}
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="lg:hidden p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                className="lg:hidden p-2 text-gray-600 hover:text-[#0519ce] hover:bg-blue-50 rounded-lg transition-colors"
                             >
                                 {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
                             </button>
@@ -648,7 +648,7 @@ export default function Headertest() {
                 <>
                     {/* Overlay */}
                     <div
-                        className={`fixed inset-0 bg-black bg-opacity-50 transition-opacity duration-300 lg:hidden z-[60] ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+                        className={`fixed inset-0 bg-[#00000059] transition-opacity duration-300 lg:hidden z-[60] ${mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
                             }`}
                         onClick={() => setMobileMenuOpen(false)}
                     />
@@ -664,7 +664,7 @@ export default function Headertest() {
                                 <img
                                     src="/assets/images/logo.png"
                                     alt="Ablevu"
-                                    className="h-8 w-auto"
+                                    className="h-10 w-auto"
                                     onError={(e) => {
                                         e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="32"%3E%3Ctext x="5" y="20" font-size="16" fill="%230519ce" font-weight="bold"%3EAblevu%3C/text%3E%3C/svg%3E';
                                     }}
@@ -680,7 +680,7 @@ export default function Headertest() {
 
                         {/* User Profile Section (if logged in) */}
                         {isLoggedIn && user && (
-                            <div className="p-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+                            <div className="p-6 bg-gradient-to-r from-[#0519ce] to-[#0519ce] text-white">
                                 <div className="flex items-center gap-4">
                                     <img
                                         src={getProfileImageUrl()}
@@ -706,28 +706,28 @@ export default function Headertest() {
                             <a
                                 href="/"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Home
                             </a>
                             <a
                                 href="/business"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Businesses
                             </a>
                             <a
                                 href="/contributor"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Contributor
                             </a>
                             <a
                                 href="/access-friendly-city"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                             >
                                 Access Friendly Cities
                             </a>
@@ -739,7 +739,7 @@ export default function Headertest() {
                                             setOpenFeedbackModal(true);
                                             setMobileMenuOpen(false);
                                         }}
-                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                        className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                                     >
                                         Share Feedback
                                     </button>
@@ -749,7 +749,7 @@ export default function Headertest() {
                                                 setOpenAddBusinessModal(true);
                                                 setMobileMenuOpen(false);
                                             }}
-                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+                                            className="flex items-center gap-3 w-full px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-blue-50 hover:text-[#0519ce] rounded-lg transition-colors"
                                         >
                                             Add Business
                                         </button>
@@ -767,7 +767,7 @@ export default function Headertest() {
                                             setMobileMenuOpen(false);
                                             window.location.href = "/dashboard";
                                         }}
-                                        className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                                        className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-2 text-sm font-semibold text-white bg-[#0519ce] hover:bg-[#0519ce] rounded-lg transition-colors"
                                     >
                                         <LayoutDashboard className="h-5 w-5" />
                                         Dashboard
@@ -787,7 +787,7 @@ export default function Headertest() {
                                             setOpenSignupModal(true);
                                             setMobileMenuOpen(false);
                                         }}
-                                        className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg shadow-sm"
+                                        className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-2 bg-gradient-to-r from-[#0519ce] to-[#0519ce] text-white font-semibold rounded-lg shadow-sm"
                                     >
                                         <UserPlus className="h-5 w-5" />
                                         Sign Up
@@ -797,7 +797,7 @@ export default function Headertest() {
                                             setOpenLoginModal(true);
                                             setMobileMenuOpen(false);
                                         }}
-                                        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white text-blue-600 font-semibold rounded-lg border-2 border-blue-600"
+                                        className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white text-[#0519ce] font-semibold rounded-lg border-2 border-[#0519ce]"
                                     >
                                         <LogIn className="h-5 w-5" />
                                         Log In
