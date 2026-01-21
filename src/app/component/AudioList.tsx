@@ -201,12 +201,12 @@ const AudioList: React.FC<AudioListProps> = ({
 
   if (audioTours.length === 0) {
     return (
-      <div className="audios border border-dotted p-6 sm:p-10 rounded-xl border-gray-300 text-center flex flex-col justify-center items-center">
-        <img src="/assets/images/audio.avif" alt="" className="max-w-[200px] w-full" />
-        <p className="mt-4 font-medium text-gray-600">
-          No Audio Tour to show
-        </p>
-      </div>
+      <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
+          <img src="/assets/images/audio.avif" alt="" />
+          <p className="mt-4 font-medium text-[#6d6d6d]">
+            No Audio Tour to show
+          </p>
+        </div>
     );
   }
 

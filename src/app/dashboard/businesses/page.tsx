@@ -243,12 +243,12 @@ export default function Page() {
 
   // ---------- Fetch businesses (shared function) ----------
 
-  const fetchBusinesses = useCallback(async (search: string) => {
+ const fetchBusinesses = useCallback(async (search: string) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    let url = base + "/business/list";
+    let url = base + "/business/list?page=1&limit=1000";
 
     if (search) {
-      url += `?search=${encodeURIComponent(search)}`;
+      url += `&search=${encodeURIComponent(search)}`;
     }
 
     const token =
