@@ -497,7 +497,7 @@ export default function Mapsections() {
         </div>
 
         {/* Sidebar */}
-        <div className="w-full lg:w-1/3 bg-gray-50 rounded-lg p-4 shadow flex flex-col font-['Helvetica']">
+        <div className="w-full lg:w-1/3 bg-gray-50 rounded-lg p-4 shadow flex flex-col font-['Helvetica'] overflow-hidden">
           {/* Search Box */}
           <div className="flex items-center bg-white border rounded-md p-2 mb-4">
             <svg

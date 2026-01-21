@@ -91,7 +91,7 @@ interface ApiResponse {
 
 const mapContainerStyle = {
   width: '100%',
-  height: '100%'
+  height: '580px'
 };
 
 const defaultCenter = {
@@ -438,12 +438,12 @@ export default function CitiesMap() {
   };
 
   return (
-    <section className="w-5/6 lg:mx-auto px-4 py-12 mt-10 bg-[#f7f7f7]">
+    <section className="lg:w-5/6 md:w-full sm:w-full lg:mx-auto px-4 py-12 mt-10 bg-[#f7f7f7] sm:mb-20">
       <h1 className="font-['Helvetica'] md:text-2xl lg:text-[28px] text-4xl font-bold pb-6 pl-4 mb-8 border-[#e5e5e7] border-b">
         {viewMode === 'cities' ? 'All Access-friendly Cities' : `Businesses in ${currentCityName}`}
       </h1>
 
-      <div className="flex flex-col lg:flex-row gap-6 h-[580px]">
+      <div className="flex flex-col lg:flex-row gap-6 h-[580px] md:h-[580px]">
         {/* Sidebar */}
         <div className="w-full lg:w-1/3 bg-gray-50 rounded-lg p-4 shadow flex flex-col font-['Helvetica']">
           {viewMode === 'businesses' && (
@@ -605,7 +605,7 @@ export default function CitiesMap() {
         </div>
 
         {/* Map */}
-        <div className="w-full lg:w-2/3 h-[580px] rounded-lg shadow overflow-hidden">
+        <div className="md:w-full lg:w-2/3  sm:w-full h-[580px] md:h-[580px] rounded-lg shadow ">
           {loading ? (
             <div className="w-full h-full flex items-center justify-center bg-gray-100">
               <p className="text-gray-600">Loading map...</p>
@@ -617,6 +617,7 @@ export default function CitiesMap() {
           ) : (
             <GoogleMap
               mapContainerStyle={mapContainerStyle}
+              
               center={mapCenter}
               zoom={mapZoom}
               onLoad={onMapLoad}

@@ -22,6 +22,9 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
   // Store the uploaded image preview
   const [uploadedImagePreview, setUploadedImagePreview] = useState<string | null>(null);
   
+  // Upload modal state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  
   // Cropper states
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -109,6 +112,7 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
       }
 
       setSuccess('Image uploaded successfully!');
+      setShowUploadModal(false);
     } catch (error) {
       console.error('Upload error:', error);
       setError('Failed to upload image');
@@ -137,12 +141,19 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       setImageToCrop(e.target?.result as string);
+      setShowUploadModal(false); // Close upload modal when showing cropper
     };
     reader.readAsDataURL(file);
   };
 
-  const handleClick = () => {
-    document.getElementById('business-logo-input')?.click();
+  const handleImageClick = () => {
+    if (displayImageUrl) {
+      // If image exists, show upload modal
+      setShowUploadModal(true);
+    } else {
+      // If no image, directly open file picker
+      document.getElementById('business-logo-input')?.click();
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,6 +161,8 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
     if (file) {
       handleFileSelect(file);
     }
+    // Reset input value to allow selecting the same file again
+    e.target.value = '';
   };
 
   const handleDrag = (e: React.DragEvent) => {
@@ -197,7 +210,7 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
         {displayImageUrl ? (
           <div className="flex justify-center p-6">
             <img
-              onClick={handleClick}
+              onClick={handleImageClick}
               src={displayImageUrl}
               alt={businessName}
               className="w-80 object-contain cursor-pointer hover:opacity-80 transition-opacity"
@@ -206,7 +219,7 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
           </div>
         ) : (
           <div
-            onClick={handleClick}
+            onClick={handleImageClick}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
@@ -253,6 +266,60 @@ const BusinessImageUpload: React.FC<BusinessImageUploadProps> = ({
           </div>
         )}
       </div>
+
+      {/* Upload Modal - Shows when clicking on existing image */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-[90%] max-w-md overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold">Update Logo</h2>
+              <p className="text-gray-600 text-sm mt-1">Choose a new image for your business logo</p>
+            </div>
+            
+            <div
+              onClick={() => document.getElementById('business-logo-input')?.click()}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              className={`flex flex-col items-center justify-center py-16 m-6 border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 ${
+                dragActive ? 'bg-blue-50 border-blue-400' : 'border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+              }`}
+            >
+              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                <svg
+                  className="w-8 h-8 text-blue-600"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+              </div>
+
+              <p className="text-gray-600 text-sm mb-2">
+                SVG, PNG, JPG or GIF (max. 5MB)
+              </p>
+              <p className="text-blue-600 font-semibold">
+                Click to upload{' '}
+                <span className="text-gray-500 font-normal">or drag and drop</span>
+              </p>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Image Cropper Modal */}
       {imageToCrop && (

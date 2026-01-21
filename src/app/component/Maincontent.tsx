@@ -651,10 +651,10 @@ export default function Maincontent({
   return (
      <>
       <div
-      className={`px-10 py-7 w-7/10 transition ${
-        openClaimModal ? "blur-sm pointer-events-none select-none" : ""
-      }`}
-    >
+        className={`px-4 sm:px-6 lg:px-10 py-5 lg:py-7 w-full lg:w-7/10 transition ${
+          openClaimModal ? "blur-sm pointer-events-none select-none" : ""
+        }`}
+      >
       {/* ---------- Virtual Tours ---------- */}
       <div className="tour border p-6 rounded-3xl border-[#e5e5e7] w-full ">
         <div className="flex justify-between items-center">
