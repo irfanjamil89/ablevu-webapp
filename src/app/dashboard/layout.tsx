@@ -690,7 +690,248 @@ export default function DashboardLayout({
           </div>
         </div>
       ) : (
-        <Header />
+        <div className="w-full border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-2 sm:py-1">
+            <div className="flex items-center gap-3 sm:gap-8 md:gap-12 lg:gap-[85px]">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <Link href="/" className="w-[120px] sm:w-[150px] lg:w-[180px] shrink-0">
+                <img src="/assets/images/logo.png" alt="AbleVu Logo" className="w-full" />
+              </Link>
+
+              
+            </div>
+
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 relative">
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => {
+                    setNotificationsOpen(!notificationsOpen);
+                    setCartOpen(false);
+                    if (!notificationsOpen) fetchNotifications();
+                  }}
+                  className="flex items-center justify-center rounded-full p-1.5 sm:p-2 hover:bg-gray-100 transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 sm:h-6 sm:w-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M15 17h5l-1.405-1.405C18.21 14.79 18 13.918 18 13V9a6 6 0 10-12 0v4c0 .918-.21 1.79-.595 2.595L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white border rounded-lg shadow-lg z-50">
+                    <ul className="divide-y divide-gray-200 max-h-[60vh] sm:max-h-96 overflow-y-auto">
+                      {notifications.length === 0 && (
+                        <li className="flex items-center justify-center px-4 py-8 sm:py-12">
+                          <p className="text-gray-500 text-sm sm:text-m">No new notifications</p>
+                        </li>
+                      )}
+
+                      {notifications.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleNotificationClick(item)}
+                        >
+                          <div className="w-full pr-2">
+                            <p className="text-xs sm:text-sm font-medium">{item.content}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(item.id);
+                            }}
+                            className="hover:opacity-80 shrink-0"
+                          >
+                            <img
+                              src="https://www.svgrepo.com/show/497079/eye-slash.svg"
+                              alt="Mark as read"
+                              className="w-4 h-4 sm:w-5 sm:h-5"
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Cart Dropdown */}
+              <div className="relative" ref={cartRef}>
+                <button
+                  onClick={async () => {
+                    setCartOpen((prev) => !prev);
+                    setNotificationsOpen(false);
+
+                    // ✅ open par fetch latest cart
+                    if (!cartOpen) {
+                      await fetchCart();
+                    }
+                  }}
+                  className="relative flex items-center justify-center rounded-full p-1.5 sm:p-2 hover:bg-gray-100 transition"
+                  aria-label="Cart"
+                >
+                  <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
+                  {cartItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 sm:px-2 py-[2px] rounded-full shadow">
+                      {cartItems.length}
+                    </span>
+                  )}
+                </button>
+
+                {cartOpen && (
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                    {/* Header */}
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-bold text-sm sm:text-base text-gray-900">Cart</p>
+                          <p className="text-[11px] sm:text-xs text-gray-500">
+                            {cartItems.length} item{cartItems.length > 1 ? "s" : ""} in your cart
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-[10px] sm:text-[11px] text-gray-500">Total</p>
+                          <p className="font-extrabold text-sm sm:text-base text-gray-900">{formatUSD(cartTotal)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    {cartLoading ? (
+                      <div className="px-4 sm:px-6 py-8 sm:py-10 text-center text-gray-600 text-sm">Loading cart...</div>
+                    ) : cartItems.length === 0 ? (
+                      <div className="px-4 sm:px-6 py-8 sm:py-10 text-center">
+                        <div className="mx-auto mb-3 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-800">Your cart is empty</p>
+                        <p className="text-[11px] sm:text-xs text-gray-500 mt-1">Add items to see them here.</p>
+                      </div>
+                    ) : (
+                      <ul className="max-h-[50vh] sm:max-h-96 overflow-y-auto">
+                        {cartItems.map((item) => {
+                          const biz = bizMap[item.business_id];
+                          const businessName =
+                            biz?.name ?? `Business (${item.business_id?.slice(0, 6)}...)`;
+                          const logo = biz?.logo_url || "/assets/images/b-img.png";
+
+                          const amountNum =
+                            typeof item.amount === "string"
+                              ? parseFloat(item.amount)
+                              : item.amount;
+
+                          return (
+                            <li
+                              key={item.id}
+                              className="px-3 sm:px-5 py-3 sm:py-4 border-b last:border-b-0 hover:bg-gray-50 transition"
+                            >
+                              <div className="flex items-start gap-3 sm:gap-4">
+                                <img
+                                  src={logo}
+                                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl object-cover shrink-0"
+                                  alt={businessName}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src =
+                                      "/assets/images/b-img.png";
+                                  }}
+                                />
+
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-bold text-gray-900 leading-5 truncate">
+                                    {businessName}
+                                  </p>
+
+                                  {/* ✅ status bigger */}
+                                  <p className="mt-1 text-xs sm:text-sm font-semibold text-gray-700">
+                                    Status:{" "}
+                                    <span className="capitalize">{item.status}</span>
+                                  </p>
+
+                                  <p className="text-xs sm:text-sm font-extrabold text-gray-900 mt-1 sm:mt-2">
+                                    {formatUSD(Number(amountNum || 0))}
+                                  </p>
+                                </div>
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFromCart(item.id);
+                                  }}
+                                  className="p-1.5 sm:p-2 rounded-xl hover:bg-red-50 text-red-600 transition shrink-0"
+                                  title="Remove"
+                                  aria-label="Remove item"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+
+                    {/* Footer */}
+                    {cartItems.length > 0 && (
+                      <div className="p-3 sm:p-4 border-t bg-white">
+                        <div className="flex gap-2 sm:gap-3">
+                          <button
+                            onClick={() => (window.location.href = "/checkout")}
+                            className="w-full rounded-xl bg-[#0519ce] text-white py-2 sm:py-2.5 text-xs sm:text-sm font-bold hover:opacity-90 shadow"
+                          >
+                            View Cart
+                          </button>
+
+                          <button
+                            onClick={clearCart}
+                            className="rounded-xl border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold hover:bg-gray-50 whitespace-nowrap"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Logout */}
+              <button
+                type="button"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer transition text-xs sm:text-sm"
+                onClick={handleLogout}
+              >
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {isMobileMenuOpen && (
         <div
