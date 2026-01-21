@@ -333,7 +333,7 @@ export default function Headertest() {
     return (
         <div>
             <header className="relative z-50 w-full lg:rounded-full">
-                <div className="m-auto bg-white px-1 w-5/6 custom-container lg:mx-auto rounded-full lg:px-0 lg:py-4 md:px-12 md:bg-transparent">
+                <div className="m-auto bg-white px-1  custom-container lg:mx-auto rounded-full lg:px-0 lg:py-4 md:px-12 md:bg-transparent">
                     <div className="flex w-full items-center justify-between rounded-full bg-white px-5 md:px-4 py-2">
                         {/* Logo */}
                         <div className="flex-shrink-0">
