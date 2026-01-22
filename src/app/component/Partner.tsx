@@ -86,19 +86,19 @@ export default function Partner() {
 
   return (
     <section className="bg-white py-16">
-      <div className="lg:w-5/6 lg:mx-auto bg-gray-100 rounded-2xl py-10 px-10 overflow-hidden flex items-center justify-center flex-wrap gap-2">
+      <div className="lg:w-5/6 lg:mx-auto bg-gray-100 rounded-2xl py-10 px-10 overflow-hidden flex items-center justify-center flex-wrap gap-10">
 
         {/* First set of partners */}
         {partners.map((partner, index) => (
           <Link
             key={`first-${index}`}
             href={partner.web_url || '#'}
-            className=" w-[19%] "
+            className=" lg:w-[19%] md:w-full flex justify-center "
           >
             <img
               src={partner?.image_url || "/assets/images/HDS_RGB-2048x610.png"}
               alt={`${partner.name} logo`}
-              className=" object-contain w-[140px]"
+              className=" object-contain w-[180px]  "
               onError={(e) => {
                 e.currentTarget.src = "/assets/images/HDS_RGB-2048x610.png";
               }}
