@@ -13,7 +13,7 @@ export default function Social() {
       <img
         src="/assets/images/Vector.png"
         alt="Wheelchair user working"
-        className="w-[500px]"
+        className="lg:w-[500px] md:full sm:w-full"
       />
     </div>
 

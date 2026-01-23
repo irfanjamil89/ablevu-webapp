@@ -37,6 +37,7 @@ type Business = {
   business_status?: string | null;
   views: number;
   created_at: Date | string;
+  modified_at: Date | string;
   city: string;
   state: string;
   zipcode: string;
@@ -346,7 +347,7 @@ export default function Page() {
           console.error("Users fetch failed:", uRes.status, uRes.statusText);
         } else {
           const uJson = await uRes.json();
-          
+
 
           let usersArr: User[] = [];
 
@@ -569,67 +570,78 @@ export default function Page() {
     return pages;
   };
 
+
+
+  const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
+    if (!url) return '';
+    const t = timestamp ? new Date(timestamp).getTime() : Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_t=${t}`;
+  };
+
+
+
   return (
-    <div className="w-full  overflow-y-auto">
+    <div className="w-full overflow-y-auto">
       <div className="flex items-center justify-between border-b border-gray-200 bg-white">
         <div className="w-full min-h-screen bg-white">
-          <div className="w-full min-h-screen bg-white px-6 py-5">
-            {/* KPI Cards (top) */}
-            <div className="cards flex flex-wrap lg:flex-nowrap sm:flex-wrap gap-4 items-center pb-10 pt-4">
+          <div className="w-full min-h-screen bg-white px-4 sm:px-6 py-4 sm:py-5">
+            {/* KPI Cards (top) - RESPONSIVE GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 pb-6 sm:pb-10 pt-4">
               {/* card-1 */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
+              <a className="block w-full p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
                   {accessibleCityTotal}
                 </h5>
-                <p className="font-normal text-gray-700">Accessible Cities</p>
+                <p className="font-normal text-gray-700 text-sm sm:text-base">Accessible Cities</p>
               </a>
 
               {/* card-2 */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#fcf4e0] rounded-lg shadow-md">
+              <a className="block w-full p-3 px-4 bg-[#fcf4e0] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
                   {paidContributorsCount}
                 </h5>
-                <p className="font-normal text-gray-700">Paid Contributors</p>
+                <p className="font-normal text-gray-700 text-sm sm:text-base">Paid Contributors</p>
               </a>
 
               {/* card-3 */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#ffe2df] rounded-lg shadow-md">
+              <a className="block w-full p-3 px-4 bg-[#ffe2df] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
                   {volunteerContributorsCount}
                 </h5>
-                <p className="font-normal text-gray-700">
+                <p className="font-normal text-gray-700 text-sm sm:text-base">
                   Volunteer Contributors
                 </p>
               </a>
 
               {/* card-4 – dynamic count */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#daf1e6] rounded-lg shadow-md">
+              <a className="block w-full p-3 px-4 bg-[#daf1e6] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
                   {businesses.length}
                 </h5>
-                <p className="font-normal text-gray-700">Business Profiles</p>
+                <p className="font-normal text-gray-700 text-sm sm:text-base">Business Profiles</p>
               </a>
 
               {/* card-5 */}
-              <a className="block max-w-sm w-[300px] md:w-[300px] sm:w-[250px] p-3 px-4 bg-[#fde8e2] rounded-lg shadow-md">
+              <a className="block w-full p-3 px-4 bg-[#fde8e2] rounded-lg shadow-md">
                 <h5 className="text-2xl font-bold tracking-tight text-gray-900">
                   {partnerTotal}
                 </h5>
-                <p className="font-normal text-gray-700">Total Partners</p>
+                <p className="font-normal text-gray-700 text-sm sm:text-base">Total Partners</p>
               </a>
             </div>
 
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-2xl font-semibold text-gray-900">
+            {/* Header - RESPONSIVE LAYOUT */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+              <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">
                 Recently Created Businesses ({filteredBusinesses.length})
               </h1>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 {/* Sort dropdown */}
-                <div className="border border-gray-300 rounded-md px-3 py-1.5">
+                <div className="border border-gray-300 rounded-md px-3 py-1.5 bg-white">
                   <select
-                    className="bg-transparent text-sm text-gray-700 outline-none"
+                    className="w-full sm:w-auto bg-transparent text-sm text-gray-700 outline-none"
                     value={sortOption}
                     onChange={(e) =>
                       setSortOption(e.target.value as SortOption)
@@ -643,10 +655,10 @@ export default function Page() {
                 </div>
 
                 {/* Search */}
-                <div className="flex items-center border border-gray-300 rounded-md px-3 py-1.5 w-72">
+                <div className="flex items-center border border-gray-300 rounded-md px-3 py-1.5 bg-white sm:w-72">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="w-4 h-4 text-gray-500"
+                    className="w-4 h-4 text-gray-500 flex-shrink-0"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -669,9 +681,9 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Business cards from DB */}
+            {/* Business cards from DB - RESPONSIVE CARDS */}
             <section className="flex-1">
-              <section className="space-y-10 lg:space-y-4 md:space-y-4">
+              <section className="space-y-4">
                 {currentbusiness.map((business) => {
                   const statusInfo = getStatusInfo(business);
 
@@ -679,18 +691,18 @@ export default function Page() {
                     <Link
                       key={business.id}
                       href={`/business-profile/${business.id}`}
-                      className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
+                      className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white hover:shadow-md transition-shadow"
                     >
-                      {/* Left image */}
+                      {/* Left image - RESPONSIVE */}
                       <div
-                        className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
+                        className="relative flex items-center justify-center w-full h-48 md:h-auto md:w-48 lg:w-56 flex-shrink-0 shadow-sm bg-[#E5E5E5] bg-cover bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(${business?.logo_url})`,
+                          backgroundImage: `url(${getCacheBustedUrl(business?.logo_url, business.modified_at || business.created_at)})`,
                         }}
                       >
                         {statusInfo.label && (
                           <span
-                            className="absolute top-3 md:right-2 right-14 text-sm font-semibold px-2 py-1 rounded-md shadow-sm"
+                            className="absolute top-3 right-3 text-xs sm:text-sm font-semibold px-2 py-1 rounded-md shadow-sm"
                             style={{
                               backgroundColor: statusInfo.bg,
                               color: statusInfo.text,
@@ -701,17 +713,17 @@ export default function Page() {
                         )}
                       </div>
 
-                      {/* Right content */}
-                      <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
-                        <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
-                          <h3 className="font-semibold text-gray-800 text-2xl">
+                      {/* Right content - RESPONSIVE */}
+                      <div className="flex-1 justify-between bg-white p-4 sm:py-3 sm:ps-5 space-y-3 sm:space-y-4">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-2 sm:mb-4">
+                          <h3 className="font-semibold text-gray-800 text-lg sm:text-xl lg:text-2xl">
                             {business.name}
                           </h3>
-                          <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
+                          <div className="flex flex-wrap gap-2">
                             {/* Saved */}
                             <label className="inline-flex items-center gap-1 cursor-pointer">
                               <input type="checkbox" className="peer hidden" />
-                              <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
+                              <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-2 sm:px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   viewBox="0 0 24 24"
@@ -726,19 +738,20 @@ export default function Page() {
                                     d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z"
                                   />
                                 </svg>
-                                <span>0 Saved</span>
+                                <span className="hidden sm:inline">0 Saved</span>
+                                <span className="sm:hidden">0</span>
                               </div>
                             </label>
 
                             {/* Views */}
-                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
+                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-2 sm:px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="white"
                                 viewBox="0 0 24 24"
                                 strokeWidth="2"
                                 stroke="black"
-                                className="w-4 h-4"
+                                className="w-4 h-4 flex-shrink-0"
                               >
                                 <path
                                   strokeLinecap="round"
@@ -747,18 +760,18 @@ export default function Page() {
                                 />
                                 <circle cx="12" cy="12" r="3" />
                               </svg>
-                              {business.views} Views
+                              <span className="whitespace-nowrap">{business.views} Views</span>
                             </button>
 
                             {/* Recommendations */}
-                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
+                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-2 sm:px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 fill="white"
                                 viewBox="0 0 24 24"
                                 strokeWidth="2"
                                 stroke="black"
-                                className="w-4 h-4"
+                                className="w-4 h-4 flex-shrink-0"
                               >
                                 <path
                                   strokeLinecap="round"
@@ -767,23 +780,26 @@ export default function Page() {
                                   d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
                                 />
                               </svg>
-                              {business.businessRecomendations?.length ?? 0}{" "}
-                              Recommendations
+                              <span className="whitespace-nowrap">
+                                {business.businessRecomendations?.length ?? 0}{" "}
+                                <span className="hidden sm:inline">Recommendations</span>
+                                <span className="sm:hidden">Recs</span>
+                              </span>
                             </button>
                           </div>
                         </div>
 
-                        {/* Categories */}
-                        <div className="text-md">
-                          <div className="flex">
-                            <span className="font-medium text-gray-500 pe-2">
+                        {/* Categories - RESPONSIVE */}
+                        <div className="text-sm sm:text-md">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium text-gray-500">
                               Categories
                             </span>
-                            <ul className="flex flex-wrap md:flex-nowrap space-x-2">
+                            <ul className="flex flex-wrap gap-2">
                               {business.linkedTypes.map((type) => (
                                 <li
                                   key={type.id}
-                                  className="bg-[#F7F7F7] rounded-full px-2"
+                                  className="bg-[#F7F7F7] text-gray-700 rounded-full px-2 py-0.5 text-xs sm:text-sm"
                                 >
                                   {getBusinessTypeName(type)}
                                 </li>
@@ -792,19 +808,19 @@ export default function Page() {
                           </div>
                         </div>
 
-                        {/* Accessible Features */}
-                        <div className="text-md text-gray-500 mt-2">
-                          <div className="flex flex-wrap md:gap-0 gap-2">
-                            <span className="font-medium text-gray-500 pe-2">
+                        {/* Accessible Features - RESPONSIVE */}
+                        <div className="text-sm sm:text-md text-gray-500">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-medium text-gray-500">
                               Accessible Features
                             </span>
-                            <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
+                            <ul className="flex flex-wrap gap-2">
                               {(() => {
                                 const list =
                                   business.accessibilityFeatures || [];
                                 const count = list.length;
 
-                                if (count === 0) return <li>No features</li>;
+                                if (count === 0) return <li className="text-xs sm:text-sm">No features</li>;
 
                                 // Only first 2 items
                                 const firstTwo = list.slice(0, 2);
@@ -814,14 +830,14 @@ export default function Page() {
                                     {firstTwo.map((feature) => (
                                       <li
                                         key={feature.id}
-                                        className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
+                                        className="bg-[#F7F7F7] text-gray-700 rounded-full px-2 py-0.5 text-xs sm:text-sm"
                                       >
                                         {getFeatureName(feature)}
                                       </li>
                                     ))}
 
                                     {count > 2 && (
-                                      <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
+                                      <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2 py-0.5 text-xs sm:text-sm">
                                         +{count - 2}
                                       </li>
                                     )}
@@ -832,23 +848,25 @@ export default function Page() {
                           </div>
                         </div>
 
-                        {/* Other info */}
-                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                        {/* Other info - RESPONSIVE */}
+                        <div className="flex items-start sm:items-center gap-2 text-sm sm:text-md text-gray-500">
                           <img
                             src="/assets/images/clock.webp"
-                            className="w-4 h-4"
+                            className="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0"
+                            alt="Clock"
                           />
-                          <span className="text-md text-gray-700">
+                          <span className="text-sm sm:text-md text-gray-700">
                             {getTodayScheduleLabel(business.id) ||
                               "Operating hours not specified"}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                        <div className="flex items-start sm:items-center gap-2 text-sm sm:text-md text-gray-500">
                           <img
                             src="/assets/images/location.png"
-                            className="w-4 h-4"
+                            className="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0"
+                            alt="Location"
                           />
-                          <span className="text-md text-gray-700">
+                          <span className="text-sm sm:text-md text-gray-700 break-words">
                             {business.address}
                           </span>
                         </div>
@@ -858,51 +876,50 @@ export default function Page() {
                 })}
 
                 {filteredBusinesses.length === 0 && (
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-500 text-sm text-center py-8">
                     No businesses found for this search.
                   </p>
                 )}
-                {/* ===== PAGINATION CONTROLS ===== */}
+                {/* ===== PAGINATION CONTROLS - RESPONSIVE ===== */}
                 {!loading && currentbusiness.length > 0 && (
-                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 sm:px-6 py-4 border-t border-gray-200 bg-white mt-6">
                     {/* Left side: Entry counter */}
-                    <div className="text-sm text-gray-600">
+                    <div className="text-xs sm:text-sm text-gray-600 text-center sm:text-left">
                       Showing {startIndex + 1} to{" "}
-                      {Math.min(endIndex, currentbusiness.length)} of{" "}
-                      {currentbusiness.length} entries
+                      {Math.min(endIndex, filteredBusinesses.length)} of{" "}
+                      {filteredBusinesses.length} entries
                     </div>
 
-                    {/* Right side: Pagination buttons */}
+                    {/* Right side: Pagination buttons - RESPONSIVE */}
                     <div className="flex items-center gap-2">
                       {/* Previous Button */}
                       <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === 1
+                        className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${currentPage === 1
                             ? "border-gray-200 text-gray-400 cursor-not-allowed"
                             : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                          }`}
                       >
-                        Previous
+                        <span className="hidden sm:inline">Previous</span>
+                        <span className="sm:hidden">Prev</span>
                       </button>
 
-                      {/* Page Numbers */}
-                      <div className="flex items-center gap-1">
+                      {/* Page Numbers - HIDE ON MOBILE, SHOW ON SM+ */}
+                      <div className="hidden sm:flex items-center gap-1">
                         {getPageNumbers().map((page, idx) => (
                           <React.Fragment key={idx}>
                             {page === "..." ? (
-                              <span className="px-3 py-1 text-gray-500">
+                              <span className="px-2 sm:px-3 py-1 text-gray-500 text-xs sm:text-sm">
                                 ...
                               </span>
                             ) : (
                               <button
                                 onClick={() => goToPage(page as number)}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                                  safePage === page
+                                className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${safePage === page
                                     ? "bg-[#0519CE] text-white"
                                     : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                }`}
+                                  }`}
                               >
                                 {page}
                               </button>
@@ -911,15 +928,19 @@ export default function Page() {
                         ))}
                       </div>
 
+                      {/* Mobile page indicator */}
+                      <div className="sm:hidden text-xs text-gray-600 px-2">
+                        Page {safePage} of {totalPages}
+                      </div>
+
                       {/* Next Button */}
                       <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === totalPages
+                        className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${currentPage === totalPages
                             ? "border-gray-200 text-gray-400 cursor-not-allowed"
                             : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                          }`}
                       >
                         Next
                       </button>

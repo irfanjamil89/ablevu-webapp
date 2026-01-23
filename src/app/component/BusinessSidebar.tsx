@@ -793,64 +793,63 @@ export default function BusinessSidebar({
   }
 
   return (
-    <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
+    <div className="w-full lg:w-3/10 px-4 sm:px-6 lg:px-10 py-5 lg:py-7 border-b lg:border-b-0 lg:border-r border-[#e5e5e7]">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center text-2xl font-semibold">
+      <div className="flex sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+        <div className="flex items-center text-xl sm:text-2xl font-semibold">
           <button onClick={() => router.back()}>
-            <BsArrowLeft className="w-6 h-6 mr-3" />
+            <BsArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
           </button>
           Business Details
         </div>
 
         <button
-          className="rounded-4xl border py-3 px-4 flex border-[#e5e5e7] items-center"
+          className="rounded-4xl border py-2 sm:py-3 px-3 sm:px-4 flex border-[#e5e5e7] items-center text-sm sm:text-base"
           onClick={handleShare}
         >
           <img
             src="/assets/images/share.png"
             alt="Share"
-            className="w-5 h-5 mr-3"
+            className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3"
           />
           Share
         </button>
       </div>
 
       {/* Logo */}
-       {canEdit && (
-      <BusinessImageUpload
-        businessId={business.id}
-        businessName={business.name}
-        initialImageUrl={business.logo_url}
-        onUploadSuccess={() => {
-          refetchBusiness();
-        }}
-      />
-       )}
-       {!canEdit && business.logo_url && (
-  <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
-    <div className="flex justify-center p-6">
-      <img
-        src={business.logo_url}
-        alt={business.name}
-        className="w-80 object-contain cursor-default transition-opacity"
-      />
-    </div>
-  </div>
-)}
-
+      {canEdit && (
+        <BusinessImageUpload
+          businessId={business.id}
+          businessName={business.name}
+          initialImageUrl={business.logo_url}
+          onUploadSuccess={() => {
+            refetchBusiness();
+          }}
+        />
+      )}
+      {!canEdit && business.logo_url && (
+        <div className="border rounded-3xl mt-6 border-[#e5e5e7] overflow-hidden relative">
+          <div className="flex justify-center p-4 sm:p-6">
+            <img
+              src={business.logo_url}
+              alt={business.name}
+              className="w-full sm:w-80 object-contain cursor-default transition-opacity"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Info */}
-      <div className="py-8">
-        <div className="flex items-center justify-between">
-          <h3 className="text-2xl font-semibold">{business.name}</h3>
+      <div className="py-6 sm:py-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+          <h3 className="text-xl sm:text-2xl font-semibold">{business.name}</h3>
 
           <div className="flex items-center gap-3">
             {/* LIKE BUTTON */}
             <button
               onClick={handleRecommendClick}
               disabled={likeLoading}
-              className={`flex items-center gap-1 py-1 px-3 rounded-2xl
+              className={`flex items-center gap-1 py-1 px-3 rounded-2xl text-sm sm:text-base
               ${
                 likedByUser
                   ? "bg-[#0205d3] text-white"
@@ -858,9 +857,9 @@ export default function BusinessSidebar({
               }`}
             >
               {likedByUser ? (
-                <AiFillLike className="w-5 h-5" />
+                <AiFillLike className="w-4 h-4 sm:w-5 sm:h-5" />
               ) : (
-                <AiOutlineLike className="w-5 h-5" />
+                <AiOutlineLike className="w-4 h-4 sm:w-5 sm:h-5" />
               )}
               <span>{likeCount}</span>
             </button>
@@ -872,31 +871,31 @@ export default function BusinessSidebar({
               className="flex items-center"
             >
               {saved ? (
-                <BsBookmarkFill className="w-5 h-5 text-[#0205d3]" />
+                <BsBookmarkFill className="w-4 h-4 sm:w-5 sm:h-5 text-[#0205d3]" />
               ) : (
-                <BsBookmark className="w-5 h-5 text-[#0205d3]" />
+                <BsBookmark className="w-4 h-4 sm:w-5 sm:h-5 text-[#0205d3]" />
               )}
             </button>
           </div>
         </div>
 
         {/* Categories */}
-        <div className="flex items-start mt-4 border-b border-[#e5e5e7] pb-6">
-          <p className="mr-4 mt-1 text-gray-500">Categories</p>
+        <div className="flex flex-col sm:flex-row items-start mt-4 border-b border-[#e5e5e7] pb-6">
+          <p className="mr-0 sm:mr-4 mb-2 sm:mb-0 mt-1 text-gray-500 text-sm sm:text-base">Categories</p>
 
           {categoryNames.length > 0 ? (
             <div className="flex gap-2 flex-wrap">
               {categoryNames.map((name, i) => (
                 <span
                   key={`${name}-${i}`}
-                  className="bg-[#f8f9fb] py-1 px-3 rounded-2xl"
+                  className="bg-[#f8f9fb] py-1 px-3 rounded-2xl text-sm"
                 >
                   {name}
                 </span>
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No categories</p>
+            <p className="text-gray-500 text-sm">No categories</p>
           )}
         </div>
       </div>
@@ -904,25 +903,25 @@ export default function BusinessSidebar({
       {/* Details */}
       <div>
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold mb-4">Details</h3>
-           {canEdit && (
-          <button
-            type="button"
-            onClick={() => setOpenDetailPopup(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          <h3 className="text-lg sm:text-xl font-semibold mb-4">Details</h3>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setOpenDetailPopup(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-5 h-5 sm:w-6 sm:h-6"
+              />
+            </button>
+          )}
         </div>
 
         {business.website && (
-          <p className="flex items-center mb-3">
-            <BsLink className="w-6 h-6 mr-3 text-[#0205d3]" />
+          <p className="flex items-start sm:items-center mb-3 text-sm sm:text-base">
+            <BsLink className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3 text-[#0205d3] flex-shrink-0 mt-0.5 sm:mt-0" />
             <a
               href={business.website}
               target="_blank"
@@ -935,8 +934,8 @@ export default function BusinessSidebar({
         )}
 
         {business.email && (
-          <p className="flex items-center mb-3">
-            <BsEnvelope className="w-5 h-5 mr-3 text-[#0205d3]" />
+          <p className="flex items-start sm:items-center mb-3 text-sm sm:text-base">
+            <BsEnvelope className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-[#0205d3] flex-shrink-0 mt-0.5 sm:mt-0" />
             <a href={`mailto:${business.email}`} className="break-all">
               {business.email}
             </a>
@@ -944,69 +943,69 @@ export default function BusinessSidebar({
         )}
 
         {business.phone_number && (
-          <p className="flex items-center mb-3">
-            <BsTelephone className="w-5 h-5 mr-3 text-[#0205d3]" />
+          <p className="flex items-center mb-3 text-sm sm:text-base">
+            <BsTelephone className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-[#0205d3] flex-shrink-0" />
             <a href={`tel:${business.phone_number}`}>{business.phone_number}</a>
           </p>
         )}
 
-        <p className="flex">
-          <BsPin className="w-5 h-5 mr-3 text-[#0205d3]" />
+        <p className="flex text-sm sm:text-base">
+          <BsPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-[#0205d3] flex-shrink-0 mt-0.5 sm:mt-0" />
           <span className="break-all">{displayAddress}</span>
         </p>
       </div>
 
       {/* Operating Hours */}
-      <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
+      <div className="border-b pb-8 sm:pb-10 mt-8 sm:mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold mb-6">Operating Hours</h3>
-           {canEdit && (
-          <button
-            type="button"
-            onClick={() => setOpenOperatingHours(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Operating Hours</h3>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setOpenOperatingHours(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-5 h-5 sm:w-6 sm:h-6"
+              />
+            </button>
+          )}
         </div>
 
         {sortedBusinessSchedule.length ? (
           sortedBusinessSchedule.map((s) => (
-            <p key={s.id} className="flex items-center mb-3">
-              <BsClock className="w-5 h-5 mr-3 text-[#0205d3]" />
-              <span className="min-w-[90px]">{formatDay(s.day)}</span>
-              <span className="ml-4">
+            <p key={s.id} className="flex sm:flex-row items-start sm:items-center mb-3 text-sm sm:text-base">
+              <BsClock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-[#0205d3] flex-shrink-0 mt-0.5 sm:mt-0" />
+              <span className="min-w-[90px] font-medium">{formatDay(s.day)}</span>
+              <span className="sm:ml-4 text-gray-600">
                 {s.opening_time_text} to {s.closing_time_text}
               </span>
             </p>
           ))
         ) : (
-          <p className="text-gray-500">No schedule added yet.</p>
+          <p className="text-gray-500 text-sm">No schedule added yet.</p>
         )}
       </div>
 
       {/* Social Links */}
-      <div className="border-b pb-10 mt-10 border-[#e5e5e7]">
+      <div className="border-b pb-8 sm:pb-10 mt-8 sm:mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold mb-6">Social Links</h3>
-           {canEdit && (
-          <button
-            type="button"
-            onClick={() => setOpenSocialLinks(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Social Links</h3>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setOpenSocialLinks(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-5 h-5 sm:w-6 sm:h-6"
+              />
+            </button>
+          )}
         </div>
 
         <div className="flex">
@@ -1016,7 +1015,7 @@ export default function BusinessSidebar({
               target="_blank"
               rel="noopener noreferrer"
             >
-              <BsFacebook className="w-10 h-10 mr-3 text-[#139df8]" />
+              <BsFacebook className="w-8 h-8 sm:w-10 sm:h-10 mr-3 text-[#139df8]" />
             </a>
           )}
           {business.instagram_link && (
@@ -1025,50 +1024,50 @@ export default function BusinessSidebar({
               target="_blank"
               rel="noopener noreferrer"
             >
-              <BsInstagram className="w-10 h-10 mr-3 text-[#E1306C]" />
+              <BsInstagram className="w-8 h-8 sm:w-10 sm:h-10 mr-3 text-[#E1306C]" />
             </a>
           )}
           {!business.facebook_link && !business.instagram_link && (
-            <p className="text-gray-500">No social links provided.</p>
+            <p className="text-gray-500 text-sm">No social links provided.</p>
           )}
         </div>
       </div>
 
       {/* About */}
-      <div className="pb-10">
+      <div className="pb-8 sm:pb-10">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold my-6">About</h3>
-           {canEdit && (
-          <button
-            type="button"
-            onClick={() => setOpenAboutModal(true)}
-            className="text-sm text-gray-800 cursor-pointer font-bold"
-          >
-            <img
-              src="/assets/images/writing-svgrepo-com.svg"
-              alt="Edit"
-              className="w-6 h-6"
-            />
-          </button>
-           )}
+          <h3 className="text-lg sm:text-xl font-semibold my-4 sm:my-6">About</h3>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => setOpenAboutModal(true)}
+              className="text-sm text-gray-800 cursor-pointer font-bold"
+            >
+              <img
+                src="/assets/images/writing-svgrepo-com.svg"
+                alt="Edit"
+                className="w-5 h-5 sm:w-6 sm:h-6"
+              />
+            </button>
+          )}
         </div>
-        <p>{business.description || "No description added yet."}</p>
+        <p className="text-sm sm:text-base text-gray-700">{business.description || "No description added yet."}</p>
       </div>
 
-      {/* ✅ STATUS SECTION */}
+      {/* STATUS SECTION */}
       <div className="pb-4">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm text-gray-500">Business Status</p>
-          <span className="text-sm font-semibold text-gray-800">
+          <p className="text-xs sm:text-sm text-gray-500">Business Status</p>
+          <span className="text-xs sm:text-sm font-semibold text-gray-800">
             {currentStatusLabel}
           </span>
         </div>
 
-        {/* ✅ ADMIN: Dropdown (all statuses) */}
+        {/* ADMIN: Dropdown (all statuses) */}
         {isAdmin && (
           <>
             <select
-              className="w-full border border-gray-300 rounded-full px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
+              className="w-full border border-gray-300 rounded-full px-3 py-2 text-xs sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0519CE] focus:border-[#0519CE]"
               value={normalizedStatus}
               disabled={statusSaving}
               onChange={(e) => handleStatusChange(e.target.value)}
@@ -1085,12 +1084,12 @@ export default function BusinessSidebar({
             )}
 
             {statusError && (
-              <p className="text-red-500 text-sm mt-1">{statusError}</p>
+              <p className="text-red-500 text-xs sm:text-sm mt-1">{statusError}</p>
             )}
           </>
         )}
 
-        {/* ✅ Business/Contributor: Action Buttons */}
+        {/* Business/Contributor: Action Buttons */}
         {!isAdmin && isBusinessContributorOrUser && (
           <>
             {availableActions.length > 0 ? (
@@ -1101,7 +1100,7 @@ export default function BusinessSidebar({
                     type="button"
                     disabled={statusSaving}
                     onClick={() => handleStatusChange(action.toStatus)}
-                    className="w-full rounded-full px-4 py-2 text-sm font-bold border border-[#0519CE] text-[#0519CE] hover:bg-[#f0f1ff] disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full rounded-full px-4 py-2 text-xs sm:text-sm font-bold border border-[#0519CE] text-[#0519CE] hover:bg-[#f0f1ff] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {statusSaving ? "Saving..." : action.label}
                   </button>
@@ -1114,44 +1113,43 @@ export default function BusinessSidebar({
             )}
 
             {statusError && (
-              <p className="text-red-500 text-sm mt-2">{statusError}</p>
+              <p className="text-red-500 text-xs sm:text-sm mt-2">{statusError}</p>
             )}
           </>
         )}
       </div>
 
       {/* Delete Business button */}
-      {(canEdit) && (
-      <div className="mt-3">
-        <button
-          type="button"
-          onClick={() => setOpenDeleteModal(true)}
-          className="flex justify-center items-center gap-2 px-5 py-2.5 w-full text-center text-md font-bold bg-[#FFEBEB] text-[#DD3820] rounded-full cursor-pointer"
-        >
-          <img
-            src="/assets/images/red-delete.svg"
-            alt="red-delete"
-            className="w-5 h-5"
-          />
-          Delete Business
-        </button>
-        
+      {canEdit && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setOpenDeleteModal(true)}
+            className="flex justify-center items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 w-full text-center text-sm sm:text-md font-bold bg-[#FFEBEB] text-[#DD3820] rounded-full cursor-pointer"
+          >
+            <img
+              src="/assets/images/red-delete.svg"
+              alt="red-delete"
+              className="w-4 h-4 sm:w-5 sm:h-5"
+            />
+            Delete Business
+          </button>
 
           {deleteError && (
-            <p className="text-red-500 text-sm mt-2">{deleteError}</p>
+            <p className="text-red-500 text-xs sm:text-sm mt-2">{deleteError}</p>
           )}
         </div>
       )}
 
       {/* Delete Confirmation Popup */}
       {openDeleteModal && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[350px] text-center p-6 sm:p-8">
             <div className="flex justify-center mb-4">
               <div className="bg-red-600 rounded-full p-3">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-8 w-8 text-white"
+                  className="h-6 w-6 sm:h-8 sm:w-8 text-white"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -1166,22 +1164,22 @@ export default function BusinessSidebar({
               </div>
             </div>
 
-            <h2 className="text-lg font-bold mb-2 text-gray-800">
+            <h2 className="text-base sm:text-lg font-bold mb-2 text-gray-800">
               Delete Business?
             </h2>
-            <p className="mb-4 text-gray-600">This action cannot be undone.</p>
+            <p className="mb-4 text-sm sm:text-base text-gray-600">This action cannot be undone.</p>
 
-            <div className="flex gap-3 mt-4">
+            <div className="flex flex-col sm:flex-row gap-3 mt-4">
               <button
                 onClick={() => setOpenDeleteModal(false)}
-                className="px-5 py-2 w-full border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100 cursor-pointer"
+                className="w-full px-5 py-2 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-100 cursor-pointer text-sm sm:text-base"
               >
                 Cancel
               </button>
 
               <button
                 onClick={confirmDeleteAction}
-                className="px-5 py-2 w-full bg-red-600 text-white rounded-full hover:bg-red-700 cursor-pointer"
+                className="w-full px-5 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 cursor-pointer text-sm sm:text-base"
               >
                 Delete
               </button>

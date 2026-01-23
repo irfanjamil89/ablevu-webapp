@@ -932,393 +932,384 @@ export default function Page({
     // 🌟 Return UI
     return (
         <div>
-            <div className="flex">
-                <BusinessSidebar
-                    business={business}
-                    businessTypes={businessTypes}
-                    businessOwner={business?.owner} 
-                    loading={loading}
-                    error={error}
-                    setOpenDetailPopup={setOpenDetailPopup}
-                    setOpenOperatingHours={setOpenOperatingHours}
-                    setOpenSocialLinks={setOpenSocialLinks}
-                    setOpenAboutModal={setOpenAboutModal}
-                    // ⭐ New props for popup
-                    showSuccess={showSuccess}
-                    showError={showError}
-                    refetchBusiness={fetchAllData}
-                />
+      <div className="flex flex-col lg:flex-row">
+        <BusinessSidebar
+          business={business}
+          businessTypes={businessTypes}
+          businessOwner={business?.owner} 
+          loading={loading}
+          error={error}
+          setOpenDetailPopup={setOpenDetailPopup}
+          setOpenOperatingHours={setOpenOperatingHours}
+          setOpenSocialLinks={setOpenSocialLinks}
+          setOpenAboutModal={setOpenAboutModal}
+          showSuccess={showSuccess}
+          showError={showError}
+          refetchBusiness={fetchAllData}
+        />
 
-                <Maincontent
-                    business={business}
-                    businessImages={businessImages}
-                    businessOwner={business?.owner} 
-                    loading={loading}
-                    error={error}
-                    setOpenVirtualTour={handleSetOpenVirtualTour}
-                    setOpenAudioTourPopup={setOpenAudioTourPopup}
-                    setCustomMediaPopup={setCustomMediaPopup}
-                    onDeleteCustomSectionMedia={handleDeleteCustomSectionMedia}
-                    onEditCustomSectionMedia={handleEditCustomSectionMedia}
-                    onAddCustomSectionMedia={handleAddCustomSectionMedia}
-                    setOpenAccessibilityFeaturePopup={
-                        handleSetOpenAccessibilityFeaturePopup
-                    }
-                    setOpenPropertyImagePopup={setOpenPropertyImagePopup}
-                    setOpenEditPropertyImagePopup={setOpenEditPropertyImagePopup}
-                    setSelectedImageId={setSelectedImageId}
-                    setOpenCustonSectionPopup={setOpenCustonSectionPopup}
-                    setOpenAccessibilityMediaPopup={
-                        handleSetOpenAccessibilityMediaPopup
-                    }
-                    setOpenAccessibilityResourcesPopup={
-                        handleSetOpenAccessibilityResourcesPopup
-                    }
-                    setOpenQuestionPopup={setOpenQuestionPopup}
-                    setOpenWriteReviewsPopup={setOpenWriteReviewsPopup}
-                    setOpenPartnerCertificationsPopup={
-                        setOpenPartnerCertificationsPopup
-                    }
-                    onEditVirtualTour={handleEditVirtualTour}
-                    onDeleteVirtualTour={handleDeleteVirtualTour}
-                    onToggleVirtualTourActive={handleToggleVirtualTourActive}
-                    onDeleteReview={handleDeleteReview}
-                    onDeleteQuestion={handleDeleteQuestion}
-                    onDeletePartner={handleDeletePartner}
-                    onDeleteAdditionalResource={handleDeleteAdditionalResource}
-                    onEditAdditionalResource={handleEditAdditionalResource}
-                    onDeleteBusinessMedia={handleDeleteBusinessMedia}
-                    onEditBusinessMedia={handleEditBusinessMedia}
-                    onEditAccessibilityFeatureGroup={
-                        handleEditAccessibilityFeatureGroup
-                    }
-                    onDeleteAccessibilityFeatureGroup={
-                        handleDeleteAccessibilityFeatureGroup
-                    }
-                    // ⭐ NEW: Business image delete handler
-                    onDeleteBusinessImage={handleDeleteBusinessImage}
-                    showSuccess={showSuccess}
-                    showError={showError}
-                />
+        <Maincontent
+          business={business}
+          businessImages={businessImages}
+          businessOwner={business?.owner} 
+          loading={loading}
+          error={error}
+          setOpenVirtualTour={handleSetOpenVirtualTour}
+          setOpenAudioTourPopup={setOpenAudioTourPopup}
+          setCustomMediaPopup={setCustomMediaPopup}
+          onDeleteCustomSectionMedia={handleDeleteCustomSectionMedia}
+          onEditCustomSectionMedia={handleEditCustomSectionMedia}
+          onAddCustomSectionMedia={handleAddCustomSectionMedia}
+          setOpenAccessibilityFeaturePopup={
+            handleSetOpenAccessibilityFeaturePopup
+          }
+          setOpenPropertyImagePopup={setOpenPropertyImagePopup}
+          setOpenEditPropertyImagePopup={setOpenEditPropertyImagePopup}
+          setSelectedImageId={setSelectedImageId}
+          setOpenCustonSectionPopup={setOpenCustonSectionPopup}
+          setOpenAccessibilityMediaPopup={
+            handleSetOpenAccessibilityMediaPopup
+          }
+          setOpenAccessibilityResourcesPopup={
+            handleSetOpenAccessibilityResourcesPopup
+          }
+          setOpenQuestionPopup={setOpenQuestionPopup}
+          setOpenWriteReviewsPopup={setOpenWriteReviewsPopup}
+          setOpenPartnerCertificationsPopup={
+            setOpenPartnerCertificationsPopup
+          }
+          onEditVirtualTour={handleEditVirtualTour}
+          onDeleteVirtualTour={handleDeleteVirtualTour}
+          onToggleVirtualTourActive={handleToggleVirtualTourActive}
+          onDeleteReview={handleDeleteReview}
+          onDeleteQuestion={handleDeleteQuestion}
+          onDeletePartner={handleDeletePartner}
+          onDeleteAdditionalResource={handleDeleteAdditionalResource}
+          onEditAdditionalResource={handleEditAdditionalResource}
+          onDeleteBusinessMedia={handleDeleteBusinessMedia}
+          onEditBusinessMedia={handleEditBusinessMedia}
+          onEditAccessibilityFeatureGroup={
+            handleEditAccessibilityFeatureGroup
+          }
+          onDeleteAccessibilityFeatureGroup={
+            handleDeleteAccessibilityFeatureGroup
+          }
+          onDeleteBusinessImage={handleDeleteBusinessImage}
+          showSuccess={showSuccess}
+          showError={showError}
+        />
+      </div>
+
+      {OpenDetailPopup && business && (
+        <BusinessDetail
+          businessId={business.id}
+          setOpenDetailPopup={setOpenDetailPopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Details Updated",
+              "Business details updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenOperatingHours && business && (
+        <Operatinghours
+          businessId={business.id}
+          setOpenOperatingHours={setOpenOperatingHours}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Operating Hours Updated",
+              "Operating hours updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenSocialLinks && business && (
+        <Profilesocial
+          businessId={business.id}
+          setOpenSocialLinks={setOpenSocialLinks}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Social Links Updated",
+              "Social links updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenAboutModal && business && (
+        <Profileabout
+          businessId={business.id}
+          setOpenAboutModal={setOpenAboutModal}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "About Updated",
+              "Business about section updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenVirtualTour && business && (
+        <VirtualTour
+          businessId={business.id}
+          setOpenVirtualTour={handleSetOpenVirtualTour}
+          tour={selectedVirtualTour}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess(
+              "Virtual Tour Saved",
+              "Virtual tour has been saved successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenAudioTourPopup && business && (
+        <AudioTourPopup
+          businessId={business.id}
+          setOpenAudioTourPopup={setOpenAudioTourPopup}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess(
+              "Audio Tour Saved",
+              "Audio tour has been saved successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenAccessibilityFeaturePopup && business && (
+        <AccessibilityFeaturePopup
+          businessId={business.id}
+          setOpenAccessibilityFeaturePopup={setOpenAccessibilityFeaturePopup}
+          initialTypeId={editFeatureTypeId || undefined}
+          initialFeatureIds={editFeatureIds}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Accessibility Updated",
+              "Accessibility features updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenPropertyImagePopup && business && (
+        <PropertyImagePopup
+          businessId={business.id}
+          setOpenPropertyImagePopup={setOpenPropertyImagePopup}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess(
+              "Images Updated",
+              "Property images updated successfully."
+            );
+          }}
+        />
+      )}
+      {OpenEditPropertyImagePopup && business && (
+        <EditPropertyImagePopup
+          businessImageId={SelectedImageId}
+          setOpenEditPropertyImagePopup={setOpenEditPropertyImagePopup}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Images Updated",
+              "Property images updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenCustonSectionPopup && business && (
+        <CustomSectionPopup
+          businessId={business.id}
+          setOpenCustonSectionPopup={setOpenCustonSectionPopup}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess(
+              "Custom Section Created",
+              "Custom section Created successfully."
+            );
+          }}
+        />
+      )}
+      {OpenCustomMediaPopup && business && (
+        <CustomMediaModal
+          businessId={business.id}
+          setCustomMediaPopup={handleSetOpenCustomMediaPopup}
+          activeCustomSectionId={activeCustomSectionId}
+          media={selectedMedia}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess(
+              "Custom Media Saved",
+              "Custom Media has been saved successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenAccessibilityMediaPopup && business && (
+        <AccessibilityMediaPopup
+          businessId={business.id}
+          setOpenAccessibilityMediaPopup={setOpenAccessibilityMediaPopupState}
+          media={selectedMedia}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Media Updated",
+              "Accessibility media updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenAccessibilityResourcesPopup && business && (
+        <AccessibilityResourcesPopup
+          businessId={business.id}
+          setOpenAccessibilityResourcesPopup={
+            setOpenAccessibilityResourcesPopupState
+          }
+          resource={selectedResource}
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Resources Updated",
+              "Accessibility resources updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {OpenQuestionPopup && business && (
+        <QuestionPopup
+          businessId={business.id}
+          setOpenQuestionPopup={setOpenQuestionPopup}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess("Question Added", "Question added successfully.");
+          }}
+        />
+      )}
+
+      {OpenWriteReviewsPopup && business && (
+        <WriteReviewsPopup
+          businessId={business.id}
+          setOpenWriteReviewsPopup={setOpenWriteReviewsPopup}
+          onUpdated={async () => {
+            await fetchAllData();
+            showSuccess("Review Added", "Review added successfully.");
+          }}
+        />
+      )}
+
+      {OpenPartnerCertificationsPopup && business && (
+        <PartnerCertificationPopup
+          businessId={business.id}
+          setOpenPartnerCertificationsPopup={
+            setOpenPartnerCertificationsPopup
+          }
+          onUpdated={async (updated) => {
+            setBusiness(updated);
+            await fetchAllData();
+            showSuccess(
+              "Partners Updated",
+              "Partner certifications updated successfully."
+            );
+          }}
+        />
+      )}
+
+      {confirm.open && (
+        <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[350px] text-center p-6 sm:p-8 relative">
+            <h2 className="text-base sm:text-lg font-bold mb-2">{confirm.title}</h2>
+            <p className="text-sm sm:text-base mb-4 sm:mb-6">{confirm.message}</p>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                className="w-full sm:w-auto px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                onClick={handleCloseConfirm}
+              >
+                Cancel
+              </button>
+              <button
+                className="w-full sm:w-auto px-5 py-2 rounded-full bg-[#DD3820] text-white hover:bg-red-700 cursor-pointer"
+                onClick={async () => {
+                  if (confirm.onConfirm) {
+                    await confirm.onConfirm();
+                  } else {
+                    handleCloseConfirm();
+                  }
+                }}
+              >
+                OK
+              </button>
             </div>
-
-            {OpenDetailPopup && business && (
-                <BusinessDetail
-                    businessId={business.id}
-                    setOpenDetailPopup={setOpenDetailPopup}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Details Updated",
-                            "Business details updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenOperatingHours && business && (
-                <Operatinghours
-                    businessId={business.id}
-                    setOpenOperatingHours={setOpenOperatingHours}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Operating Hours Updated",
-                            "Operating hours updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenSocialLinks && business && (
-                <Profilesocial
-                    businessId={business.id}
-                    setOpenSocialLinks={setOpenSocialLinks}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Social Links Updated",
-                            "Social links updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenAboutModal && business && (
-                <Profileabout
-                    businessId={business.id}
-                    setOpenAboutModal={setOpenAboutModal}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "About Updated",
-                            "Business about section updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenVirtualTour && business && (
-                <VirtualTour
-                    businessId={business.id}
-                    setOpenVirtualTour={handleSetOpenVirtualTour}
-                    tour={selectedVirtualTour}
-                    onUpdated={async () => {
-                        await fetchAllData();
-                        showSuccess(
-                            "Virtual Tour Saved",
-                            "Virtual tour has been saved successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenAudioTourPopup && business && (
-                <AudioTourPopup
-                    businessId={business.id}
-                    setOpenAudioTourPopup={setOpenAudioTourPopup}
-                    onUpdated={async () => {
-                        await fetchAllData();
-                        showSuccess(
-                            "Audio Tour Saved",
-                            "Audio tour has been saved successfully."
-                        );
-                    }}
-                />
-            )}
-
-            
-
-            
-
-            {OpenAccessibilityFeaturePopup && business && (
-                <AccessibilityFeaturePopup
-                    businessId={business.id}
-                    setOpenAccessibilityFeaturePopup={setOpenAccessibilityFeaturePopup}
-                    initialTypeId={editFeatureTypeId || undefined}
-                    initialFeatureIds={editFeatureIds}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Accessibility Updated",
-                            "Accessibility features updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenPropertyImagePopup && business && (
-                <PropertyImagePopup
-                    businessId={business.id}
-                    setOpenPropertyImagePopup={setOpenPropertyImagePopup}
-                    onUpdated={async () => {
-                        await fetchAllData();
-                        showSuccess(
-                            "Images Updated",
-                            "Property images updated successfully."
-                        );
-                    }}
-                />
-            )}
-            {OpenEditPropertyImagePopup && business && (
-                <EditPropertyImagePopup
-                    businessImageId={SelectedImageId}
-                    setOpenEditPropertyImagePopup={setOpenEditPropertyImagePopup}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Images Updated",
-                            "Property images updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenCustonSectionPopup && business && (
-                <CustomSectionPopup
-                    businessId={business.id}
-                    setOpenCustonSectionPopup={setOpenCustonSectionPopup}
-                    onUpdated={async () => {
-                        await fetchAllData();
-                        showSuccess(
-                            "Custom Section Created",
-                            "Custom section Created successfully."
-                        );
-                    }}
-                />
-            )}
-            {OpenCustomMediaPopup && business && (
-                <CustomMediaModal
-                    businessId={business.id}
-                    setCustomMediaPopup={handleSetOpenCustomMediaPopup}
-                     activeCustomSectionId={activeCustomSectionId}
-                     media= {selectedMedia}
-                    onUpdated={async () => {
-                        await fetchAllData();
-                        showSuccess(
-                            "Custom Media Saved",
-                            "Custom Media has been saved successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenAccessibilityMediaPopup && business && (
-                <AccessibilityMediaPopup
-                    businessId={business.id}
-                    setOpenAccessibilityMediaPopup={setOpenAccessibilityMediaPopupState}
-                    media={selectedMedia}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Media Updated",
-                            "Accessibility media updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenAccessibilityResourcesPopup && business && (
-                <AccessibilityResourcesPopup
-                    businessId={business.id}
-                    setOpenAccessibilityResourcesPopup={
-                        setOpenAccessibilityResourcesPopupState
-                    }
-                    resource={selectedResource}
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Resources Updated",
-                            "Accessibility resources updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {OpenQuestionPopup && business && (
-                <QuestionPopup
-                    businessId={business.id}
-                    setOpenQuestionPopup={setOpenQuestionPopup}
-                    onUpdated={async () => {
-                        await fetchAllData();
-                        showSuccess("Question Added", "Question added successfully.");
-                    }}
-                />
-            )}
-
-            {OpenWriteReviewsPopup && business && (
-                <WriteReviewsPopup
-                    businessId={business.id}
-                    setOpenWriteReviewsPopup={setOpenWriteReviewsPopup}
-                    onUpdated={async () => {
-                        await fetchAllData();
-                        showSuccess("Review Added", "Review added successfully.");
-                    }}
-                />
-            )}
-
-            {OpenPartnerCertificationsPopup && business && (
-                <PartnerCertificationPopup
-                    businessId={business.id}
-                    setOpenPartnerCertificationsPopup={
-                        setOpenPartnerCertificationsPopup
-                    }
-                    onUpdated={async (updated) => {
-                        setBusiness(updated);
-                        await fetchAllData();
-                        showSuccess(
-                            "Partners Updated",
-                            "Partner certifications updated successfully."
-                        );
-                    }}
-                />
-            )}
-
-            {/* 🌟 Global Confirm Popup */}
-            {confirm.open && (
-                <div className="fixed inset-0 z-[6000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
-                        <h2 className="text-lg font-bold mb-2">{confirm.title}</h2>
-                        <p className="mb-6">{confirm.message}</p>
-
-                        <div className="flex gap-3 justify-center">
-                            <button
-                                className="px-5 py-2 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100 cursor-pointer"
-                                onClick={handleCloseConfirm}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                className="px-5 py-2 rounded-full bg-[#DD3820] text-white hover:bg-red-700 cursor-pointer"
-                                onClick={async () => {
-                                    if (confirm.onConfirm) {
-                                        await confirm.onConfirm();
-                                    } else {
-                                        handleCloseConfirm();
-                                    }
-                                }}
-                            >
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-
-            {/* 🌟 Global Success/Error Popup */}
-            {feedback.type && (
-                <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
-                        <div className="flex justify-center mb-4">
-                            <div
-                                className={`rounded-full p-3 ${feedback.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
-                                    }`}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-8 w-8 text-white"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
-                                >
-                                    {feedback.type === "success" ? (
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M5 13l4 4L19 7"
-                                        />
-                                    ) : (
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14"
-                                        />
-                                    )}
-                                </svg>
-                            </div>
-                        </div>
-                        <h2 className="text-lg font-bold mb-2">{feedback.title}</h2>
-                        <p className="mb-4">{feedback.message}</p>
-                        <button
-                            className={`px-4 py-2 rounded-lg cursor-pointer text-white ${feedback.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
-                                }`}
-                            onClick={handleCloseFeedback}
-                        >
-                            OK
-                        </button>
-                    </div>
-                </div>
-            )}
+          </div>
         </div>
+      )}
+
+      {feedback.type && (
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[350px] text-center p-6 sm:p-8 relative">
+            <div className="flex justify-center mb-4">
+              <div
+                className={`rounded-full p-3 ${feedback.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
+                  }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 sm:h-8 sm:w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  {feedback.type === "success" ? (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  ) : (
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14"
+                    />
+                  )}
+                </svg>
+              </div>
+            </div>
+            <h2 className="text-base sm:text-lg font-bold mb-2">{feedback.title}</h2>
+            <p className="text-sm sm:text-base mb-4">{feedback.message}</p>
+            <button
+              className={`w-full sm:w-auto px-4 py-2 rounded-lg cursor-pointer text-white ${feedback.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
+                }`}
+              onClick={handleCloseFeedback}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
     );
 }

@@ -74,6 +74,18 @@ export default function DashboardLayout({
   const cartRef = useRef<HTMLDivElement | null>(null);
   const notifRef = useRef<HTMLDivElement | null>(null);
 
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
 
 
   const token =
@@ -111,28 +123,28 @@ export default function DashboardLayout({
   };
 
   useEffect(() => {
-  const handleClickOutside = (e: MouseEvent) => {
-    const target = e.target as Node;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
 
-    // cart
-    if (cartOpen && cartRef.current && !cartRef.current.contains(target)) {
-      setCartOpen(false);
-    }
+      // cart
+      if (cartOpen && cartRef.current && !cartRef.current.contains(target)) {
+        setCartOpen(false);
+      }
 
-    // notifications (optional)
-    if (
-      notificationsOpen &&
-      notifRef.current &&
-      !notifRef.current.contains(target)
-    ) {
-      setNotificationsOpen(false);
-    }
-    
-  };
+      // notifications (optional)
+      if (
+        notificationsOpen &&
+        notifRef.current &&
+        !notifRef.current.contains(target)
+      ) {
+        setNotificationsOpen(false);
+      }
 
-  document.addEventListener("mousedown", handleClickOutside);
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-}, [cartOpen, notificationsOpen, ]);
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [cartOpen, notificationsOpen,]);
 
 
   // ✅ fetch businesses list to map id -> name/logo
@@ -163,39 +175,39 @@ export default function DashboardLayout({
 
   // ✅ fetch cart from backend
   const fetchCart = async () => {
-  try {
-    if (!loggedIn) {
-      setCartItems([]);
-      return;
+    try {
+      if (!loggedIn) {
+        setCartItems([]);
+        return;
+      }
+
+      setCartLoading(true);
+
+      const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Failed to load cart");
+
+      const data = await res.json();
+      const items: CartItem[] = Array.isArray(data) ? data : data?.data ?? [];
+
+      // ✅ ONLY pending items
+      const pendingItems = items.filter(
+        (item) => (item.status || "").toLowerCase() === "pending"
+      );
+
+      setCartItems(pendingItems);
+    } catch (e) {
+      console.error("fetchCart error", e);
+    } finally {
+      setCartLoading(false);
     }
-
-    setCartLoading(true);
-
-    const res = await fetch(`${API_BASE}business-claim-cart/my-cart`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) throw new Error("Failed to load cart");
-
-    const data = await res.json();
-    const items: CartItem[] = Array.isArray(data) ? data : data?.data ?? [];
-
-    // ✅ ONLY pending items
-    const pendingItems = items.filter(
-      (item) => (item.status || "").toLowerCase() === "pending"
-    );
-
-    setCartItems(pendingItems);
-  } catch (e) {
-    console.error("fetchCart error", e);
-  } finally {
-    setCartLoading(false);
-  }
-};
+  };
 
 
   // ✅ delete single item from backend
@@ -237,7 +249,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-    
+
 
     if (!token) {
       setError("Please log in to continue.");
@@ -247,7 +259,7 @@ export default function DashboardLayout({
     }
 
     if (isTokenExpired(token)) {
-      
+
       handleLogout();
       return;
     }
@@ -255,7 +267,7 @@ export default function DashboardLayout({
     fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/1`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
-      });
+    });
     // If user is already loaded from context, skip API call
     if (user) {
       setLoading(false);
@@ -271,7 +283,7 @@ export default function DashboardLayout({
     })
       .then((response) => {
         if (response.status === 401) {
-      
+
           handleLogout();
           return null;
         }
@@ -284,15 +296,15 @@ export default function DashboardLayout({
         sessionStorage.setItem("user", JSON.stringify(data));
 
         if (data.user_role === "Business") {
-          router.push("/dashboard/business-overview");
+          router.replace("/dashboard/business-overview");
           setLoading(false);
           return;
         } else if (data.user_role === "Contributor") {
-          router.push("/dashboard/contributor-overview");
+          router.replace("/dashboard/contributor-overview");
           setLoading(false);
           return;
         } else if (data.user_role === "User") {
-          router.push("/dashboard/saved");
+          router.replace("/dashboard/saved");
           setLoading(false);
           return;
         }
@@ -309,7 +321,7 @@ export default function DashboardLayout({
     const tokenCheckInterval = setInterval(() => {
       const currentToken = localStorage.getItem("access_token");
       if (!currentToken || isTokenExpired(currentToken)) {
-        
+
         clearInterval(tokenCheckInterval);
         handleLogout();
       }
@@ -430,21 +442,31 @@ export default function DashboardLayout({
     <div>
       {user?.user_role == "Admin" ? (
         <div className="w-full border-b border-gray-200 bg-white">
-          <div className="flex items-center justify-between px-4 lg:px-6 py-1">
-            <div className="flex items-center gap-[85px]">
-              <Link href="/" className="w-[180px]">
-                <img src="/assets/images/logo.png" alt="AbleVu Logo" className="w-[180px]" />
+          <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-2 sm:py-1">
+            <div className="flex items-center gap-3 sm:gap-8 md:gap-12 lg:gap-[85px]">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <Link href="/" className="w-[120px] sm:w-[150px] lg:w-[180px] shrink-0">
+                <img src="/assets/images/logo.png" alt="AbleVu Logo" className="w-full" />
               </Link>
 
-              <div className="flex items-center gap-5 text-gray-700">
-                <span className="text-2xl">👋</span>
-                <span className="font-medium text-xl">
-                  Welcome Back! <span>{user.first_name} {user.last_name} ({user.user_role})</span>
+              <div className="hidden md:flex items-center gap-2 lg:gap-5 text-gray-700">
+                <span className="text-xl lg:text-2xl">👋</span>
+                <span className="font-medium text-sm lg:text-xl">
+                  Welcome Back! <span className="hidden xl:inline">{user.first_name} {user.last_name} ({user.user_role})</span>
+                  <span className="xl:hidden">{user.first_name}</span>
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3 relative">
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 relative">
               {/* Notifications */}
               <div className="relative" ref={notifRef}>
                 <button
@@ -453,11 +475,11 @@ export default function DashboardLayout({
                     setCartOpen(false);
                     if (!notificationsOpen) fetchNotifications();
                   }}
-                  className="flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+                  className="flex items-center justify-center rounded-full p-1.5 sm:p-2 hover:bg-gray-100 transition"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
+                    className="h-5 w-5 sm:h-6 sm:w-6"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -474,35 +496,34 @@ export default function DashboardLayout({
                 </button>
 
                 {notificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-96 bg-white border rounded-lg shadow-lg z-50">
-                    <ul className="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white border rounded-lg shadow-lg z-50">
+                    <ul className="divide-y divide-gray-200 max-h-[60vh] sm:max-h-96 overflow-y-auto">
                       {notifications.length === 0 && (
-                       <li className="flex items-center justify-center px-4 py-12">
-                           <p className="text-gray-500 text-m">No new notifications</p>
-                           
+                        <li className="flex items-center justify-center px-4 py-8 sm:py-12">
+                          <p className="text-gray-500 text-sm sm:text-m">No new notifications</p>
                         </li>
                       )}
 
                       {notifications.map((item) => (
                         <li
                           key={item.id}
-                           className="flex justify-between items-center px-4 py-4 hover:bg-gray-100 cursor-pointer"
+                          className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 hover:bg-gray-100 cursor-pointer"
                           onClick={() => handleNotificationClick(item)}
                         >
                           <div className="w-full pr-2">
-                            <p className="text-sm font-medium">{item.content}</p>
+                            <p className="text-xs sm:text-sm font-medium">{item.content}</p>
                           </div>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               markAsRead(item.id);
                             }}
-                            className="hover:opacity-80"
+                            className="hover:opacity-80 shrink-0"
                           >
                             <img
                               src="https://www.svgrepo.com/show/497079/eye-slash.svg"
                               alt="Mark as read"
-                              className="w-5 h-5"
+                              className="w-4 h-4 sm:w-5 sm:h-5"
                             />
                           </button>
                         </li>
@@ -524,49 +545,49 @@ export default function DashboardLayout({
                       await fetchCart();
                     }
                   }}
-                  className="relative flex items-center justify-center rounded-full p-2 hover:bg-gray-100 transition"
+                  className="relative flex items-center justify-center rounded-full p-1.5 sm:p-2 hover:bg-gray-100 transition"
                   aria-label="Cart"
                 >
-                  <ShoppingCart className="h-6 w-6" />
+                  <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
                   {cartItems.length > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-2 py-[2px] rounded-full shadow">
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 sm:px-2 py-[2px] rounded-full shadow">
                       {cartItems.length}
                     </span>
                   )}
                 </button>
 
                 {cartOpen && (
-                  <div className="absolute right-0 mt-2 w-96 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
                     {/* Header */}
-                    <div className="px-5 py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-white">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="font-bold text-base text-gray-900">Cart</p>
-                          <p className="text-xs text-gray-500">
+                          <p className="font-bold text-sm sm:text-base text-gray-900">Cart</p>
+                          <p className="text-[11px] sm:text-xs text-gray-500">
                             {cartItems.length} item{cartItems.length > 1 ? "s" : ""} in your cart
                           </p>
                         </div>
 
                         <div className="text-right">
-                          <p className="text-[11px] text-gray-500">Total</p>
-                          <p className="font-extrabold text-gray-900">{formatUSD(cartTotal)}</p>
+                          <p className="text-[10px] sm:text-[11px] text-gray-500">Total</p>
+                          <p className="font-extrabold text-sm sm:text-base text-gray-900">{formatUSD(cartTotal)}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Body */}
                     {cartLoading ? (
-                      <div className="px-6 py-10 text-center text-gray-600">Loading cart...</div>
+                      <div className="px-4 sm:px-6 py-8 sm:py-10 text-center text-gray-600 text-sm">Loading cart...</div>
                     ) : cartItems.length === 0 ? (
-                      <div className="px-6 py-10 text-center">
-                        <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
-                          <ShoppingCart className="h-6 w-6 text-gray-500" />
+                      <div className="px-4 sm:px-6 py-8 sm:py-10 text-center">
+                        <div className="mx-auto mb-3 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
                         </div>
-                        <p className="text-sm font-semibold text-gray-800">Your cart is empty</p>
-                        <p className="text-xs text-gray-500 mt-1">Add items to see them here.</p>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-800">Your cart is empty</p>
+                        <p className="text-[11px] sm:text-xs text-gray-500 mt-1">Add items to see them here.</p>
                       </div>
                     ) : (
-                      <ul className="max-h-96 overflow-y-auto">
+                      <ul className="max-h-[50vh] sm:max-h-96 overflow-y-auto">
                         {cartItems.map((item) => {
                           const biz = bizMap[item.business_id];
                           const businessName =
@@ -581,12 +602,12 @@ export default function DashboardLayout({
                           return (
                             <li
                               key={item.id}
-                              className="px-5 py-4 border-b last:border-b-0 hover:bg-gray-50 transition"
+                              className="px-3 sm:px-5 py-3 sm:py-4 border-b last:border-b-0 hover:bg-gray-50 transition"
                             >
-                              <div className="flex items-start gap-4">
+                              <div className="flex items-start gap-3 sm:gap-4">
                                 <img
                                   src={logo}
-                                  className="h-14 w-14 rounded-xl object-cover shrink-0"
+                                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl object-cover shrink-0"
                                   alt={businessName}
                                   onError={(e) => {
                                     (e.target as HTMLImageElement).src =
@@ -594,18 +615,18 @@ export default function DashboardLayout({
                                   }}
                                 />
 
-                                <div className="flex-1">
-                                  <p className="text-sm font-bold text-gray-900 leading-5">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-bold text-gray-900 leading-5 truncate">
                                     {businessName}
                                   </p>
 
                                   {/* ✅ status bigger */}
-                                  <p className="mt-1 text-sm font-semibold text-gray-700">
+                                  <p className="mt-1 text-xs sm:text-sm font-semibold text-gray-700">
                                     Status:{" "}
                                     <span className="capitalize">{item.status}</span>
                                   </p>
 
-                                  <p className="text-sm font-extrabold text-gray-900 mt-2">
+                                  <p className="text-xs sm:text-sm font-extrabold text-gray-900 mt-1 sm:mt-2">
                                     {formatUSD(Number(amountNum || 0))}
                                   </p>
                                 </div>
@@ -615,11 +636,11 @@ export default function DashboardLayout({
                                     e.stopPropagation();
                                     removeFromCart(item.id);
                                   }}
-                                  className="p-2 rounded-xl hover:bg-red-50 text-red-600 transition"
+                                  className="p-1.5 sm:p-2 rounded-xl hover:bg-red-50 text-red-600 transition shrink-0"
                                   title="Remove"
                                   aria-label="Remove item"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 </button>
                               </div>
                             </li>
@@ -630,18 +651,18 @@ export default function DashboardLayout({
 
                     {/* Footer */}
                     {cartItems.length > 0 && (
-                      <div className="p-4 border-t bg-white">
-                        <div className="flex gap-3">
+                      <div className="p-3 sm:p-4 border-t bg-white">
+                        <div className="flex gap-2 sm:gap-3">
                           <button
                             onClick={() => (window.location.href = "/checkout")}
-                            className="w-full rounded-xl bg-[#0519ce] text-white py-2.5 text-sm font-bold hover:opacity-90 shadow"
+                            className="w-full rounded-xl bg-[#0519ce] text-white py-2 sm:py-2.5 text-xs sm:text-sm font-bold hover:opacity-90 shadow"
                           >
                             View Cart
                           </button>
 
                           <button
                             onClick={clearCart}
-                            className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold hover:bg-gray-50"
+                            className="rounded-xl border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold hover:bg-gray-50 whitespace-nowrap"
                           >
                             Clear
                           </button>
@@ -655,36 +676,308 @@ export default function DashboardLayout({
               {/* Logout */}
               <button
                 type="button"
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer transition"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer transition text-xs sm:text-sm"
                 onClick={handleLogout}
               >
-                Logout
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </span>
               </button>
             </div>
           </div>
         </div>
       ) : (
-        <Header />
-      )}
+        <div className="w-full border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-2 sm:py-1">
+            <div className="flex items-center gap-3 sm:gap-8 md:gap-12 lg:gap-[85px]">
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="lg:hidden flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition"
+                aria-label="Toggle menu"
+              >
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <Link href="/" className="w-[120px] sm:w-[150px] lg:w-[180px] shrink-0">
+                <img src="/assets/images/logo.png" alt="AbleVu Logo" className="w-full" />
+              </Link>
 
+              
+            </div>
+
+            <div className="flex items-center space-x-1 sm:space-x-2 lg:space-x-3 relative">
+              {/* Notifications */}
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => {
+                    setNotificationsOpen(!notificationsOpen);
+                    setCartOpen(false);
+                    if (!notificationsOpen) fetchNotifications();
+                  }}
+                  className="flex items-center justify-center rounded-full p-1.5 sm:p-2 hover:bg-gray-100 transition"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 sm:h-6 sm:w-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M15 17h5l-1.405-1.405C18.21 14.79 18 13.918 18 13V9a6 6 0 10-12 0v4c0 .918-.21 1.79-.595 2.595L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-[1px] rounded-full">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+
+                {notificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white border rounded-lg shadow-lg z-50">
+                    <ul className="divide-y divide-gray-200 max-h-[60vh] sm:max-h-96 overflow-y-auto">
+                      {notifications.length === 0 && (
+                        <li className="flex items-center justify-center px-4 py-8 sm:py-12">
+                          <p className="text-gray-500 text-sm sm:text-m">No new notifications</p>
+                        </li>
+                      )}
+
+                      {notifications.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex justify-between items-center px-3 sm:px-4 py-3 sm:py-4 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleNotificationClick(item)}
+                        >
+                          <div className="w-full pr-2">
+                            <p className="text-xs sm:text-sm font-medium">{item.content}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(item.id);
+                            }}
+                            className="hover:opacity-80 shrink-0"
+                          >
+                            <img
+                              src="https://www.svgrepo.com/show/497079/eye-slash.svg"
+                              alt="Mark as read"
+                              className="w-4 h-4 sm:w-5 sm:h-5"
+                            />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Cart Dropdown */}
+              <div className="relative" ref={cartRef}>
+                <button
+                  onClick={async () => {
+                    setCartOpen((prev) => !prev);
+                    setNotificationsOpen(false);
+
+                    // ✅ open par fetch latest cart
+                    if (!cartOpen) {
+                      await fetchCart();
+                    }
+                  }}
+                  className="relative flex items-center justify-center rounded-full p-1.5 sm:p-2 hover:bg-gray-100 transition"
+                  aria-label="Cart"
+                >
+                  <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6" />
+                  {cartItems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 sm:px-2 py-[2px] rounded-full shadow">
+                      {cartItems.length}
+                    </span>
+                  )}
+                </button>
+
+                {cartOpen && (
+                  <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                    {/* Header */}
+                    <div className="px-4 sm:px-5 py-3 sm:py-4 border-b bg-gradient-to-r from-gray-50 to-white">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-bold text-sm sm:text-base text-gray-900">Cart</p>
+                          <p className="text-[11px] sm:text-xs text-gray-500">
+                            {cartItems.length} item{cartItems.length > 1 ? "s" : ""} in your cart
+                          </p>
+                        </div>
+
+                        <div className="text-right">
+                          <p className="text-[10px] sm:text-[11px] text-gray-500">Total</p>
+                          <p className="font-extrabold text-sm sm:text-base text-gray-900">{formatUSD(cartTotal)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    {cartLoading ? (
+                      <div className="px-4 sm:px-6 py-8 sm:py-10 text-center text-gray-600 text-sm">Loading cart...</div>
+                    ) : cartItems.length === 0 ? (
+                      <div className="px-4 sm:px-6 py-8 sm:py-10 text-center">
+                        <div className="mx-auto mb-3 h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                          <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-gray-800">Your cart is empty</p>
+                        <p className="text-[11px] sm:text-xs text-gray-500 mt-1">Add items to see them here.</p>
+                      </div>
+                    ) : (
+                      <ul className="max-h-[50vh] sm:max-h-96 overflow-y-auto">
+                        {cartItems.map((item) => {
+                          const biz = bizMap[item.business_id];
+                          const businessName =
+                            biz?.name ?? `Business (${item.business_id?.slice(0, 6)}...)`;
+                          const logo = biz?.logo_url || "/assets/images/b-img.png";
+
+                          const amountNum =
+                            typeof item.amount === "string"
+                              ? parseFloat(item.amount)
+                              : item.amount;
+
+                          return (
+                            <li
+                              key={item.id}
+                              className="px-3 sm:px-5 py-3 sm:py-4 border-b last:border-b-0 hover:bg-gray-50 transition"
+                            >
+                              <div className="flex items-start gap-3 sm:gap-4">
+                                <img
+                                  src={logo}
+                                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl object-cover shrink-0"
+                                  alt={businessName}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src =
+                                      "/assets/images/b-img.png";
+                                  }}
+                                />
+
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs sm:text-sm font-bold text-gray-900 leading-5 truncate">
+                                    {businessName}
+                                  </p>
+
+                                  {/* ✅ status bigger */}
+                                  <p className="mt-1 text-xs sm:text-sm font-semibold text-gray-700">
+                                    Status:{" "}
+                                    <span className="capitalize">{item.status}</span>
+                                  </p>
+
+                                  <p className="text-xs sm:text-sm font-extrabold text-gray-900 mt-1 sm:mt-2">
+                                    {formatUSD(Number(amountNum || 0))}
+                                  </p>
+                                </div>
+
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFromCart(item.id);
+                                  }}
+                                  className="p-1.5 sm:p-2 rounded-xl hover:bg-red-50 text-red-600 transition shrink-0"
+                                  title="Remove"
+                                  aria-label="Remove item"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+
+                    {/* Footer */}
+                    {cartItems.length > 0 && (
+                      <div className="p-3 sm:p-4 border-t bg-white">
+                        <div className="flex gap-2 sm:gap-3">
+                          <button
+                            onClick={() => (window.location.href = "/checkout")}
+                            className="w-full rounded-xl bg-[#0519ce] text-white py-2 sm:py-2.5 text-xs sm:text-sm font-bold hover:opacity-90 shadow"
+                          >
+                            View Cart
+                          </button>
+
+                          <button
+                            onClick={clearCart}
+                            className="rounded-xl border border-gray-200 px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold hover:bg-gray-50 whitespace-nowrap"
+                          >
+                            Clear
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Logout */}
+              <button
+                type="button"
+                className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 lg:px-4 py-1.5 sm:py-2 border border-gray-300 text-gray-700 hover:bg-gray-100 rounded-full cursor-pointer transition text-xs sm:text-sm"
+                onClick={handleLogout}
+              >
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-[#00000059] z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
       <div className="flex">
-        <div className=" w-[300px] pt-5  bg-white border-r border-gray-200 flex flex-col justify-between">
+        <div className={`
+    fixed lg:sticky 
+    top-0 left-0 
+    h-screen
+    w-[240px] sm:w-[260px] md:w-[280px] lg:w-[300px]
+    pt-3 sm:pt-4 lg:pt-5 
+    bg-white border-r border-gray-200
+    flex flex-col justify-between
+    transition-transform duration-300 ease-in-out
+    z-50 lg:z-auto
+    overflow-y-auto
+    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+  `}>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden absolute top-3 right-3 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition z-10"
+            aria-label="Close menu"
+          >
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
           {/* Top Navigation */}
-          <div className="p-4 mb-15 sticky top-0 ">
-            <ul className="space-y-4 font-medium">
+          <div className="px-3 sm:px-4 mb-4 sticky top-0">
+            <ul className="space-y-2 sm:space-y-3 lg:space-y-4 font-medium">
               {user?.user_role === "Admin" ? (
                 <>
                   <Link
                     href="/dashboard"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${pathname === "/dashboard"
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${pathname === "/dashboard"
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}
                   >
-
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -696,24 +989,22 @@ export default function DashboardLayout({
                         d="M3 9.75L12 3l9 6.75V21a.75.75 0 01-.75.75h-5.25V14.25h-6v7.5H3.75A.75.75 0 013 21V9.75z"
                       />
                     </svg>
-
-                    Overview
-
+                    <span className="truncate">Overview</span>
                   </Link>
 
                   <button
                     onClick={() => setIsSetupOpen(!isSetupOpen)}
-                    className="w-full flex items-center justify-between gap-3 px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
+                    className="w-full flex items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg text-gray-700 hover:bg-gray-100 text-sm sm:text-base"
                   >
-                    <div className="flex items-center gap-3">
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z" />
                       </svg>
-                      <span className="font-semibold">Setup</span>
+                      <span className="font-semibold truncate">Setup</span>
                     </div>
                     <svg
-                      className={`w-4 h-4 transition-transform ${isSetupOpen ? 'rotate-180' : ''}`}
+                      className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform shrink-0 ${isSetupOpen ? 'rotate-180' : ''}`}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -724,151 +1015,127 @@ export default function DashboardLayout({
                   </button>
 
                   {isSetupOpen && (
-                    <div className="pl-4 space-y-1">
+                    <div className="pl-3 sm:pl-4 space-y-1">
                       <Link href="/dashboard/business-type"
-                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/business-type")
-                          ? "bg-blue-700 text-white font-semibold"
-                          : "text-gray-700 hover:bg-gray-100"
+                        className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/business-type")
+                            ? "bg-blue-700 text-white font-semibold"
+                            : "text-gray-700 hover:bg-gray-100"
                           }`}
                       >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                           <polyline points="9 22 9 12 15 12 15 22" />
                         </svg>
-                        Business Type
+                        <span className="truncate">Business Type</span>
                       </Link>
 
                       <Link href="/dashboard/accessibility-feature-type"
-                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/accessibility-feature-type")
-                          ? "bg-blue-700 text-white font-semibold"
-                          : "text-gray-700 hover:bg-gray-100"
+                        className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/accessibility-feature-type")
+                            ? "bg-blue-700 text-white font-semibold"
+                            : "text-gray-700 hover:bg-gray-100"
                           }`}>
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                           <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c4.418 0 8 3.582 8 8s-3.582 8-8 8-8-3.582-8-8 3.582-8 8-8zm0 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-4 4a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2h-1.5l1.2 4.8a1 1 0 0 1-1.94.485L12 14.236l-.765 3.049a1 1 0 0 1-1.94-.485L10.5 12H9a1 1 0 0 1-1-1z" />
                         </svg>
-                        Features type
+                        <span className="truncate">Features type</span>
                       </Link>
 
                       <Link href="/dashboard/review-type"
-                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/review-type")
-                          ? "bg-blue-700 text-white font-semibold"
-                          : "text-gray-700 hover:bg-gray-100"
+                        className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/review-type")
+                            ? "bg-blue-700 text-white font-semibold"
+                            : "text-gray-700 hover:bg-gray-100"
                           }`}>
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-7 9H5V9h8v2zm4-4H5V5h12v2z" />
                           <path d="M19 14.5l-1.41-1.41-2.09 2.09-1.5-1.5-1.41 1.41 2.91 2.91z" />
                         </svg>
-                        Review Type
+                        <span className="truncate">Review Type</span>
                       </Link>
 
                       <Link href="/dashboard/feedback-type"
-                        className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/feedback-type")
-                          ? "bg-blue-700 text-white font-semibold"
-                          : "text-gray-700 hover:bg-gray-100"
+                        className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/feedback-type")
+                            ? "bg-blue-700 text-white font-semibold"
+                            : "text-gray-700 hover:bg-gray-100"
                           }`}>
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
-                        Feedback Type
+                        <span className="truncate">Feedback Type</span>
                       </Link>
                     </div>
                   )}
+
                   <Link href="/dashboard/accessibility-features"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/accessibility-features")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/accessibility-features")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-
-                    {/* <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 6v12M6 12h12" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg> */}
-
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
                       <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 2c4.418 0 8 3.582 8 8s-3.582 8-8 8-8-3.582-8-8 3.582-8 8-8zm0 3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-4 4a1 1 0 0 1 1-1h6a1 1 0 1 1 0 2h-1.5l1.2 4.8a1 1 0 0 1-1.94.485L12 14.236l-.765 3.049a1 1 0 0 1-1.94-.485L10.5 12H9a1 1 0 0 1-1-1z" />
                     </svg>
-
-
-                    Accessibility Features
-
+                    <span className="truncate">Accessibility Features</span>
                   </Link>
 
-
-                  <Link href="/dashboard/businesses" className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/businesses")
-
-                    ? "bg-blue-700 text-white font-semibold"
-                    : "text-gray-700 hover:bg-gray-100"
-                    }`}>
-
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <Link href="/dashboard/businesses"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/businesses")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
+                      }`}>
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="2" y="7" width="20" height="14" rx="2" />
                       <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                     </svg>
-
-                    Businesses
-
+                    <span className="truncate">Businesses</span>
                   </Link>
 
-                  {/* <!-- Accessible Cities --> */}
                   <Link href="/dashboard/accessible-cities"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/accessible-cities")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/accessible-cities")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-                    {/* <!-- Thumbs Up Icon --> */}
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                       <circle cx="12" cy="10" r="3" />
                     </svg>
-                    Accessible Cities
-
+                    <span className="truncate">Accessible Cities</span>
                   </Link>
 
-
                   <Link href="/dashboard/partners"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/partners")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
-                      }`} >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/partners")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
+                      }`}>
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
                       <circle cx="9" cy="7" r="4" />
                       <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
-                    Partners
-
+                    <span className="truncate">Partners</span>
                   </Link>
 
-
-                  {/* <!-- Coupon Codes --> */}
                   <Link href="/dashboard/couponcodes"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/couponcodes")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/couponcodes")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
                       <line x1="7" y1="7" x2="7.01" y2="7" />
                     </svg>
-
-
-                    Coupon Codes
-
+                    <span className="truncate">Coupon Codes</span>
                   </Link>
-                    <Link href="/dashboard/reviews"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
-                      }`}>
 
+                  <Link href="/dashboard/reviews"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/reviews")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
+                      }`}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 512 512"
                       width="32"
                       height="32"
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                     >
                       <path
                         d="M128 224H64a32 32 0 00-32 32v192a32 32 0 0032 32h64a32 32 0 0032-32V256a32 32 0 00-32-32z"
@@ -885,52 +1152,39 @@ export default function DashboardLayout({
                         strokeLinejoin="round"
                       />
                     </svg>
-
-                    Reviews
+                    <span className="truncate">Reviews</span>
                   </Link>
-
-
-                  {/* <!-- Feedback --> */}
 
                   <Link href="/dashboard/feedback"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/feedback")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/feedback")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-                    {/* <!-- User Icon --> */}
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                     </svg>
-
-                    Feedback
-
+                    <span className="truncate">Feedback</span>
                   </Link>
 
-
-
                   <Link href="/dashboard/users"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/users")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/users")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                       <circle cx="9" cy="7" r="4" />
                       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                     </svg>
-
-                    Users
+                    <span className="truncate">Users</span>
                   </Link>
 
-
                   <Link href="/dashboard/profile"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/profile")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/profile")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-                    {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 512 512"
@@ -941,39 +1195,31 @@ export default function DashboardLayout({
                       strokeWidth={24}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                     >
-                      {/* Outer Circle */}
                       <circle cx="256" cy="256" r="208" />
-                      {/* Head */}
                       <circle cx="256" cy="176" r="72" />
-                      {/* Shoulders/Upper Body */}
                       <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
-
-                    Profile
+                    <span className="truncate">Profile</span>
                   </Link>
                 </>
               ) : user?.user_role === "Business" ? (
                 <>
                   <Link href="/dashboard/business-overview"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/business-overview")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/business-overview")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-
-                    <img src="/assets/images/overview.svg" className='w-5 h-5' alt="" />
-
-                    Overview
-
+                    <img src="/assets/images/overview.svg" className='w-4 h-4 sm:w-5 sm:h-5 shrink-0' alt="" />
+                    <span className="truncate">Overview</span>
                   </Link>
 
                   <Link href="/dashboard/subscriptions"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/subscriptions")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/subscriptions")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 512 512"
@@ -984,33 +1230,26 @@ export default function DashboardLayout({
                       strokeWidth={24}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                     >
-                      {/* Outer Circle */}
                       <circle cx="256" cy="256" r="208" />
-                      {/* Head */}
                       <circle cx="256" cy="176" r="72" />
-                      {/* Shoulders/Upper Body */}
                       <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
-
-                    Subscriptions
+                    <span className="truncate">Subscriptions</span>
                   </Link>
 
-
-
                   <Link href="/dashboard/questions"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/questions")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/questions")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 512 512"
                       width="32"
                       height="32"
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                     >
                       <path
                         d="M256 64C150 64 64 150 64 256s86 192 192 192 192-86 192-192S362 64 256 64z"
@@ -1029,25 +1268,20 @@ export default function DashboardLayout({
                       />
                       <circle cx="256" cy="336" r="16" fill="currentColor" />
                     </svg>
-
-                    Questions
+                    <span className="truncate">Questions</span>
                   </Link>
 
-
-
-
                   <Link href="/dashboard/reviews"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/reviews")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/reviews")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 512 512"
                       width="32"
                       height="32"
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                     >
                       <path
                         d="M128 224H64a32 32 0 00-32 32v192a32 32 0 0032 32h64a32 32 0 0032-32V256a32 32 0 00-32-32z"
@@ -1064,16 +1298,14 @@ export default function DashboardLayout({
                         strokeLinejoin="round"
                       />
                     </svg>
-
-                    Reviews
+                    <span className="truncate">Reviews</span>
                   </Link>
 
                   <Link href="/dashboard/profile"
-                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-150 ${isActive("/dashboard/profile")
-                      ? "bg-blue-700 text-white font-semibold"
-                      : "text-gray-700 hover:bg-gray-100"
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 rounded-lg transition-all duration-150 text-sm sm:text-base ${isActive("/dashboard/profile")
+                        ? "bg-blue-700 text-white font-semibold"
+                        : "text-gray-700 hover:bg-gray-100"
                       }`}>
-                    {/* <!-- User Icon --> */}
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 512 512"
@@ -1084,19 +1316,14 @@ export default function DashboardLayout({
                       strokeWidth={24}
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="w-5 h-5"
+                      className="w-4 h-4 sm:w-5 sm:h-5 shrink-0"
                     >
-                      {/* Outer Circle */}
                       <circle cx="256" cy="256" r="208" />
-                      {/* Head */}
                       <circle cx="256" cy="176" r="72" />
-                      {/* Shoulders/Upper Body */}
                       <path d="M128 400c0-88 256-88 256 0" />
                     </svg>
-
-                    Profile
+                    <span className="truncate">Profile</span>
                   </Link>
-
                 </>
               ) : user?.user_role == "Contributor" ? (
                 <>
@@ -1439,7 +1666,7 @@ export default function DashboardLayout({
                     onError={(e) => {
                       const target = e.currentTarget as HTMLImageElement;
                       if (target.src !== "/assets/images/profile.png") {
-                        
+
                         target.src = "/assets/images/profile.png";
                       }
                     }}
