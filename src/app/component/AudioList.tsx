@@ -43,37 +43,37 @@ const AudioList: React.FC<AudioListProps> = ({
       default: return 'Unknown media error';
     }
   };
-      // Filter out tours without audio files
-      useEffect(() => {
-       const toursWithAudio = (items ?? []).filter(t => t.link_url);
-      setAudioTours(toursWithAudio);
-        const validIds = new Set(toursWithAudio.map(t => t.id));
-        Object.keys(audioRefs.current).forEach(id => {
-    if (!validIds.has(id)) {
-      audioRefs.current[id].pause();
-      audioRefs.current[id].src = '';
-      delete audioRefs.current[id];
-    }
-  });
 
-      // Initialize progress and muted state
-      const initialProgress: Record<string, number> = {};
-      const initialMuted: Record<string, boolean> = {};
-      toursWithAudio.forEach(tour => {
-        initialProgress[tour.id] = 0;
-        initialMuted[tour.id] = false;
-      });
-      setProgress(initialProgress);
-      setMuted(initialMuted);
-      }, [items]);
+  // Filter out tours without audio files
+  useEffect(() => {
+    const toursWithAudio = (items ?? []).filter(t => t.link_url);
+    setAudioTours(toursWithAudio);
+    const validIds = new Set(toursWithAudio.map(t => t.id));
+    Object.keys(audioRefs.current).forEach(id => {
+      if (!validIds.has(id)) {
+        audioRefs.current[id].pause();
+        audioRefs.current[id].src = '';
+        delete audioRefs.current[id];
+      }
+    });
+
+    // Initialize progress and muted state
+    const initialProgress: Record<string, number> = {};
+    const initialMuted: Record<string, boolean> = {};
+    toursWithAudio.forEach(tour => {
+      initialProgress[tour.id] = 0;
+      initialMuted[tour.id] = false;
+    });
+    setProgress(initialProgress);
+    setMuted(initialMuted);
+  }, [items]);
 
   // Initialize audio element for a tour
   const getAudioElement = (tour: AudioTour): HTMLAudioElement => {
     if (!audioRefs.current[tour.id]) {
       const audio = new Audio(tour.link_url!);
-      audio.volume = 0.7; // Set default volume to 70%
+      audio.volume = 0.7;
 
-      // Update progress as audio plays
       audio.ontimeupdate = () => {
         if (audio.duration) {
           const progressPercent = (audio.currentTime / audio.duration) * 100;
@@ -81,18 +81,15 @@ const AudioList: React.FC<AudioListProps> = ({
         }
       };
 
-      // Store duration when metadata loads
       audio.onloadedmetadata = () => {
         setDurations(prev => ({ ...prev, [tour.id]: audio.duration }));
       };
 
-      // Handle audio end
       audio.onended = () => {
         setPlayingId(null);
         setProgress(prev => ({ ...prev, [tour.id]: 0 }));
       };
 
-      // Handle errors
       audio.onerror = (e) => {
         const errorMsg = audio.error 
           ? `Error code ${audio.error.code}: ${getMediaErrorMessage(audio.error.code)}`
@@ -112,15 +109,12 @@ const AudioList: React.FC<AudioListProps> = ({
       audio.pause();
       setPlayingId(null);
     } else {
-      // Stop any currently playing audio and wait for it to fully pause
       if (playingId && audioRefs.current[playingId]) {
         const previousAudio = audioRefs.current[playingId];
         previousAudio.pause();
-        // Reset the previous audio to prevent lingering play promises
         previousAudio.currentTime = previousAudio.currentTime;
       }
 
-      // Play new audio and handle the promise properly
       try {
         setPlayingId(tour.id);
         const playPromise = audio.play();
@@ -128,7 +122,6 @@ const AudioList: React.FC<AudioListProps> = ({
           await playPromise;
         }
       } catch (err) {
-        // Ignore AbortError which happens when play is interrupted
         if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Error playing audio:', err);
         }
@@ -137,7 +130,6 @@ const AudioList: React.FC<AudioListProps> = ({
     }
   };
 
-  // Handle seeking through audio
   const handleProgressChange = (id: string, newProgress: number) => {
     const audio = audioRefs.current[id];
     if (audio && audio.duration) {
@@ -147,12 +139,8 @@ const AudioList: React.FC<AudioListProps> = ({
     }
   };
 
-  // Toggle mute/unmute
   const handleMuteToggle = (tour: AudioTour) => {
-    // Initialize audio element if it doesn't exist yet
     const audio = getAudioElement(tour);
-    
-    // Toggle mute state
     const newMutedState = !audio.muted;
     audio.muted = newMutedState;
     setMuted(prev => ({ ...prev, [tour.id]: newMutedState }));
@@ -167,7 +155,6 @@ const AudioList: React.FC<AudioListProps> = ({
     if (!deleteTargetId) return;
 
     try {
-      // Stop and cleanup audio if playing
       if (audioRefs.current[deleteTargetId]) {
         audioRefs.current[deleteTargetId].pause();
         audioRefs.current[deleteTargetId].src = '';
@@ -178,7 +165,6 @@ const AudioList: React.FC<AudioListProps> = ({
         setPlayingId(null);
       }
 
-      // Remove from state
       setAudioTours(prev => prev.filter(tour => tour.id !== deleteTargetId));
       onAudioDeleted?.(deleteTargetId);
 
@@ -197,7 +183,6 @@ const AudioList: React.FC<AudioListProps> = ({
     }
   };
 
-  // Format time in MM:SS
   const formatTime = (seconds: number): string => {
     if (!seconds || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
@@ -205,7 +190,6 @@ const AudioList: React.FC<AudioListProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Cleanup audio elements on unmount
   useEffect(() => {
     return () => {
       Object.values(audioRefs.current).forEach(audio => {
@@ -218,18 +202,18 @@ const AudioList: React.FC<AudioListProps> = ({
   if (audioTours.length === 0) {
     return (
       <div className="audios border border-dotted p-10 rounded-xl border-[#e5e5e7] text-center flex flex-col justify-center items-center">
-        <img src="/assets/images/audio.avif" alt="" />
-        <p className="mt-4 font-medium text-[#6d6d6d]">
-          No Audio Tour to show
-        </p>
-      </div>
+          <img src="/assets/images/audio.avif" alt="" />
+          <p className="mt-4 font-medium text-[#6d6d6d]">
+            No Audio Tour to show
+          </p>
+        </div>
     );
   }
 
   return (
     <>
-      <div className="max-w-6xl mx-auto">
-        <div className="space-y-4">
+      <div className="w-full max-w-6xl mx-auto ">
+        <div className="space-y-3 sm:space-y-4">
           {audioTours.map((tour) => {
             const currentProgress = progress[tour.id] || 0;
             const duration = durations[tour.id] || 0;
@@ -239,81 +223,155 @@ const AudioList: React.FC<AudioListProps> = ({
             return (
               <div
                 key={tour.id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center gap-4"
+                className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6"
               >
-                {/* Emoji Icon */}
-                <button className="text-gray-400 hover:text-gray-600 transition-colors">
-                  <Smile className="w-6 h-6" />
-                </button>
+                {/* Mobile Layout */}
+                <div className="flex flex-col gap-4 md:hidden">
+                  {/* Top row: Icons and Name */}
+                  <div className="flex items-center gap-3">
+                    <button className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
+                      <Smile className="w-5 h-5" />
+                    </button>
 
-                {/* Delete Icon */}
-                <button
-                  onClick={() => handleDelete(tour.id)}
-                  className="text-red-500 hover:text-red-600 transition-colors"
-                  title="Delete audio tour"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                    <button
+                      onClick={() => handleDelete(tour.id)}
+                      className="text-red-500 hover:text-red-600 transition-colors flex-shrink-0"
+                      title="Delete audio tour"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
 
-                {/* Audio Name */}
-                <div className="flex-1">
-                  <div className="text-gray-900 font-medium">{tour.name}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {new Date(tour.created_at).toLocaleDateString()}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-gray-900 font-medium truncate">{tour.name}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {new Date(tour.created_at).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Controls row */}
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => handlePlayPause(tour)}
+                      className={`rounded-full p-3 transition-colors flex-shrink-0 ${
+                        playingId === tour.id
+                          ? 'bg-[#0519CE] hover:bg-[#0416b8]'
+                          : 'bg-blue-50 hover:bg-blue-100'
+                      }`}
+                      title={playingId === tour.id ? 'Pause' : 'Play'}
+                    >
+                      {playingId === tour.id ? (
+                        <Pause className="w-5 h-5 text-white" fill="currentColor" />
+                      ) : (
+                        <Play className="w-5 h-5 text-[#0519CE]" fill="currentColor" />
+                      )}
+                    </button>
+
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-xs text-gray-600">
+                        {formatTime(currentTime)}
+                      </span>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={currentProgress}
+                        onChange={(e) => handleProgressChange(tour.id, parseInt(e.target.value))}
+                        className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                        style={{
+                          background: `linear-gradient(to right, #0519CE 0%, #0519CE ${currentProgress}%, #e5e7eb ${currentProgress}%, #e5e7eb 100%)`
+                        }}
+                        title="Seek audio"
+                      />
+                      <span className="text-xs text-gray-600">
+                        {formatTime(duration)}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleMuteToggle(tour)}
+                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                      title={isMuted ? 'Unmute' : 'Mute'}
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-5 h-5 text-red-500" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-gray-600" />
+                      )}
+                    </button>
                   </div>
                 </div>
 
-                {/* Play/Pause Button */}
-                <button
-                  onClick={() => handlePlayPause(tour)}
-                  className={`rounded-full p-4 transition-colors ${
-                    playingId === tour.id
-                      ? 'bg-[#0519CE] hover:bg-[#0519CE]'
-                      : 'bg-blue-50 hover:bg-blue-100'
-                  }`}
-                  title={playingId === tour.id ? 'Pause' : 'Play'}
-                >
-                  {playingId === tour.id ? (
-                    <Pause className="w-6 h-6 text-white" fill="currentColor" />
-                  ) : (
-                    <Play className="w-6 h-6 text-[#0519CE]" fill="currentColor" />
-                  )}
-                </button>
+                {/* Desktop Layout */}
+                <div className="hidden md:flex items-center gap-4">
+                  <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                    <Smile className="w-6 h-6" />
+                  </button>
 
-                {/* Progress Bar with Time */}
-                <div className="flex items-center gap-3 w-64">
-                  <span className="text-xs text-gray-600 w-10 text-right">
-                    {formatTime(currentTime)}
-                  </span>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={currentProgress}
-                    onChange={(e) => handleProgressChange(tour.id, parseInt(e.target.value))}
-                    className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                    style={{
-                      background: `linear-gradient(to right, #0519CE 0%, #0519CE ${currentProgress}%, #e5e7eb ${currentProgress}%, #e5e7eb 100%)`
-                    }}
-                    title="Seek audio"
-                  />
-                  <span className="text-xs text-gray-600 w-10">
-                    {formatTime(duration)}
-                  </span>
+                  <button
+                    onClick={() => handleDelete(tour.id)}
+                    className="text-red-500 hover:text-red-600 transition-colors"
+                    title="Delete audio tour"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+
+                  <div className="flex-1">
+                    <div className="text-gray-900 font-medium">{tour.name}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {new Date(tour.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handlePlayPause(tour)}
+                    className={`rounded-full p-4 transition-colors ${
+                      playingId === tour.id
+                        ? 'bg-[#0519CE] hover:bg-[#0416b8]'
+                        : 'bg-blue-50 hover:bg-blue-100'
+                    }`}
+                    title={playingId === tour.id ? 'Pause' : 'Play'}
+                  >
+                    {playingId === tour.id ? (
+                      <Pause className="w-6 h-6 text-white" fill="currentColor" />
+                    ) : (
+                      <Play className="w-6 h-6 text-[#0519CE]" fill="currentColor" />
+                    )}
+                  </button>
+
+                  <div className="flex items-center gap-3 w-48 lg:w-64">
+                    <span className="text-xs text-gray-600 w-10 text-right">
+                      {formatTime(currentTime)}
+                    </span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={currentProgress}
+                      onChange={(e) => handleProgressChange(tour.id, parseInt(e.target.value))}
+                      className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      style={{
+                        background: `linear-gradient(to right, #0519CE 0%, #0519CE ${currentProgress}%, #e5e7eb ${currentProgress}%, #e5e7eb 100%)`
+                      }}
+                      title="Seek audio"
+                    />
+                    <span className="text-xs text-gray-600 w-10">
+                      {formatTime(duration)}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => handleMuteToggle(tour)}
+                    className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    title={isMuted ? 'Unmute' : 'Mute'}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="w-6 h-6 text-red-500" />
+                    ) : (
+                      <Volume2 className="w-6 h-6 text-gray-600" />
+                    )}
+                  </button>
                 </div>
-
-                {/* Mute/Unmute Toggle Button */}
-                <button
-                  onClick={() => handleMuteToggle(tour)}
-                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  title={isMuted ? 'Unmute' : 'Mute'}
-                >
-                  {isMuted ? (
-                    <VolumeX className="w-6 h-6 text-red-500" />
-                  ) : (
-                    <Volume2 className="w-6 h-6 text-gray-600" />
-                  )}
-                </button>
               </div>
             );
           })}
@@ -322,8 +380,8 @@ const AudioList: React.FC<AudioListProps> = ({
 
       {/* Delete Confirmation Modal */}
       {openDeleteModal && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[350px] text-center p-6 sm:p-8">
             <div className="flex justify-center mb-4">
               <div className="bg-red-600 rounded-full p-3">
                 <svg
@@ -363,8 +421,8 @@ const AudioList: React.FC<AudioListProps> = ({
 
       {/* Success Modal */}
       {openSuccessModal && (
-        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[350px] text-center p-6 sm:p-8 relative">
             <div className="flex justify-center mb-4">
               <div className="bg-[#0519CE] rounded-full p-3">
                 <svg

@@ -123,6 +123,10 @@ export default function AddBusinessModal({
       setCreateError("You must be logged in.");
       return;
     }
+  } catch (e: any) {
+    setCreateError(e?.message || "Failed to read image");
+    return;
+  }
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
@@ -143,7 +147,6 @@ export default function AddBusinessModal({
     if (!priceId) {
       setCreateError("Stripe price id missing.");
       return;
-
     }
 
     // ✅ Build draft payload (NO business create here)

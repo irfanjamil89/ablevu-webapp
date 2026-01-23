@@ -3,8 +3,8 @@ import React from "react";
 export default function HeroSection() {
   return (
     <section
-      className="relative min-h-[100vh] md:min-h-screen bg-cover bg-top bg-no-repeat flex items-center"
-      style={{ backgroundImage: "url('/assets/images/hero.jpg')" }}
+      className="relative min-h-[100vh] md:min-h-screen bg-cover bg-top bg-no-repeat flex items-center background-center"
+      style={{ backgroundImage: "url('/assets/images/hero.jpg')", }}
       aria-labelledby="hero-heading"
       role="region"
     >
