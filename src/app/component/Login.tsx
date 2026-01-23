@@ -24,7 +24,7 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
     setLoading(true);
 
     try {
-      const response = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + "/auth/login", {
+      const response = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + "auth/login", {
         username: email,
         password: password,
       });

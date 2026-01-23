@@ -218,7 +218,7 @@ export default function Page() {
 
     setUserId(uid);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${uid}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}users/${uid}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then(async (res) => {

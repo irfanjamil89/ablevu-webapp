@@ -59,7 +59,7 @@ const Profileabout: React.FC<ProfileaboutProps> = ({
         }
 
         const res = await fetch(
-          `${API_BASE_URL}/business/business-profile/${businessId}`,
+          `${API_BASE_URL}business/business-profile/${businessId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -119,7 +119,7 @@ const Profileabout: React.FC<ProfileaboutProps> = ({
       };
 
       const res = await fetch(
-        `${API_BASE_URL}/business/update/${businessId}`,
+        `${API_BASE_URL}business/update/${businessId}`,
         {
           method: "PATCH",
           headers: {

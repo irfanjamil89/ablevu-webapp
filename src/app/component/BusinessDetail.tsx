@@ -83,7 +83,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
             : null;
 
         const res = await fetch(
-          `${API_BASE_URL}/business-type/list?page=1&limit=200`,
+          `${API_BASE_URL}business-type/list?page=1&limit=200`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -136,7 +136,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
         }
 
         const res = await fetch(
-          `${API_BASE_URL}/business/business-profile/${businessId}`,
+          `${API_BASE_URL}business/business-profile/${businessId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -232,7 +232,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
       }
 
       const res = await fetch(
-        `${API_BASE_URL}/business/update/${businessId}`,
+        `${API_BASE_URL}business/update/${businessId}`,
         {
           method: "PATCH",
           headers: {

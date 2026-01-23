@@ -188,7 +188,7 @@ export default function Page({
 
             // 1️⃣ Fetch business profile
             const profileRes = await fetch(
-                `${API_BASE_URL}/business/business-profile/${id}`,
+                `${API_BASE_URL}business/business-profile/${id}`,
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -204,7 +204,7 @@ export default function Page({
 
             // 2️⃣ Fetch business-types
             const typeRes = await fetch(
-                `${API_BASE_URL}/business-type/list?page=1&limit=1000`,
+                `${API_BASE_URL}business-type/list?page=1&limit=1000`,
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -225,7 +225,7 @@ export default function Page({
 
             // 3️⃣ ⭐ NEW: Fetch business-images
             const imagesRes = await fetch(
-                `${API_BASE_URL}/business-images/list`,
+                `${API_BASE_URL}business-images/list`,
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -292,7 +292,7 @@ export default function Page({
             async () => {
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/business-virtual-tours/delete/${tour.id}`,
+                        `${API_BASE_URL}business-virtual-tours/delete/${tour.id}`,
                         {
                             method: "DELETE",
                             headers: {
@@ -334,7 +334,7 @@ export default function Page({
 
         try {
             const res = await fetch(
-                `${API_BASE_URL}/business-virtual-tours/update/${tour.id}`,
+                `${API_BASE_URL}business-virtual-tours/update/${tour.id}`,
                 {
                     method: "PATCH",
                     headers: {
@@ -381,7 +381,7 @@ export default function Page({
             async () => {
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/business-reviews/delete/${review.id}`,
+                        `${API_BASE_URL}business-reviews/delete/${review.id}`,
                         {
                             method: "DELETE",
                             headers: { Authorization: `Bearer ${token}` },
@@ -429,7 +429,7 @@ export default function Page({
             async () => {
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/business-questions/delete/${question.id}`,
+                        `${API_BASE_URL}business-questions/delete/${question.id}`,
                         {
                             method: "DELETE",
                             headers: { Authorization: `Bearer ${token}` },
@@ -478,7 +478,7 @@ export default function Page({
 
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/business-partner/delete/${business.id}`,
+                        `${API_BASE_URL}business-partner/delete/${business.id}`,
                         {
                             method: "DELETE",
                             headers: {
@@ -530,7 +530,7 @@ export default function Page({
             async () => {
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/additional-resource/delete/${resource.id}`,
+                        `${API_BASE_URL}additional-resource/delete/${resource.id}`,
                         {
                             method: "DELETE",
                             headers: {
@@ -577,7 +577,7 @@ export default function Page({
             async () => {
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/business-custom-sections-media/delete/${media.id}`,
+                        `${API_BASE_URL}business-custom-sections-media/delete/${media.id}`,
                         {
                             method: "DELETE",
                             headers: {
@@ -640,7 +640,7 @@ export default function Page({
             async () => {
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/business-media/delete/${media.id}`,
+                        `${API_BASE_URL}business-media/delete/${media.id}`,
                         {
                             method: "DELETE",
                             headers: {
@@ -691,7 +691,7 @@ export default function Page({
             async () => {
                 try {
                     const res = await fetch(
-                        `${API_BASE_URL}/business-images/delete/${image.id}`,
+                        `${API_BASE_URL}business-images/delete/${image.id}`,
                         {
                             method: "DELETE",
                             headers: {
@@ -900,7 +900,7 @@ export default function Page({
                 try {
                     for (const f of group.items) {
                         await fetch(
-                            `${API_BASE_URL}/business-accessible-feature/delete/${f.id}`,
+                            `${API_BASE_URL}business-accessible-feature/delete/${f.id}`,
                             {
                                 method: "DELETE",
                                 headers: {

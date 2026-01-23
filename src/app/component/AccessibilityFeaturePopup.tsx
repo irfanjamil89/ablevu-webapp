@@ -92,7 +92,7 @@ const AccessibilityFeaturePopup: React.FC<AccessibilityFeaturePopupProps> = ({
         setError(null);
 
         const res = await fetch(
-          `${API_BASE_URL}/accessible-feature-types/list?limit=100&page=1`
+          `${API_BASE_URL}accessible-feature-types/list?limit=100&page=1`
         );
 
         if (!res.ok) {
@@ -131,7 +131,7 @@ const AccessibilityFeaturePopup: React.FC<AccessibilityFeaturePopupProps> = ({
         setError(null);
 
         const res = await fetch(
-          `${API_BASE_URL}/accessible-feature/list?limit=1000&page=1`
+          `${API_BASE_URL}accessible-feature/list?limit=1000&page=1`
         );
         if (!res.ok) {
           throw new Error(`Failed to load accessible features (${res.status})`);
@@ -226,7 +226,7 @@ const handleSubmit: React.FormEventHandler = async (e) => {
     setError(null);
 
     const res = await fetch(
-      `${API_BASE_URL}/business-accessible-feature/create`,
+      `${API_BASE_URL}business-accessible-feature/create`,
       {
         method: "POST",
         headers: {
@@ -257,7 +257,7 @@ const handleSubmit: React.FormEventHandler = async (e) => {
 
     if (onUpdated) {
       const profileRes = await fetch(
-        `${API_BASE_URL}/business/business-profile/${businessId}`,
+        `${API_BASE_URL}business/business-profile/${businessId}`,
         {
           headers: {
             "Content-Type": "application/json",

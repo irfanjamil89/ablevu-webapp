@@ -80,7 +80,7 @@ const QuestionPopup: React.FC<QuestionPopupProps> = ({
         show_name,
       };
 
-      const res = await fetch(`${API_BASE_URL}/business-questions/create`, {
+      const res = await fetch(`${API_BASE_URL}business-questions/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

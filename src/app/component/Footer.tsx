@@ -18,7 +18,7 @@ export default function Footer() {
     setErrorMsg("");
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/subscribe/create`, {
+      const res = await axios.post(`${API_BASE_URL}subscribe/create`, {
         email: email,
         active: true,
       });

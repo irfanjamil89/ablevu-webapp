@@ -31,7 +31,7 @@ export default function FeatureTypeForm({ onSuccess }: FeatureTypeFormProps) {
 
     try {
       const response = await axios.post(
-        process.env.NEXT_PUBLIC_API_BASE_URL+"/accessible-feature-types/create",
+        process.env.NEXT_PUBLIC_API_BASE_URL+"accessible-feature-types/create",
         payload,
         {
           headers: {

@@ -83,8 +83,8 @@ const AccessibilityResourcesPopup: React.FC<AccessibilityResourcesPopupProps> = 
       };
 
       const url = isEdit
-        ? `${API_BASE_URL}/additional-resource/update/${resource.id}`
-        : `${API_BASE_URL}/additional-resource/create`;
+        ? `${API_BASE_URL}additional-resource/update/${resource.id}`
+        : `${API_BASE_URL}additional-resource/create`;
 
       const method = isEdit ? "PATCH" : "POST";
 

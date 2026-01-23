@@ -26,7 +26,7 @@ export default function FeedbackTypeForm({ onSuccess }: FeedbackTypeFormProps) {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/feedback-type/create`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}feedback-type/create`,
         payload,
         {
           headers: {

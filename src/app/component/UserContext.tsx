@@ -47,7 +47,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 
 
-      const response = await fetch( process.env.NEXT_PUBLIC_API_BASE_URL+'/users/1',{
+      const response = await fetch( process.env.NEXT_PUBLIC_API_BASE_URL+'users/1',{
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

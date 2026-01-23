@@ -201,7 +201,7 @@ export default function BusinessSidebar({
 
     try {
       const res = await fetch(
-        `${API_BASE_URL}/business-recomendations/list?businessId=${business.id}&page=1&limit=1000`,
+        `${API_BASE_URL}business-recomendations/list?businessId=${business.id}&page=1&limit=1000`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -284,7 +284,7 @@ export default function BusinessSidebar({
       // 🔴 UNSAVE
       if (saved && saveId) {
         const res = await fetch(
-          `${API_BASE_URL}/business-save/delete/${saveId}`,
+          `${API_BASE_URL}business-save/delete/${saveId}`,
           {
             method: "DELETE",
             headers: {
@@ -301,7 +301,7 @@ export default function BusinessSidebar({
       }
 
       // 🟢 SAVE
-      const res = await fetch(`${API_BASE_URL}/business-save/create`, {
+      const res = await fetch(`${API_BASE_URL}business-save/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -355,7 +355,7 @@ export default function BusinessSidebar({
 
       try {
         const res = await fetch(
-          `${API_BASE_URL}/business-save/list?page=1&limit=100`,
+          `${API_BASE_URL}business-save/list?page=1&limit=100`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -412,7 +412,7 @@ export default function BusinessSidebar({
       // 🔴 UNLIKE
       if (likedByUser && likeId) {
         const res = await fetch(
-          `${API_BASE_URL}/business-recomendations/delete/${likeId}`,
+          `${API_BASE_URL}business-recomendations/delete/${likeId}`,
           {
             method: "DELETE",
             headers: {
@@ -429,7 +429,7 @@ export default function BusinessSidebar({
 
       // 🟢 LIKE
       const res = await fetch(
-        `${API_BASE_URL}/business-recomendations/create`,
+        `${API_BASE_URL}business-recomendations/create`,
         {
           method: "POST",
           headers: {
@@ -520,7 +520,7 @@ export default function BusinessSidebar({
           return;
         }
 
-        const res = await fetch(`${base}/users/me/${userId}`, {
+        const res = await fetch(`${base}users/me/${userId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -566,7 +566,7 @@ export default function BusinessSidebar({
           : null;
 
       const res = await fetch(
-        `${API_BASE_URL}/business/status/${business.id}`,
+        `${API_BASE_URL}business/status/${business.id}`,
         {
           method: "PATCH",
           headers: {
@@ -689,7 +689,7 @@ export default function BusinessSidebar({
       }
 
       const res = await fetch(
-        `${API_BASE_URL}/business/delete/${business.id}`,
+        `${API_BASE_URL}business/delete/${business.id}`,
         {
           method: "DELETE",
           headers: {

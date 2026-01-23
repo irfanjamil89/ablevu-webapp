@@ -154,7 +154,7 @@ const startSubscriptionCheckout = async (plan: PlanKey) => {
   }
 
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions/checkout`,
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
     {
       method: "POST",
       headers: {
@@ -189,7 +189,7 @@ const startSubscriptionCheckout = async (plan: PlanKey) => {
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    fetch(base + "/business-type/list?page=1&limit=1000")
+    fetch(base + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
         setBusinessTypes(data.data || []);

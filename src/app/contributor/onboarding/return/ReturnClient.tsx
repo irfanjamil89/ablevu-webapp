@@ -24,7 +24,7 @@ export default function ReturnClient() {
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/me`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}users/me`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const me = await res.json();

@@ -200,7 +200,7 @@ export default function Mapsections() {
     // ✅ plan based amount (apne hisaab se set kar lena)
     const amount = plan === "monthly" ? 29 : 299;
 
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-claim-cart/create`;
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}business-claim-cart/create`;
     const res = await fetch(url, {
       method: "POST",
       headers: {

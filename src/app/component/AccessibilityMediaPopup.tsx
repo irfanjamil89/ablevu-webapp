@@ -87,8 +87,8 @@ const AccessibilityMediaPopup: React.FC<AccessibilityMediaPopupProps> = ({
 
       // 🔥 yahan se fark aata hai – create vs update
       const url = isEdit
-        ? `${API_BASE_URL}/business-media/update/${media.id}`
-        : `${API_BASE_URL}/business-media/create`;
+        ? `${API_BASE_URL}business-media/update/${media.id}`
+        : `${API_BASE_URL}business-media/create`;
 
       const method = isEdit ? "PATCH" : "POST";
 

@@ -145,7 +145,7 @@ export default function Page() {
   useEffect(() => {
     if (!API_BASE_URL) return;
 
-    fetch(API_BASE_URL + "/business-type/list?page=1&limit=1000")
+    fetch(API_BASE_URL + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
         setBusinessTypes(data.data || []);
@@ -154,7 +154,7 @@ export default function Page() {
         console.error("Error fetching business types:", error);
       });
 
-    fetch(API_BASE_URL + "/accessible-feature/list?page=1&limit=1000")
+    fetch(API_BASE_URL + "accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
         setFeatures(data.items || []);
@@ -163,7 +163,7 @@ export default function Page() {
         console.error("Error fetching features:", error);
       });
 
-    fetch(API_BASE_URL + "/business-schedules/list?page=1&limit=1000")
+    fetch(API_BASE_URL + "business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
         setSchedules(data.data || []);
@@ -200,7 +200,7 @@ export default function Page() {
 
       // 1️⃣ Saved list
       const res = await fetch(
-        `${API_BASE_URL}/business-save/list?page=1&limit=50`,
+        `${API_BASE_URL}business-save/list?page=1&limit=50`,
         { headers }
       );
 
@@ -226,7 +226,7 @@ export default function Page() {
       // 3️⃣ har business ka profile
       const businessPromises = ids.map(async (id) => {
         const bRes = await fetch(
-          `${API_BASE_URL}/business/business-profile/${id}`,
+          `${API_BASE_URL}business/business-profile/${id}`,
           { headers }
         );
 
