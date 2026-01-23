@@ -63,7 +63,7 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
       }
 
       try {
-        const res = await fetch(`${API_BASE_URL}/partner/list?page=1&limit=1000`, {
+        const res = await fetch(`${API_BASE_URL}partner/list?page=1&limit=1000`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -114,7 +114,7 @@ const PartnerCertificationPopup: React.FC<PartnerCertificationPopupProps> = ({
         active: true,
       };
 
-      const res = await fetch(`${API_BASE_URL}/business-partner/create/${businessId}`, {
+      const res = await fetch(`${API_BASE_URL}business-partner/create/${businessId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

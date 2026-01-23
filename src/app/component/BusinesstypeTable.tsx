@@ -49,7 +49,7 @@ export default function BusinessTypeTable() {
   const fetchBusinessTypes = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + "/business-type/list/?page=1&limit=1000");
+      const response = await axios.get(process.env.NEXT_PUBLIC_API_BASE_URL + "business-type/list/?page=1&limit=1000");
       setData(response.data.data || []);
       setCurrentPage(1); // Reset to first page on fetch
     } catch (err: any) {
@@ -70,7 +70,7 @@ export default function BusinessTypeTable() {
 
     try {
       await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/delete/${deleteId}/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business-type/delete/${deleteId}/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -101,7 +101,7 @@ export default function BusinessTypeTable() {
     try {
       setEditLoading(true);
       await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/business-type/update/${editId}/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business-type/update/${editId}/${userId}`,
         { name: editName.trim() },
         {
           headers: {

@@ -16,7 +16,7 @@ export default function Sidebar() {
         }
 
         // Fetch user data using the token for authentication
-        fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'/users/1', {
+        fetch(process.env.NEXT_PUBLIC_API_BASE_URL+'users/1', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}` // Send the token in the Authorization header

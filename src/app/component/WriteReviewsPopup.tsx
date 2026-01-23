@@ -63,7 +63,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
         setError(null);
 
         const res = await fetch(
-          `${API_BASE_URL}/review-type/list?limit=100&page=1`
+          `${API_BASE_URL}review-type/list?limit=100&page=1`
         );
 
         if (!res.ok) throw new Error("Failed to load review types");
@@ -185,7 +185,7 @@ const WriteReviewsPopup: React.FC<WriteReviewsPopupProps> = ({
         active: true,
       };
 
-      const res = await fetch(`${API_BASE_URL}/business-reviews/create`, {
+      const res = await fetch(`${API_BASE_URL}business-reviews/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

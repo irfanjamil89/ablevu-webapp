@@ -56,7 +56,7 @@ export default function ReviewTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/review-type/list`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}review-type/list?limit=100&page=1`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -108,7 +108,7 @@ export default function ReviewTypeTable({ refresh }: { refresh: number }) {
 
     try {
       await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/review-type/update/${editReviewsId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}review-type/update/${editReviewsId}`,
         {
           title: form.title,
         },
@@ -361,7 +361,7 @@ export default function ReviewTypeTable({ refresh }: { refresh: number }) {
                   setLoadingDelete(true);
                   try {
                     await axios.delete(
-                      `${process.env.NEXT_PUBLIC_API_BASE_URL}/review-type/delete/${reviewsToDelete}`,
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL}review-type/delete/${reviewsToDelete}`,
                       {
                         headers: {
                           Authorization: `Bearer ${localStorage.getItem(

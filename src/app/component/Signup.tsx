@@ -83,7 +83,7 @@ const Signup: React.FC<SignupProps> = ({ setOpenSignupModal, setOpenLoginModal, 
 
     try {
       const response = await axios.post(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/users/signup",
+        process.env.NEXT_PUBLIC_API_BASE_URL + "users/signup",
         payload,
         { headers: { "Content-Type": "application/json" } }
       );

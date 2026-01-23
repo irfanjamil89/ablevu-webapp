@@ -27,7 +27,7 @@ export default function Page() {
           return;
         }
 
-        const res = await fetch(`${API_BASE}/stripe/billing/me`, {
+        const res = await fetch(`${API_BASE}stripe/billing/me`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,

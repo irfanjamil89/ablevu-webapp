@@ -33,7 +33,7 @@ const ResetPassword: React.FC<ResetPasswordProps> = ({
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/reset-password`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}auth/reset-password`,
         {
           method: "POST",
           headers: {

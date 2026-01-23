@@ -205,17 +205,17 @@ export default function Page() {
     try {
       setIsOnboardingLoading(true);
 
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/stripe/create-account`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}),
-        }
-      );
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      }
+    );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -244,7 +244,7 @@ export default function Page() {
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    fetch(base + "/business-type/list?page=1&limit=1000")
+    fetch(base + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
 
@@ -254,7 +254,7 @@ export default function Page() {
         console.error("Error fetching business types:", error);
       });
 
-    fetch(base + "/accessible-feature/list?page=1&limit=1000")
+    fetch(base + "accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
 
@@ -264,7 +264,7 @@ export default function Page() {
         console.error("Error fetching features:", error);
       });
 
-    fetch(base + "/business-schedules/list?page=1&limit=1000")
+    fetch(base + "business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
 
@@ -279,7 +279,7 @@ export default function Page() {
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    let url = base + "/business/list";
+    let url = base + "business/list";
 
     if (appliedSearch) {
       url += `?search=${encodeURIComponent(appliedSearch)}`;
@@ -316,7 +316,7 @@ export default function Page() {
 
   const fetchBusinesses = useCallback(async (search: string) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    let url = base + "/business/list";
+    let url = base + "business/list";
 
     if (search) {
       url += `?search=${encodeURIComponent(search)}`;
@@ -664,7 +664,7 @@ export default function Page() {
       setIsCreating(true);
 
       const res = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/create",
+        process.env.NEXT_PUBLIC_API_BASE_URL + "business/create",
         {
           method: "POST",
           headers: {
@@ -684,7 +684,7 @@ export default function Page() {
       }
 
       const listRes = await fetch(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/business/list",
+        process.env.NEXT_PUBLIC_API_BASE_URL + "business/list",
         {
           headers: {
             Authorization: `Bearer ${token}`,

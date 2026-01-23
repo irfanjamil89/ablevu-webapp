@@ -80,8 +80,8 @@ const VirtualTour: React.FC<VirtualTourProps> = ({
       setSaving(true);
 
       const url = isEditMode
-        ? `${API_BASE_URL}/business-virtual-tours/update/${tour!.id}`
-        : `${API_BASE_URL}/business-virtual-tours/create`;
+        ? `${API_BASE_URL}business-virtual-tours/update/${tour!.id}`
+        : `${API_BASE_URL}business-virtual-tours/create`;
 
       const res = await fetch(url, {
         method: isEditMode ? "PATCH" : "POST",

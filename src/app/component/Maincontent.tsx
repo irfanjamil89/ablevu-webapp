@@ -401,7 +401,7 @@ export default function Maincontent({
       const token = localStorage.getItem("access_token");
       if (!token) throw new Error("No access token found");
       const res = await fetch(
-        `${API_BASE_URL}/business-questions/update/${q.id}`,
+        `${API_BASE_URL}business-questions/update/${q.id}`,
         {
           method: "PATCH",
           headers: {
@@ -439,7 +439,7 @@ export default function Maincontent({
     const fetchTypes = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/accessible-feature-types/list?limit=100&page=1`
+          `${API_BASE_URL}accessible-feature-types/list?limit=100&page=1`
         );
         if (!res.ok) {
           console.error("Failed to load feature types", res.status);
@@ -468,7 +468,7 @@ export default function Maincontent({
     const fetchFeatures = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/accessible-feature/list?limit=1000&page=1`
+          `${API_BASE_URL}accessible-feature/list?limit=1000&page=1`
         );
         if (!res.ok) {
           console.error("Failed to load accessible features", res.status);

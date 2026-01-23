@@ -68,7 +68,7 @@ export default function Page() {
     try {
       // 1) Feedback list
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/feedback/list`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}feedback/list`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -93,7 +93,7 @@ export default function Page() {
             userIds.map(async (id) => {
               try {
                 const userRes = await axios.get(
-                  `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/me/${id}`,
+                  `${process.env.NEXT_PUBLIC_API_BASE_URL}users/me/${id}`,
                   {
                     headers: {
                       Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -132,7 +132,7 @@ export default function Page() {
   const fetchFeedbackTypes = async () => {
     try {
       const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/feedback-type/list`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}feedback-type/list`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,

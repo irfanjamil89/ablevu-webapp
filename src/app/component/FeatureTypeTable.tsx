@@ -61,7 +61,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        process.env.NEXT_PUBLIC_API_BASE_URL + "/accessible-feature-types/list?page=1&limit=1000",
+        process.env.NEXT_PUBLIC_API_BASE_URL + "accessible-feature-types/list?page=1&limit=1000",
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -111,7 +111,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
 
     try {
       await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature-types/update/${editFeatureId}/80dfa7c9-f919-4ffa-b37b-ad36899ec46d`,
         {
           name: form.name,
 
@@ -368,7 +368,7 @@ export default function FeatureTypeTable({ refresh }: { refresh: number }) {
                   setLoadingDelete(true);
                   try {
                     await axios.delete(
-                      `${process.env.NEXT_PUBLIC_API_BASE_URL}/accessible-feature-types/delete/${featureToDelete}`,
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature-types/delete/${featureToDelete}`,
                       {
                         headers: {
                           Authorization: `Bearer ${localStorage.getItem("access_token")}`,

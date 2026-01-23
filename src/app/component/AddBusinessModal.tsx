@@ -114,6 +114,7 @@ export default function AddBusinessModal({
   };
 
   const startSubscriptionCheckout = async (plan: PlanKey) => {
+  try {
     const token =
       typeof window !== "undefined"
         ? localStorage.getItem("access_token")
@@ -148,22 +149,22 @@ export default function AddBusinessModal({
 
       active: false,
       business_status: "draft",
-      subscription_plan: plan, // optional (if you want stored in payload)
+      subscription_plan: plan,
     };
 
     // ✅ image base64 (optional)
     let businessImageBase64: string | null = null;
-    try {
-      if (selectedImage) {
+    if (selectedImage) {
+      try {
         businessImageBase64 = await fileToBase64(selectedImage);
+      } catch (e: any) {
+        setCreateError(e?.message || "Failed to read image");
+        return;
       }
-    } catch (e: any) {
-      setCreateError(e?.message || "Failed to read image");
-      return;
     }
 
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/subscriptions/checkout`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
       {
         method: "POST",
         headers: {
@@ -187,18 +188,22 @@ export default function AddBusinessModal({
     }
 
     if (data?.url) {
-      window.location.href = data.url; // ✅ Stripe redirect
+      // ✅ redirect to Stripe
+      window.location.href = data.url;
     } else {
       setCreateError("Stripe URL missing");
     }
-  };
-
+  } catch (e: any) {
+    console.error(e);
+    setCreateError(e?.message || "Something went wrong");
+  }
+};
 
   // ---------- Fetch business types on mount ----------
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    fetch(base + "/business-type/list?page=1&limit=1000")
+    fetch(base + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
         setBusinessTypes(data.data || []);

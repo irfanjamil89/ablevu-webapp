@@ -136,7 +136,7 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
         }
 
         const res = await fetch(
-          `${API_BASE_URL}/business/business-profile/${businessId}`,
+          `${API_BASE_URL}business/business-profile/${businessId}`,
           {
             headers: {
               "Content-Type": "application/json",
@@ -308,7 +308,7 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
         };
 
         const resCreate = await fetch(
-          `${API_BASE_URL}/business-schedules/create`,
+          `${API_BASE_URL}business-schedules/create`,
           {
             method: "POST",
             headers: {
@@ -337,7 +337,7 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
           if (!scheduleId) continue;
 
           const resUpdate = await fetch(
-            `${API_BASE_URL}/business-schedules/update/${scheduleId}`,
+            `${API_BASE_URL}business-schedules/update/${scheduleId}`,
             {
               method: "PATCH",
               headers: {
@@ -364,7 +364,7 @@ const Operatinghours: React.FC<OperatinghoursProps> = ({
       if (onUpdated) {
         try {
           const profileRes = await fetch(
-            `${API_BASE_URL}/business/business-profile/${businessId}`,
+            `${API_BASE_URL}business/business-profile/${businessId}`,
             {
               headers: {
                 "Content-Type": "application/json",

@@ -313,7 +313,7 @@ export default function Page() {
 
         // 🔹 Business types
         const btRes = await fetch(
-          `${base}/business-type/list?page=1&limit=1000`,
+          `${base}business-type/list?page=1&limit=1000`,
           { headers }
         );
         const btJson = await btRes.json();
@@ -321,13 +321,13 @@ export default function Page() {
 
         // 🔹 Accessible features
         const fRes = await fetch(
-          `${base}/accessible-feature/list?page=1&limit=1000`
+          `${base}accessible-feature/list?page=1&limit=1000`
         );
         const fJson = await fRes.json();
         setFeatures(fJson.items || []);
 
         // 🔹 Businesses (admin sees all)
-        const bRes = await fetch(`${base}/business/list?page=1&limit=1000`, {
+        const bRes = await fetch(`${base}business/list?page=1&limit=1000`, {
           headers,
         });
         const bJson = await bRes.json();
@@ -335,14 +335,14 @@ export default function Page() {
 
         // 🔹 Accessible cities
         const acRes = await fetch(
-          `${base}/accessible-city/list?page=1&limit=1000`,
+          `${base}accessible-city/list?page=1&limit=1000`,
           { headers }
         );
         const acJson = await acRes.json();
         setAccessibleCityTotal(acJson.total ?? (acJson.items?.length || 0));
 
         // 🔹 Users
-        const uRes = await fetch(`${base}/users`, { headers });
+        const uRes = await fetch(`${base}users`, { headers });
         if (!uRes.ok) {
           console.error("Users fetch failed:", uRes.status, uRes.statusText);
         } else {
@@ -363,7 +363,7 @@ export default function Page() {
         }
 
         // 🔹 Partners
-        const pRes = await fetch(`${base}/partner/list?page=1&limit=1000`, {
+        const pRes = await fetch(`${base}partner/list?page=1&limit=1000`, {
           headers,
         });
         const pJson = await pRes.json();
@@ -373,7 +373,7 @@ export default function Page() {
 
         // 🔹 Business schedules
         const sRes = await fetch(
-          `${base}/business-schedules/list?page=1&limit=1000`,
+          `${base}business-schedules/list?page=1&limit=1000`,
           { headers }
         );
         const sJson: ScheduleListResponse = await sRes.json();

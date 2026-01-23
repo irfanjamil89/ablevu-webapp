@@ -56,7 +56,7 @@ export default function FeedbackTypeTable({ refresh }: { refresh: number }) {
     setError("");
     try {
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/feedback-type/list`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}feedback-type/list`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access_token")}`,
@@ -109,7 +109,7 @@ export default function FeedbackTypeTable({ refresh }: { refresh: number }) {
 
     try {
       await axios.patch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/feedback-type/update/${editFeatureId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}feedback-type/update/${editFeatureId}`,
         {
           name: form.name,
           image_url: "",
@@ -365,7 +365,7 @@ export default function FeedbackTypeTable({ refresh }: { refresh: number }) {
                   setLoadingDelete(true);
                   try {
                     await axios.delete(
-                      `${process.env.NEXT_PUBLIC_API_BASE_URL}/feedback-type/delete/${featureToDelete}`,
+                      `${process.env.NEXT_PUBLIC_API_BASE_URL}feedback-type/delete/${featureToDelete}`,
                       {
                         headers: {
                           Authorization: `Bearer ${localStorage.getItem(

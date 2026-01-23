@@ -124,7 +124,7 @@ export default function Page() {
     if (!API_BASE_URL) return;
     try {
       const res = await fetch(
-        `${API_BASE_URL}/business-type/list?page=1&limit=1000`
+        `${API_BASE_URL}business-type/list?page=1&limit=1000`
       );
       const json = await res.json();
       setBusinessTypes(json.data || []);
@@ -137,7 +137,7 @@ export default function Page() {
     if (!API_BASE_URL) return;
     try {
       const res = await fetch(
-        `${API_BASE_URL}/accessible-feature/list?page=1&limit=1000`
+        `${API_BASE_URL}accessible-feature/list?page=1&limit=1000`
       );
       const json: AccessibleFeatureListResponse = await res.json();
       setFeatureMaster(json.items || []);
@@ -154,7 +154,7 @@ export default function Page() {
       setLoading(true);
       setError(null);
 
-      let url = `${API_BASE_URL}/business/list1?page=1&limit=1000`;
+      let url = `${API_BASE_URL}business/list1?page=1&limit=1000`;
 
       if (selectedBusinessTypeIds.length) {
         url += `&businessTypeIds=${encodeURIComponent(
