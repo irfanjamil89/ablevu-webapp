@@ -18,6 +18,17 @@ type VirtualTour = {
   created_at: string;
   modified_at: string;
 };
+ type AudioTour = {
+  id: string;
+  name: string;
+  link_url: string | null;
+  business_id: string;
+  active: boolean;
+  created_by: string;
+  modified_by: string;
+  created_at: string;
+  modified_at: string;
+}
 
 type AccessibilityFeature = {
   id: string;
@@ -228,6 +239,7 @@ type BusinessProfile = {
   modified_at: string;
 
   virtualTours?: VirtualTour[];
+  audioTours?: AudioTour[];
   accessibilityFeatures?: AccessibilityFeature[];
   businessreviews?: BusinessReview[];
   businessQuestions?: BusinessQuestion[];
@@ -751,7 +763,9 @@ export default function Maincontent({
         </div>
 
         {/* Use This Component to display Audio List */}
-        <AudioList />
+        <AudioList
+        items={business.audioTours || []}
+        />
 
         {/* You can use this in else part when no audio is present  */}
 

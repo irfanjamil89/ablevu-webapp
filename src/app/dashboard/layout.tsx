@@ -284,15 +284,15 @@ export default function DashboardLayout({
         sessionStorage.setItem("user", JSON.stringify(data));
 
         if (data.user_role === "Business") {
-          router.push("/dashboard/business-overview");
+          router.replace("/dashboard/business-overview");
           setLoading(false);
           return;
         } else if (data.user_role === "Contributor") {
-          router.push("/dashboard/contributor-overview");
+          router.replace("/dashboard/contributor-overview");
           setLoading(false);
           return;
         } else if (data.user_role === "User") {
-          router.push("/dashboard/saved");
+          router.replace("/dashboard/saved");
           setLoading(false);
           return;
         }

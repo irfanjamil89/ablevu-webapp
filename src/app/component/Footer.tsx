@@ -94,17 +94,17 @@ export default function Footer() {
           </h3>
           <ul className="space-y-2 font-['Helvetica'] text-sm">
             <li>
-              <a href="#" className="hover:underline">
+              <a href="/business" className="hover:underline">
                 Businesses
               </a>
             </li>
             <li>
-              <a href="#" className="hover:underline">
+              <a href="/contributor" className="hover:underline">
                 Contributor
               </a>
             </li>
             <li>
-              <a href="#" className="hover:underline">
+              <a href="/access-friendly-city" className="hover:underline">
                 Access-friendly Cities
               </a>
             </li>

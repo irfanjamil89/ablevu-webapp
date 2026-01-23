@@ -38,6 +38,7 @@ type Business = {
   business_status?: string | null;
   views: number;
   created_at: Date | string;
+  modified_at: Date | string;
   city: string;
   state: string;
   zipcode: string;
@@ -168,17 +169,17 @@ export default function Page() {
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
 
   const statusFilterLabel =
-  statusFilter === "draft"
-    ? "Draft"
-    : statusFilter === "pending approval"
-    ? "Approval Request"
-    : statusFilter === "approved"
-    ? "Approved"
-    : statusFilter === "pending acclaim"
-    ? "Pending Acclaim"
-    : statusFilter === "claimed"
-    ? "Claimed"
-    : "";
+    statusFilter === "draft"
+      ? "Draft"
+      : statusFilter === "pending approval"
+        ? "Approval Request"
+        : statusFilter === "approved"
+          ? "Approved"
+          : statusFilter === "pending acclaim"
+            ? "Pending Acclaim"
+            : statusFilter === "claimed"
+              ? "Claimed"
+              : "";
 
 
   // ---------- Fetch business types & accessible features ----------
@@ -189,7 +190,7 @@ export default function Page() {
     fetch(base + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        
+
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {
@@ -199,7 +200,7 @@ export default function Page() {
     fetch(base + "accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        
+
         setFeatures(data.items || []);
       })
       .catch((error) => {
@@ -209,7 +210,7 @@ export default function Page() {
     fetch(base + "business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
-        
+
         setSchedules(data.data || []);
       })
       .catch((error) => {
@@ -242,7 +243,7 @@ export default function Page() {
     fetch(url, { headers })
       .then((response) => response.json())
       .then((data) => {
-        
+
         const list: Business[] = data.data || [];
         setBusinesses(list);
       })
@@ -256,7 +257,7 @@ export default function Page() {
 
   const fetchBusinesses = useCallback(async (search: string) => {
         const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-        let url = base + "business/list";
+        let url = base + "/business/list";
     
         if (search) {
           url += `?search=${encodeURIComponent(search)}`;
@@ -353,56 +354,56 @@ export default function Page() {
   // ---------- Status badge (business.business_status) ----------
 
   type StatusKey =
-  | "draft"
-  | "pending approval"
-  | "approved"
-  | "pending acclaim"
-  | "claimed";
+    | "draft"
+    | "pending approval"
+    | "approved"
+    | "pending acclaim"
+    | "claimed";
 
-const STATUS_BADGE: Record<
-  StatusKey,
-  { label: string; bg: string; text: string }
-> = {
-  draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
-  "pending approval": {
-    label: "Pending Approval",
-    bg: "#FFEFD5",
-    text: "#B46A00",
-  },
-  approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
-  "pending acclaim": {
-    label: "Pending Acclaim",
-    bg: "#EEF2FF",
-    text: "#3730A3",
-  },
-  claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
-};
+  const STATUS_BADGE: Record<
+    StatusKey,
+    { label: string; bg: string; text: string }
+  > = {
+    draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+    "pending approval": {
+      label: "Pending Approval",
+      bg: "#FFEFD5",
+      text: "#B46A00",
+    },
+    approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
+    "pending acclaim": {
+      label: "Pending Acclaim",
+      bg: "#EEF2FF",
+      text: "#3730A3",
+    },
+    claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
+  };
 
-const toCanonicalStatus = (raw: string, b: Business): StatusKey | null => {
-  const s = normalizeStatus(raw);
+  const toCanonicalStatus = (raw: string, b: Business): StatusKey | null => {
+    const s = normalizeStatus(raw);
 
-  // backend aliases
-  if (s === "pending" || s === "pending approved") return "pending approval";
-  if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
+    // backend aliases
+    if (s === "pending" || s === "pending approved") return "pending approval";
+    if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
 
-  if (s === "draft") return "draft";
-  if (s === "pending approval") return "pending approval";
-  if (s === "approved") return "approved";
-  if (s === "claimed") return "claimed";
+    if (s === "draft") return "draft";
+    if (s === "pending approval") return "pending approval";
+    if (s === "approved") return "approved";
+    if (s === "claimed") return "claimed";
 
-  // fallback: empty status but active + not blocked
-  if ((!s || s === "active") && b.active === true && !b.blocked) {
-    return "approved";
-  }
+    // fallback: empty status but active + not blocked
+    if ((!s || s === "active") && b.active === true && !b.blocked) {
+      return "approved";
+    }
 
-  return null;
-};
+    return null;
+  };
 
-const getStatusInfo = (b: Business) => {
-  const canonical = toCanonicalStatus(b.business_status || "", b);
-  if (!canonical) return { label: "", bg: "", text: "" };
-  return STATUS_BADGE[canonical];
-};
+  const getStatusInfo = (b: Business) => {
+    const canonical = toCanonicalStatus(b.business_status || "", b);
+    if (!canonical) return { label: "", bg: "", text: "" };
+    return STATUS_BADGE[canonical];
+  };
 
 
   // ---------- Sorting + Status filter ----------
@@ -411,30 +412,30 @@ const getStatusInfo = (b: Business) => {
     let arr = [...businesses];
 
     if (statusFilter) {
-  arr = arr.filter((b) => {
-    const canonical = toCanonicalStatus(b.business_status || "", b);
+      arr = arr.filter((b) => {
+        const canonical = toCanonicalStatus(b.business_status || "", b);
 
-    switch (statusFilter) {
-      case "draft":
-        return canonical === "draft";
+        switch (statusFilter) {
+          case "draft":
+            return canonical === "draft";
 
-      case "pending approval":
-        return canonical === "pending approval";
+          case "pending approval":
+            return canonical === "pending approval";
 
-      case "approved":
-        return canonical === "approved";
+          case "approved":
+            return canonical === "approved";
 
-      case "pending acclaim":
-        return canonical === "pending acclaim";
+          case "pending acclaim":
+            return canonical === "pending acclaim";
 
-      case "claimed":
-        return canonical === "claimed";
+          case "claimed":
+            return canonical === "claimed";
 
-      default:
-        return true;
+          default:
+            return true;
+        }
+      });
     }
-  });
-}
 
 
     switch (sortOption) {
@@ -555,13 +556,13 @@ const getStatusInfo = (b: Business) => {
   };
 
   useEffect(() => {
-  const t = setTimeout(() => {
-    setAppliedSearch(searchTerm.trim());
-    setCurrentPage(1);
-  }, 350);
+    const t = setTimeout(() => {
+      setAppliedSearch(searchTerm.trim());
+      setCurrentPage(1);
+    }, 350);
 
-  return () => clearTimeout(t);
-}, [searchTerm]);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
 
   // ---------- Create business ----------
@@ -627,7 +628,7 @@ const getStatusInfo = (b: Business) => {
         }
       );
 
-     
+
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}));
@@ -742,6 +743,13 @@ const getStatusInfo = (b: Business) => {
     return pages;
   };
 
+  const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
+  if (!url) return '';
+  const t = timestamp ? new Date(timestamp).getTime() : Date.now();
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_t=${t}`;
+};
+
   // ---------- UI ----------
 
   return (
@@ -792,10 +800,10 @@ const getStatusInfo = (b: Business) => {
                           {sortOption === "name-asc"
                             ? "Name A–Z"
                             : sortOption === "name-desc"
-                            ? "Name Z–A"
-                            : sortOption === "created-asc"
-                            ? "Oldest First"
-                            : "Newest First"}
+                              ? "Name Z–A"
+                              : sortOption === "created-asc"
+                                ? "Oldest First"
+                                : "Newest First"}
                           )
                         </span>
                       )}
@@ -969,7 +977,7 @@ const getStatusInfo = (b: Business) => {
                     placeholder="Search by Name, City, Country"
                     className="w-full border-none focus:outline-none focus:ring-0 font-medium text-sm text-gray-700 placeholder-gray-500 ml-2"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}                  
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
 
@@ -979,8 +987,8 @@ const getStatusInfo = (b: Business) => {
                   id="business-toggle"
                   className="hidden peer"
                 /> */}
-                 <button
-                  onClick={()=> setOpenAddBusinessModal(true)}
+                <button
+                  onClick={() => setOpenAddBusinessModal(true)}
                   className="px-4 py-3 text-sm font-bold bg-[#0519CE] text-white rounded-lg cursor-pointer hover:bg-blue-700 transition"
                 >
                   Add Business
@@ -1047,7 +1055,7 @@ const getStatusInfo = (b: Business) => {
                             }))
                           }
                           onSelect={(result) => {
-                            
+
 
                             const { city, state, country, zipcode } =
                               extractAddressParts(result);
@@ -1078,7 +1086,7 @@ const getStatusInfo = (b: Business) => {
                             accept=".svg,.png,.jpg,.gif"
                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                             onChange={(e) => {
-                             
+
                             }}
                           />
                           <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text:center hover:bg-gray-50 cursor-pointer h-fit">
@@ -1179,7 +1187,7 @@ const getStatusInfo = (b: Business) => {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(${business?.logo_url})`,
+                          backgroundImage: `url(${getCacheBustedUrl(business?.logo_url, business.modified_at || business.created_at)})`,
                         }}
                       >
                         {statusInfo.label && (
@@ -1293,35 +1301,35 @@ const getStatusInfo = (b: Business) => {
                               Accessible Features
                             </span>
                             <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                          {(() => {
-                            const list = business.accessibilityFeatures || [];
-                            const count = list.length;
+                              {(() => {
+                                const list = business.accessibilityFeatures || [];
+                                const count = list.length;
 
-                            if (count === 0) return <li>No features</li>;
+                                if (count === 0) return <li>No features</li>;
 
-                            // Only first 2 items
-                            const firstTwo = list.slice(0, 2);
+                                // Only first 2 items
+                                const firstTwo = list.slice(0, 2);
 
-                            return (
-                              <>
-                                {firstTwo.map((feature) => (
-                                  <li
-                                    key={feature.id}
-                                    className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
-                                  >
-                                    {getFeatureName(feature)}
-                                  </li>
-                                ))}
+                                return (
+                                  <>
+                                    {firstTwo.map((feature) => (
+                                      <li
+                                        key={feature.id}
+                                        className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
+                                      >
+                                        {getFeatureName(feature)}
+                                      </li>
+                                    ))}
 
-                                {count > 2 && (
-                                  <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
-                                    +{count - 2} 
-                                  </li>
-                                )}
-                              </>
-                            );
-                          })()}
-                        </ul>
+                                    {count > 2 && (
+                                      <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-2">
+                                        +{count - 2}
+                                      </li>
+                                    )}
+                                  </>
+                                );
+                              })()}
+                            </ul>
 
                           </div>
                         </div>
@@ -1367,11 +1375,10 @@ const getStatusInfo = (b: Business) => {
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                        currentPage === 1
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
                           ? "border-gray-200 text-gray-400 cursor-not-allowed"
                           : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       Previous
                     </button>
@@ -1387,11 +1394,10 @@ const getStatusInfo = (b: Business) => {
                           ) : (
                             <button
                               onClick={() => goToPage(page as number)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                                currentPage === page
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
                                   ? "bg-[#0519CE] text-white"
                                   : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                              }`}
+                                }`}
                             >
                               {page}
                             </button>
@@ -1404,11 +1410,10 @@ const getStatusInfo = (b: Business) => {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                        currentPage === totalPages
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
                           ? "border-gray-200 text-gray-400 cursor-not-allowed"
                           : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       Next
                     </button>
@@ -1420,11 +1425,11 @@ const getStatusInfo = (b: Business) => {
         </div>
       </div>
       {OpenAddBusinessModal && (
-                    <AddBusinessModal
-                      setOpenAddBusinessModal={setOpenAddBusinessModal}
-                      onBusinessCreated={() => {}}
-                    />
-                  )}
+        <AddBusinessModal
+          setOpenAddBusinessModal={setOpenAddBusinessModal}
+          onBusinessCreated={() => { }}
+        />
+      )}
     </div>
   );
 }

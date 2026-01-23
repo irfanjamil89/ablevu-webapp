@@ -38,6 +38,7 @@ type Business = {
   business_status?: string | null;
   views: number;
   created_at: Date | string;
+  modified_at: Date | string;
   city: string;
   state: string;
   zipcode: string;
@@ -181,27 +182,27 @@ export default function Page() {
   const itemsPerPage = 6;
 
   useEffect(() => {
-  const t = setTimeout(() => {
-    setAppliedSearch(searchTerm.trim());
-    setCurrentPage(1);
-  }, 350);
+    const t = setTimeout(() => {
+      setAppliedSearch(searchTerm.trim());
+      setCurrentPage(1);
+    }, 350);
 
-  return () => clearTimeout(t);
-}, [searchTerm]);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
 
 
   const statusFilterLabel =
-  statusFilter === "draft"
-    ? "Draft"
-    : statusFilter === "pending approval"
-    ? "Pending Approval"
-    : statusFilter === "approved"
-    ? "Approved"
-    : statusFilter === "pending acclaim"
-    ? "Pending Acclaim"
-    : statusFilter === "claimed"
-    ? "Claimed"
-    : "";
+    statusFilter === "draft"
+      ? "Draft"
+      : statusFilter === "pending approval"
+        ? "Pending Approval"
+        : statusFilter === "approved"
+          ? "Approved"
+          : statusFilter === "pending acclaim"
+            ? "Pending Acclaim"
+            : statusFilter === "claimed"
+              ? "Claimed"
+              : "";
 
 
   // ---------- Fetch business types & accessible features ----------
@@ -212,7 +213,7 @@ export default function Page() {
     fetch(base + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        
+
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {
@@ -222,7 +223,7 @@ export default function Page() {
     fetch(base + "accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-        
+
         setFeatures(data.items || []);
       })
       .catch((error) => {
@@ -232,7 +233,7 @@ export default function Page() {
     fetch(base + "business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
-       
+
         setSchedules(data.data || []);
       })
       .catch((error) => {
@@ -261,13 +262,13 @@ export default function Page() {
     }
 
     if (firstLoadRef.current) {
-    setLoading(true);
-  }
+      setLoading(true);
+    }
 
     try {
       const response = await fetch(url, { headers });
       const data = await response.json();
-      
+
       const list: Business[] = data.data || [];
       setBusinesses(list);
     } catch (error) {
@@ -342,115 +343,115 @@ export default function Page() {
   // ---------- Status badge (business.business_status) ----------
 
   const getStatusInfo = (b: Business) => {
-  const s = normalizeStatus(b.business_status || "");
+    const s = normalizeStatus(b.business_status || "");
 
-  // ✅ normalize + alias support (pending, pending approval, pending approved etc.)
-  const key =
-    s === "draft"
-      ? "draft"
-      : s === "approved"
-      ? "approved"
-      : s === "claimed"
-      ? "claimed"
-      : s === "pending" || s === "pending approval" || s === "pending approved"
-      ? "pending approval"
-      : s === "pending acclaim" || s === "pending claim"
-      ? "pending acclaim"
-      : "";
+    // ✅ normalize + alias support (pending, pending approval, pending approved etc.)
+    const key =
+      s === "draft"
+        ? "draft"
+        : s === "approved"
+          ? "approved"
+          : s === "claimed"
+            ? "claimed"
+            : s === "pending" || s === "pending approval" || s === "pending approved"
+              ? "pending approval"
+              : s === "pending acclaim" || s === "pending claim"
+                ? "pending acclaim"
+                : "";
 
-  // ✅ if unknown or empty status
-  if (!key) return { label: "", bg: "", text: "" };
+    // ✅ if unknown or empty status
+    if (!key) return { label: "", bg: "", text: "" };
 
-  // ✅ UI mapping
-  const uiMap: Record<
-    string,
-    { label: string; bg: string; text: string }
-  > = {
-    draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
-    "pending approval": {
-      label: "Pending Approval",
-      bg: "#FFEFD5",
-      text: "#B46A00",
-    },
-    approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
-    "pending acclaim": {
-      label: "Pending Acclaim",
-      bg: "#EDE9FE",
-      text: "#5B21B6",
-    },
-    claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
+    // ✅ UI mapping
+    const uiMap: Record<
+      string,
+      { label: string; bg: string; text: string }
+    > = {
+      draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+      "pending approval": {
+        label: "Pending Approval",
+        bg: "#FFEFD5",
+        text: "#B46A00",
+      },
+      approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
+      "pending acclaim": {
+        label: "Pending Acclaim",
+        bg: "#EDE9FE",
+        text: "#5B21B6",
+      },
+      claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
+    };
+
+    return uiMap[key];
   };
-
-  return uiMap[key];
-};
 
   // ---------- Sorting + Status filter ----------
 
   const sortedBusinesses = useMemo(() => {
-  let arr = [...businesses];
+    let arr = [...businesses];
 
-  if (statusFilter) {
-    const filterKey = normalizeStatus(statusFilter);
+    if (statusFilter) {
+      const filterKey = normalizeStatus(statusFilter);
 
-    arr = arr.filter((b) => {
-      const status = normalizeStatus(b.business_status || "");
+      arr = arr.filter((b) => {
+        const status = normalizeStatus(b.business_status || "");
 
-      // normalize business status to one key
-      const businessKey =
-        status === "draft"
-          ? "draft"
-          : status === "approved"
-          ? "approved"
-          : status === "claimed"
-          ? "claimed"
-          : status === "pending" ||
-            status === "pending approval" ||
-            status === "pending approved"
-          ? "pending approval"
-          : status === "pending acclaim" || status === "pending claim"
-          ? "pending acclaim"
-          : "";
+        // normalize business status to one key
+        const businessKey =
+          status === "draft"
+            ? "draft"
+            : status === "approved"
+              ? "approved"
+              : status === "claimed"
+                ? "claimed"
+                : status === "pending" ||
+                  status === "pending approval" ||
+                  status === "pending approved"
+                  ? "pending approval"
+                  : status === "pending acclaim" || status === "pending claim"
+                    ? "pending acclaim"
+                    : "";
 
-      // normalize filter
-      const filterNormalized =
-        filterKey === "pending" ||
-        filterKey === "pending approval" ||
-        filterKey === "pending approved"
-          ? "pending approval"
-          : filterKey === "pending acclaim" || filterKey === "pending claim"
-          ? "pending acclaim"
-          : filterKey;
+        // normalize filter
+        const filterNormalized =
+          filterKey === "pending" ||
+            filterKey === "pending approval" ||
+            filterKey === "pending approved"
+            ? "pending approval"
+            : filterKey === "pending acclaim" || filterKey === "pending claim"
+              ? "pending acclaim"
+              : filterKey;
 
-      return businessKey === filterNormalized;
-    });
-  }
+        return businessKey === filterNormalized;
+      });
+    }
 
-  // 👇 baqi sorting logic jaisa ka waisa rehne do
-  switch (sortOption) {
-    case "name-asc":
-      arr.sort((a, b) => a.name.localeCompare(b.name));
-      break;
-    case "name-desc":
-      arr.sort((a, b) => b.name.localeCompare(a.name));
-      break;
-    case "created-asc":
-      arr.sort(
-        (a, b) =>
-          new Date(a.created_at).getTime() -
-          new Date(b.created_at).getTime()
-      );
-      break;
-    case "created-desc":
-      arr.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-      );
-      break;
-  }
+    // 👇 baqi sorting logic jaisa ka waisa rehne do
+    switch (sortOption) {
+      case "name-asc":
+        arr.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        arr.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "created-asc":
+        arr.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() -
+            new Date(b.created_at).getTime()
+        );
+        break;
+      case "created-desc":
+        arr.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        );
+        break;
+    }
 
-  return arr;
-}, [businesses, sortOption, statusFilter]);
+    return arr;
+  }, [businesses, sortOption, statusFilter]);
 
 
   // Schedule Helper
@@ -612,6 +613,14 @@ export default function Page() {
     return pages;
   };
 
+
+  const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
+    if (!url) return '';
+    const t = timestamp ? new Date(timestamp).getTime() : Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_t=${t}`;
+  };
+
   // ---------- UI ----------
 
   return (
@@ -662,10 +671,10 @@ export default function Page() {
                           {sortOption === "name-asc"
                             ? "Name A–Z"
                             : sortOption === "name-desc"
-                            ? "Name Z–A"
-                            : sortOption === "created-asc"
-                            ? "Oldest First"
-                            : "Newest First"}
+                              ? "Name Z–A"
+                              : sortOption === "created-asc"
+                                ? "Oldest First"
+                                : "Newest First"}
                           )
                         </span>
                       )}
@@ -796,14 +805,14 @@ export default function Page() {
                         </button>
                       </li>
                       <li>
-                          <button
-                            type="button"
-                            onClick={() => setStatusFilter("pending acclaim")}
-                            className="w-full text-left block px-3 py-1 hover:bg-gray-100"
-                          >
-                            Pending Acclaim
-                          </button>
-                        </li>
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilter("pending acclaim")}
+                          className="w-full text-left block px-3 py-1 hover:bg-gray-100"
+                        >
+                          Pending Acclaim
+                        </button>
+                      </li>
                       <li>
                         <button
                           type="button"
@@ -847,7 +856,7 @@ export default function Page() {
                     placeholder="Search by Name, City, Country"
                     className="w-full border-none focus:outline-none focus:ring-0 font-medium text-sm text-gray-700 placeholder-gray-500 ml-2"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}                    
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
 
@@ -881,7 +890,7 @@ export default function Page() {
                       <div
                         className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
                         style={{
-                          backgroundImage: `url(${business?.logo_url})`,
+                          backgroundImage: `url(${getCacheBustedUrl(business?.logo_url, business.modified_at || business.created_at)})`,
                         }}
                       >
                         {statusInfo.label && (
@@ -1054,11 +1063,10 @@ export default function Page() {
                     <button
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                        currentPage === 1
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
                           ? "border-gray-200 text-gray-400 cursor-not-allowed"
                           : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       Previous
                     </button>
@@ -1074,11 +1082,10 @@ export default function Page() {
                           ) : (
                             <button
                               onClick={() => goToPage(page as number)}
-                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                                currentPage === page
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
                                   ? "bg-[#0519CE] text-white"
                                   : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                              }`}
+                                }`}
                             >
                               {page}
                             </button>
@@ -1091,11 +1098,10 @@ export default function Page() {
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                        currentPage === totalPages
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
                           ? "border-gray-200 text-gray-400 cursor-not-allowed"
                           : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                      }`}
+                        }`}
                     >
                       Next
                     </button>
@@ -1110,7 +1116,7 @@ export default function Page() {
       {OpenAddBusinessModal && (
         <AddBusinessModal
           setOpenAddBusinessModal={setOpenAddBusinessModal}
-          onBusinessCreated={() => {}}
+          onBusinessCreated={() => { }}
         />
       )}
     </div>
