@@ -10,7 +10,6 @@ import About from '../component/About'
 import Footer from '../component/Footer'
 import CitiesMap from '../component/CitiesMap';
 
-// test
 export const metadata: Metadata = {
   title: "Access-Friendly Cities | AbleVu",
   description:
