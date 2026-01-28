@@ -45,7 +45,7 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
     const fetchBusinesses = async () => {
       try {
         const token = localStorage.getItem("access_token");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list?limit=1000`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list?limit=5`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
