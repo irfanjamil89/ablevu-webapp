@@ -53,6 +53,7 @@ type BusinessType = {
   name: string;
 };
 
+// 🔹 record from /accessible-feature/list
 type FeatureType = {
   id: string;
   title: string;
@@ -74,6 +75,7 @@ type StatusKey =
   | "approved"
   | "pending acclaim"
   | "claimed";
+
 
 type BusinessSchedule = {
   id: string;
@@ -99,18 +101,10 @@ type ScheduleListResponse = {
   totalPages: number;
 };
 
-// ✅ New type for API response
-type BusinessListResponse = {
-  data: Business[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-};
-
 const normalizeStatusKey = (raw: string | null | undefined): StatusKey | "" => {
   const s = normalizeStatus(raw || "");
 
+  // aliases / old values support
   if (s === "pending" || s === "pending approved" || s === "pending approval")
     return "pending approval";
 
@@ -143,6 +137,7 @@ const STATUS_UI: Record<
   claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
 };
 
+
 const normalizeStatus = (status: string) =>
   status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
 
@@ -170,11 +165,7 @@ function extractAddressParts(result: { address_components?: any[] }) {
 // ---------- Component ----------
 
 export default function Page() {
-  // ✅ Updated state management
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [totalBusinesses, setTotalBusinesses] = useState(0); // ✅ Total from API
-  const [totalPages, setTotalPages] = useState(0); // ✅ Total pages from API
-  
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [features, setFeatures] = useState<FeatureType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,18 +177,19 @@ export default function Page() {
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
 
   const [schedules, setSchedules] = useState<BusinessSchedule[]>([]);
+  const firstLoadRef = React.useRef(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6; // ✅ This will be sent to API
+  const itemsPerPage = 6;
 
-  // ✅ Debounced search
   useEffect(() => {
     const t = setTimeout(() => {
       setAppliedSearch(searchTerm.trim());
-      setCurrentPage(1); // Reset to page 1 on search
+      setCurrentPage(1);
     }, 350);
 
     return () => clearTimeout(t);
   }, [searchTerm]);
+
 
   const statusFilterLabel =
     statusFilter === "draft"
@@ -212,7 +204,8 @@ export default function Page() {
               ? "Claimed"
               : "";
 
-  // ---------- Fetch business types & accessible features (unchanged) ----------
+
+  // ---------- Fetch business types & accessible features ----------
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -220,6 +213,7 @@ export default function Page() {
     fetch(base + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
+
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {
@@ -229,6 +223,7 @@ export default function Page() {
     fetch(base + "accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
+
         setFeatures(data.items || []);
       })
       .catch((error) => {
@@ -238,57 +233,23 @@ export default function Page() {
     fetch(base + "business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
+
         setSchedules(data.data || []);
       })
       .catch((error) => {
         console.error("Error fetching business schedules:", error);
       });
   }, []);
-  // ✅ NEW: Server-side pagination fetch function
-  const fetchBusinesses = useCallback(async () => {
+
+  // ---------- Fetch businesses (shared function) ----------
+
+ const fetchBusinesses = useCallback(async (search: string) => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
-    // ✅ Build URL with server-side parameters
-    const params = new URLSearchParams({
-      page: currentPage.toString(),
-      limit: itemsPerPage.toString(),
-    });
+    let url = base + "business/list?page=1&limit=1000";
 
-    // ✅ Add search parameter
-    if (appliedSearch) {
-      params.append("search", appliedSearch);
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
     }
-
-    // ✅ Add status filter parameter (adjust key based on your API)
-    if (statusFilter) {
-      params.append("status", statusFilter);
-    }
-
-    // ✅ Add sort parameter (adjust format based on your API)
-    if (sortOption) {
-      // Convert our format to API format
-      // Adjust these based on your actual API requirements
-      switch (sortOption) {
-        case "name-asc":
-          params.append("sortBy", "name");
-          params.append("sortOrder", "asc");
-          break;
-        case "name-desc":
-          params.append("sortBy", "name");
-          params.append("sortOrder", "desc");
-          break;
-        case "created-asc":
-          params.append("sortBy", "created_at");
-          params.append("sortOrder", "asc");
-          break;
-        case "created-desc":
-          params.append("sortBy", "created_at");
-          params.append("sortOrder", "desc");
-          break;
-      }
-    }
-
-    const url = `${base}business/list?${params.toString()}`;
 
     const token =
       typeof window !== "undefined"
@@ -300,35 +261,33 @@ export default function Page() {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    setLoading(true);
+    if (firstLoadRef.current) {
+      setLoading(true);
+    }
 
     try {
       const response = await fetch(url, { headers });
-      const data: BusinessListResponse = await response.json();
+      const data = await response.json();
 
-      // ✅ Set data from API response
-      setBusinesses(data.data || []);
-      setTotalBusinesses(data.total || 0);
-      setTotalPages(data.totalPages || 0);
+      const list: Business[] = data.data || [];
+      setBusinesses(list);
     } catch (error) {
       console.error("Error fetching data:", error);
-      setBusinesses([]);
-      setTotalBusinesses(0);
-      setTotalPages(0);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, appliedSearch, statusFilter, sortOption]);
+  }, []);
 
-  // ✅ Fetch whenever dependencies change
+  // fetch on first load + whenever appliedSearch changes
   useEffect(() => {
-    fetchBusinesses();
-  }, [fetchBusinesses]);
+    fetchBusinesses(appliedSearch);
+  }, [appliedSearch, fetchBusinesses]);
 
   // ---------- Callback for modal to refresh list ----------
 
   const handleBusinessCreated = () => {
-    fetchBusinesses();
+    // re-fetch businesses with current search filter
+    fetchBusinesses(appliedSearch);
   };
 
   // ---------- Maps (ID -> Name) ----------
@@ -386,6 +345,7 @@ export default function Page() {
   const getStatusInfo = (b: Business) => {
     const s = normalizeStatus(b.business_status || "");
 
+    // ✅ normalize + alias support (pending, pending approval, pending approved etc.)
     const key =
       s === "draft"
         ? "draft"
@@ -399,8 +359,10 @@ export default function Page() {
                 ? "pending acclaim"
                 : "";
 
+    // ✅ if unknown or empty status
     if (!key) return { label: "", bg: "", text: "" };
 
+    // ✅ UI mapping
     const uiMap: Record<
       string,
       { label: string; bg: string; text: string }
@@ -423,10 +385,76 @@ export default function Page() {
     return uiMap[key];
   };
 
-  // ✅ REMOVED: sortedBusinesses useMemo - no longer needed
-  // Server now handles sorting and filtering
+  // ---------- Sorting + Status filter ----------
 
-  // Schedule Helper Functions
+  const sortedBusinesses = useMemo(() => {
+    let arr = [...businesses];
+
+    if (statusFilter) {
+      const filterKey = normalizeStatus(statusFilter);
+
+      arr = arr.filter((b) => {
+        const status = normalizeStatus(b.business_status || "");
+
+        // normalize business status to one key
+        const businessKey =
+          status === "draft"
+            ? "draft"
+            : status === "approved"
+              ? "approved"
+              : status === "claimed"
+                ? "claimed"
+                : status === "pending" ||
+                  status === "pending approval" ||
+                  status === "pending approved"
+                  ? "pending approval"
+                  : status === "pending acclaim" || status === "pending claim"
+                    ? "pending acclaim"
+                    : "";
+
+        // normalize filter
+        const filterNormalized =
+          filterKey === "pending" ||
+            filterKey === "pending approval" ||
+            filterKey === "pending approved"
+            ? "pending approval"
+            : filterKey === "pending acclaim" || filterKey === "pending claim"
+              ? "pending acclaim"
+              : filterKey;
+
+        return businessKey === filterNormalized;
+      });
+    }
+
+    // 👇 baqi sorting logic jaisa ka waisa rehne do
+    switch (sortOption) {
+      case "name-asc":
+        arr.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        arr.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "created-asc":
+        arr.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() -
+            new Date(b.created_at).getTime()
+        );
+        break;
+      case "created-desc":
+        arr.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        );
+        break;
+    }
+
+    return arr;
+  }, [businesses, sortOption, statusFilter]);
+
+
+  // Schedule Helper
   const dayOrder = [
     "monday",
     "tuesday",
@@ -515,23 +543,38 @@ export default function Page() {
     return key || "Unknown feature";
   };
 
-  // ✅ NEW: Pagination handlers
+  // ---------- Loading state ----------
+
+  if (loading) {
+    return (
+      <div className=" w-full flex justify-center items-center h-[400px]">
+        <img
+          src="/assets/images/favicon.png"
+          className="w-15 h-15 animate-spin"
+          alt="Favicon"
+        />
+      </div>
+    );
+  }
+
+  const totalPages = Math.ceil(sortedBusinesses.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentbusiness = sortedBusinesses.slice(startIndex, endIndex);
+
   const goToPage = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -570,6 +613,7 @@ export default function Page() {
     return pages;
   };
 
+
   const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
     if (!url) return '';
     const t = timestamp ? new Date(timestamp).getTime() : Date.now();
@@ -577,23 +621,6 @@ export default function Page() {
     return `${url}${separator}_t=${t}`;
   };
 
-  // ---------- Loading state ----------
-
-  if (loading && businesses.length === 0) {
-    return (
-      <div className="w-full flex justify-center items-center h-[400px]">
-        <img
-          src="/assets/images/favicon.png"
-          className="w-15 h-15 animate-spin"
-          alt="Favicon"
-        />
-      </div>
-    );
-  }
-
-  // ✅ Calculate display indices for pagination info
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, totalBusinesses);
   // ---------- UI ----------
 
   return (
@@ -604,7 +631,7 @@ export default function Page() {
             {/* Header */}
             <div className="flex flex-wrap gap-y-4 items-center justify-between mb-8">
               <h1 className="text-2xl font-semibold text-gray-900">
-                {`Business Profiles (${totalBusinesses})`}
+                {`Business Profiles (${sortedBusinesses.length})`}
               </h1>
 
               {/* Controls */}
@@ -618,7 +645,6 @@ export default function Page() {
                       setAppliedSearch("");
                       setSortOption("");
                       setStatusFilter("");
-                      setCurrentPage(1);
                     }}
                   >
                     Clear All
@@ -679,10 +705,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSortOption("name-asc");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setSortOption("name-asc")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Name (A–Z)
@@ -691,10 +714,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSortOption("name-desc");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setSortOption("name-desc")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Name (Z–A)
@@ -703,10 +723,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSortOption("created-asc");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setSortOption("created-asc")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Created Date (Low–High)
@@ -715,10 +732,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSortOption("created-desc");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setSortOption("created-desc")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Created Date (High–Low)
@@ -740,7 +754,7 @@ export default function Page() {
                     htmlFor="business-status-toggle"
                     className="flex items-center justify-between border border-gray-300 text-gray-500 text-sm px-3 py-3 rounded-md hover:border-[#0519CE] cursor-pointer w-auto lg:w-auto transition-all duration-200"
                   >
-                    <span className="flex items-center">
+                    <span className="flex items- center">
                       Business Status
                       {statusFilterLabel && (
                         <span className="ml-1 text-xs text-gray-400">
@@ -775,10 +789,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setStatusFilter("draft");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setStatusFilter("draft")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Draft
@@ -787,10 +798,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setStatusFilter("pending approval");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setStatusFilter("pending approval")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Pending Approved
@@ -799,10 +807,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setStatusFilter("pending acclaim");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setStatusFilter("pending acclaim")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Pending Acclaim
@@ -811,10 +816,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setStatusFilter("approved");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setStatusFilter("approved")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Approved
@@ -823,10 +825,7 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => {
-                            setStatusFilter("claimed");
-                            setCurrentPage(1);
-                          }}
+                          onClick={() => setStatusFilter("claimed")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
                           Claimed
@@ -871,260 +870,245 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ✅ Loading indicator for page changes */}
-            {loading && (
-              <div className="w-full flex justify-center items-center h-[200px]">
-                <img
-                  src="/assets/images/favicon.png"
-                  className="w-10 h-10 animate-spin"
-                  alt="Loading"
-                />
-              </div>
-            )}
+            {/* Business cards */}
+            <section>
+              <div>
+                {currentbusiness.map((business) => {
+                  const statusInfo = getStatusInfo(business);
+                  const allFeatures = business.accessibilityFeatures || [];
+                  const visibleFeatures = allFeatures.slice(0, 2);
+                  const extraFeaturesCount =
+                    allFeatures.length - visibleFeatures.length;
 
-            {/* Business cards - ✅ Now using businesses directly from API */}
-            {!loading && (
-              <section>
-                <div>
-                  {businesses.map((business) => {
-                    const statusInfo = getStatusInfo(business);
-                    const allFeatures = business.accessibilityFeatures || [];
-                    const visibleFeatures = allFeatures.slice(0, 2);
-                    const extraFeaturesCount =
-                      allFeatures.length - visibleFeatures.length;
-
-                    return (
-                      <Link
-                        key={business.id}
-                        href={`/business-profile/${business.id}`}
-                        className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
+                  return (
+                    <Link
+                      key={business.id}
+                      href={`/business-profile/${business.id}`}
+                      className="border border-gray-200 rounded-xl flex flex-col md:flex-row font-['Helvetica'] bg-white mb-4"
+                    >
+                      {/* Left image */}
+                      <div
+                        className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
+                        style={{
+                          backgroundImage: `url(${getCacheBustedUrl(business?.logo_url, business.modified_at || business.created_at)})`,
+                        }}
                       >
-                        {/* Left image */}
-                        <div
-                          className="relative flex items-center justify-center w-full sm:h-[180px] md:h-auto md:w-[220px] shadow-sm bg-[#E5E5E5] bg-contain bg-center bg-no-repeat opacity-95"
-                          style={{
-                            backgroundImage: `url(${getCacheBustedUrl(business?.logo_url, business.modified_at || business.created_at)})`,
-                          }}
-                        >
-                          {statusInfo.label && (
-                            <span
-                              className="absolute top-3 md:right-2 right-14 text-sm font-semibold px-2 py-1 rounded-md shadow-sm"
-                              style={{
-                                backgroundColor: statusInfo.bg,
-                                color: statusInfo.text,
-                              }}
-                            >
-                              {statusInfo.label}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Right content */}
-                        <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
-                          <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
-                            <h3 className="font-semibold text-gray-800 text-2xl">
-                              {business.name}
-                            </h3>
-                            <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
-                              {/* Saved */}
-                              <label className="inline-flex items-center gap-1 cursor-pointer">
-                                <input type="checkbox" className="peer hidden" />
-                                <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="2"
-                                    stroke="black"
-                                    fill="white"
-                                    className="w-3.5 h-4 peer-checked:fill-black peer-checked:stroke-black transition-colors"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z"
-                                    />
-                                  </svg>
-                                  <span>0 Saved</span>
-                                </div>
-                              </label>
-
-                              {/* Views */}
-                              <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="white"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth="2"
-                                  stroke="black"
-                                  className="w-4 h-4"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                  />
-                                  <circle cx="12" cy="12" r="3" />
-                                </svg>
-                                {business.views} Views
-                              </button>
-
-                              {/* Recommendations */}
-                              <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="white"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth="2"
-                                  stroke="black"
-                                  className="w-4 h-4"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
-                                  />
-                                </svg>
-                                {business.businessRecomendations?.length ?? 0}{" "}
-                                Recommendations
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Categories */}
-                          <div className="text-md">
-                            <div className="flex">
-                              <span className="font-medium text-gray-500 pe-2">
-                                Categories
-                              </span>
-                              <ul className="flex flex-wrap md:flex-nowrap space-x-2">
-                                {business.linkedTypes.map((type) => (
-                                  <li
-                                    key={type.id}
-                                    className="bg-[#F7F7F7] rounded-full px-2"
-                                  >
-                                    {getBusinessTypeName(type)}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </div>
-
-                          {/* Accessible Features */}
-                          <div className="text-md text-gray-500 mt-2">
-                            <div className="flex flex-wrap md:gap-0 gap-2">
-                              <span className="font-medium text-gray-500 pe-2">
-                                Accessible Features
-                              </span>
-                              <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
-                                {visibleFeatures.map((feature) => (
-                                  <li
-                                    key={feature.id}
-                                    className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
-                                  >
-                                    {getFeatureName(feature)}
-                                  </li>
-                                ))}
-                                {extraFeaturesCount > 0 && (
-                                  <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-3">
-                                    +{extraFeaturesCount}
-                                  </li>
-                                )}
-                              </ul>
-                            </div>
-                          </div>
-
-                          {/* Other info */}
-                          <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-                            <img
-                              src="/assets/images/clock.webp"
-                              className="w-4 h-4"
-                            />
-                            <span className="text-md text-gray-700">
-                              {getTodayScheduleLabel(business.id) ||
-                                "Operating hours not specified"}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
-                            <img
-                              src="/assets/images/location.png"
-                              className="w-4 h-4"
-                            />
-                            <span className="text-md text-gray-700">
-                              {business.address}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-
-                {/* ✅ UPDATED PAGINATION CONTROLS */}
-                {totalBusinesses > 0 && (
-                  <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
-                    {/* Left side: Entry counter */}
-                    <div className="text-sm text-gray-600">
-                      Showing {startIndex + 1} to {endIndex} of{" "}
-                      {totalBusinesses} entries
-                    </div>
-
-                    {/* Right side: Pagination buttons */}
-                    <div className="flex items-center gap-2">
-                      {/* Previous Button */}
-                      <button
-                        onClick={goToPreviousPage}
-                        disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === 1
-                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
-                      >
-                        Previous
-                      </button>
-
-                      {/* Page Numbers */}
-                      <div className="flex items-center gap-1">
-                        {getPageNumbers().map((page, idx) => (
-                          <React.Fragment key={idx}>
-                            {page === "..." ? (
-                              <span className="px-3 py-1 text-gray-500">
-                                ...
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => goToPage(page as number)}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                                  currentPage === page
-                                    ? "bg-[#0519CE] text-white"
-                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            )}
-                          </React.Fragment>
-                        ))}
+                        {statusInfo.label && (
+                          <span
+                            className="absolute top-3 md:right-2 right-14 text-sm font-semibold px-2 py-1 rounded-md shadow-sm"
+                            style={{
+                              backgroundColor: statusInfo.bg,
+                              color: statusInfo.text,
+                            }}
+                          >
+                            {statusInfo.label}
+                          </span>
+                        )}
                       </div>
 
-                      {/* Next Button */}
-                      <button
-                        onClick={goToNextPage}
-                        disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === totalPages
-                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
-                      >
-                        Next
-                      </button>
-                    </div>
+                      {/* Right content */}
+                      <div className="flex-1 justify-between bg-white py-3 ps-5 space-y-5">
+                        <div className="flex flex-wrap space-y-4 md:items-center md:gap-0 gap-5 items-start md:flex-row flex-col justify-between mb-4">
+                          <h3 className="font-semibold text-gray-800 text-2xl">
+                            {business.name}
+                          </h3>
+                          <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
+                            {/* Saved */}
+                            <label className="inline-flex items-center gap-1 cursor-pointer">
+                              <input type="checkbox" className="peer hidden" />
+                              <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="2"
+                                  stroke="black"
+                                  fill="white"
+                                  className="w-3.5 h-4 peer-checked:fill-black peer-checked:stroke-black transition-colors"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-4-7 4V5z"
+                                  />
+                                </svg>
+                                <span>0 Saved</span>
+                              </div>
+                            </label>
+
+                            {/* Views */}
+                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="white"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="black"
+                                className="w-4 h-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                              {business.views} Views
+                            </button>
+
+                            {/* Recommendations */}
+                            <button className="flex items-center gap-1 bg-[#F0F1FF] text-[#1B19CE] text-xs font-semibold px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="white"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="black"
+                                className="w-4 h-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M14 9V5a3 3 0 00-3-3l-4 9v11h9.28a2 2 0 001.986-1.667l1.2-7A2 2 0 0017.486 11H14zM7 22H4a2 2 0 01-2-2v-9a2 2 0 012-2h3v13z"
+                                />
+                              </svg>
+                              {business.businessRecomendations?.length ?? 0}{" "}
+                              Recommendations
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Categories */}
+                        <div className="text-md">
+                          <div className="flex">
+                            <span className="font-medium text-gray-500 pe-2">
+                              Categories
+                            </span>
+                            <ul className="flex flex-wrap md:flex-nowrap space-x-2">
+                              {business.linkedTypes.map((type) => (
+                                <li
+                                  key={type.id}
+                                  className="bg-[#F7F7F7] rounded-full px-2"
+                                >
+                                  {getBusinessTypeName(type)}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Accessible Features */}
+                        <div className="text-md text-gray-500 mt-2">
+                          <div className="flex flex-wrap md:gap-0 gap-2">
+                            <span className="font-medium text-gray-500 pe-2">
+                              Accessible Features
+                            </span>
+                            <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
+                              {visibleFeatures.map((feature) => (
+                                <li
+                                  key={feature.id}
+                                  className="bg-[#F7F7F7] text-gray-700 rounded-full px-2"
+                                >
+                                  {getFeatureName(feature)}
+                                </li>
+                              ))}
+                              {extraFeaturesCount > 0 && (
+                                <li className="bg-[#F7F7F7] text-gray-700 rounded-full px-3">
+                                  +{extraFeaturesCount}
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Other info */}
+                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                          <img
+                            src="/assets/images/clock.webp"
+                            className="w-4 h-4"
+                          />
+                          <span className="text-md text-gray-700">
+                            {getTodayScheduleLabel(business.id) ||
+                              "Operating hours not specified"}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-md text-gray-500 mt-2">
+                          <img
+                            src="/assets/images/location.png"
+                            className="w-4 h-4"
+                          />
+                          <span className="text-md text-gray-700">
+                            {business.address}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* ===== PAGINATION CONTROLS ===== */}
+              {!loading && sortedBusinesses.length > 0 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+                  {/* Left side: Entry counter */}
+                  <div className="text-sm text-gray-600">
+                    Showing {startIndex + 1} to{" "}
+                    {Math.min(endIndex, sortedBusinesses.length)} of{" "}
+                    {sortedBusinesses.length} entries
                   </div>
-                )}
-              </section>
-            )}
+
+                  {/* Right side: Pagination buttons */}
+                  <div className="flex items-center gap-2">
+                    {/* Previous Button */}
+                    <button
+                      onClick={goToPreviousPage}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
+                    >
+                      Previous
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers().map((page, idx) => (
+                        <React.Fragment key={idx}>
+                          {page === "..." ? (
+                            <span className="px-3 py-1 text-gray-500">
+                              ...
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => goToPage(page as number)}
+                              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                                  ? "bg-[#0519CE] text-white"
+                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                }`}
+                            >
+                              {page}
+                            </button>
+                          )}
+                        </React.Fragment>
+                      ))}
+                    </div>
+
+                    {/* Next Button */}
+                    <button
+                      onClick={goToNextPage}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
           </div>
         </div>
       </div>
@@ -1132,7 +1116,7 @@ export default function Page() {
       {OpenAddBusinessModal && (
         <AddBusinessModal
           setOpenAddBusinessModal={setOpenAddBusinessModal}
-          onBusinessCreated={handleBusinessCreated}
+          onBusinessCreated={() => { }}
         />
       )}
     </div>

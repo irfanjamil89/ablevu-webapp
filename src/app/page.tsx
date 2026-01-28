@@ -34,7 +34,7 @@ export default function Homepage() {
       <Header/>
       <Herosection />
       <Citiesslider />
-      <Mapsection />
+      <Mapsection/>
       <Booking />
       <Cta />
       <Benefit />

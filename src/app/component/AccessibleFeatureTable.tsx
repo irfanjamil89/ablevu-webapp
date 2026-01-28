@@ -23,6 +23,7 @@ type BusinessType = {
   id: string;
   name: string;
 };
+
 type Props = {
   onCountChange?: (count: number) => void;
 };
@@ -40,29 +41,25 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
     const [openSuccessModal, setOpenSuccessModal] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const itemsPerPage = 10;
 
-  const totalPages = Math.ceil(features.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentFeatures = features.slice(startIndex, endIndex);
+    const goToPage = (page: number) => {
+      setCurrentPage(page);
+    };
 
-  const goToPage = (page: number) => {
-    setCurrentPage(page);
-  };
+    const goToNextPage = () => {
+      if (currentPage < totalPages) {
+        setCurrentPage(currentPage + 1);
+      }
+    };
 
-  const goToNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const goToPreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-  
+    const goToPreviousPage = () => {
+      if (currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    };
 
     const fetchFeatures = async () => {
       setLoading(true);
@@ -70,30 +67,37 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
         const [ftRes, btRes, fRes] = await Promise.all([
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature-types/list?limit=1000`).then(res => res.json()),
           fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business-type/list?limit=1000`).then(res => res.json()),
-          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/list?limit=1000`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/list?limit=${itemsPerPage}&page=${currentPage}`, {
             headers: { "Content-Type": "application/json" },
           }).then(res => res.json())
         ]);
 
         setFeatureTypes(ftRes.data || []);
         setBusinessTypes(btRes.data || []);
+        
         const items = fRes.items || [];
         setFeatures(items);
-        if (onCountChange) onCountChange(items.length);
+        
+        // Update total count and pages from API response
+        const total = fRes.total || 0;
+        setTotalItems(total);
+        setTotalPages(fRes.totalPages || 1);
+        
+        if (onCountChange) onCountChange(total);
       } catch (err) {
         console.error("Error fetching features:", err);
       } finally {
         setLoading(false);
       }
     };
+
     useImperativeHandle(ref, () => ({
       fetchFeatures,
     }));
 
     useEffect(() => {
       fetchFeatures();
-    }, []);
-
+    }, [currentPage]);
 
     const getFeatureTypeNames = (linked: LinkedType[]) =>
       linked
@@ -118,12 +122,13 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
 
       try {
         const res = await fetch(
-           `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/delete/${featureToDelete.id}`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-feature/delete/${featureToDelete.id}`,
           {
             method: "DELETE",
             headers: {
               Authorization: `Bearer ${token}`,
-             "Content-Type": "application/json" },
+              "Content-Type": "application/json"
+            },
           }
         );
 
@@ -140,45 +145,47 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
     };
 
     if (loading) {
-      return <div className="flex justify-center items-center h-[400px]">
-        <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
-      </div>;
+      return (
+        <div className="flex justify-center items-center h-[400px]">
+          <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
+        </div>
+      );
     }
 
     const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
+      const pages = [];
+      const maxVisiblePages = 5;
 
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
+      if (totalPages <= maxVisiblePages) {
+        for (let i = 1; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
-        pages.push(1);
-        pages.push('...');
-        pages.push(currentPage - 1);
-        pages.push(currentPage);
-        pages.push(currentPage + 1);
-        pages.push('...');
-        pages.push(totalPages);
+        if (currentPage <= 3) {
+          for (let i = 1; i <= 4; i++) {
+            pages.push(i);
+          }
+          pages.push('...');
+          pages.push(totalPages);
+        } else if (currentPage >= totalPages - 2) {
+          pages.push(1);
+          pages.push('...');
+          for (let i = totalPages - 3; i <= totalPages; i++) {
+            pages.push(i);
+          }
+        } else {
+          pages.push(1);
+          pages.push('...');
+          pages.push(currentPage - 1);
+          pages.push(currentPage);
+          pages.push(currentPage + 1);
+          pages.push('...');
+          pages.push(totalPages);
+        }
       }
-    }
 
-    return pages;
-  };
+      return pages;
+    };
 
     return (
       <div className="w-full rounded-lg shadow-sm border border-gray-200">
@@ -195,9 +202,9 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
             </thead>
 
             <tbody className="divide-y divide-gray-200">
-              {currentFeatures.map((feature, index) => (
+              {features.map((feature, index) => (
                 <tr key={feature.id} className="hover:bg-gray-50">
-                  <td className="px-6 pr-4 pl-3">{index + 1}</td>
+                  <td className="px-6 pr-4 pl-3">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="px-6 pr-4 pl-3">{feature.title}</td>
                   <td className="px-6 py-4">{getFeatureTypeNames(feature.linkedTypes)}</td>
                   <td className="px-6 py-4 w-2/5">{getBusinessTypeNames(feature.linkedBusinessTypes)}</td>
@@ -213,7 +220,6 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
                     >
                       ⋮
                     </label>
-
 
                     <div className="absolute right-0 mt-2 w-[180px] bg-white border border-gray-200 rounded-lg shadow-lg z-50 hidden peer-checked:flex flex-col">
                       <button
@@ -246,61 +252,61 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
             </tbody>
           </table>
           {!loading && features.length > 0 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
-            {/* Left side: Entry counter */}
-            <div className="text-sm text-gray-600">
-              Showing {startIndex + 1} to {Math.min(endIndex, features.length)} of {features.length} entries
-            </div>
-
-            {/* Right side: Pagination buttons */}
-            <div className="flex items-center gap-2">
-              {/* Previous Button */}
-              <button
-                onClick={goToPreviousPage}
-                disabled={currentPage === 1}
-                className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
-                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                  }`}
-              >
-                Previous
-              </button>
-
-              {/* Page Numbers */}
-              <div className="flex items-center gap-1">
-                {getPageNumbers().map((page, idx) => (
-                  <React.Fragment key={idx}>
-                    {page === '...' ? (
-                      <span className="px-3 py-1 text-gray-500">...</span>
-                    ) : (
-                      <button
-                        onClick={() => goToPage(page as number)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
-                          ? "bg-[#0519CE] text-white"
-                          : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                          }`}
-                      >
-                        {page}
-                      </button>
-                    )}
-                  </React.Fragment>
-                ))}
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white">
+              {/* Left side: Entry counter */}
+              <div className="text-sm text-gray-600">
+                Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} entries
               </div>
 
-              {/* Next Button */}
-              <button
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
-                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                  : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                  }`}
-              >
-                Next
-              </button>
+              {/* Right side: Pagination buttons */}
+              <div className="flex items-center gap-2">
+                {/* Previous Button */}
+                <button
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                    ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    }`}
+                >
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {getPageNumbers().map((page, idx) => (
+                    <React.Fragment key={idx}>
+                      {page === '...' ? (
+                        <span className="px-3 py-1 text-gray-500">...</span>
+                      ) : (
+                        <button
+                          onClick={() => goToPage(page as number)}
+                          className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                            ? "bg-[#0519CE] text-white"
+                            : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
+                        >
+                          {page}
+                        </button>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                    ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                    }`}
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
         </div>
         {isUpdateFormOpen && (
           <UpdateAccessibilityFeatureForm
@@ -392,4 +398,5 @@ const AccessibleFeatureTable = forwardRef<{ fetchFeatures: () => void }, Props>(
       </div>
     );
   });
+
 export default AccessibleFeatureTable;
