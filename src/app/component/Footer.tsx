@@ -40,15 +40,18 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#0A1733] px-6 py-10 text-white text-center sm:pt-[50px] sm:text-center md:px-20 md:pt-[150px] md:text-start lg:pt-[150px] lg:text-start">
-      <div className="grid max-w-7xl grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:mx-auto">
+      <div className="grid max-w-7xl grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 lg:mx-auto">
         {/* Logo and Social Icons */}
         <div>
-          <div className="mb-4 flex items-center justify-center lg:justify-start">
+          <div className="mb-4">
             <img
               src="/assets/images/ablevu-white-logo.png"
               alt="AbleVu Logo"
               className="mr-2 h-20 object-contain"
             />
+            {/* <p>AbleVu is committed to making our website accessible and usable for everyone. Accessibility is an ongoing effort, and we continue to improve our digital experience.
+              If you experience difficulty accessing any part of our site, please contact us at support@ablevu.com.
+            </p> */}
           </div>
           <div className="mt-4 flex space-x-4 justify-center lg:justify-start">
             <a href="#" className="hover:text-blue-400">

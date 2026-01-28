@@ -164,7 +164,7 @@ function extractAddressParts(result: { address_components?: any[] }) {
 
 // ---------- Component ----------
 
-export default function Page() {
+export default function Page1() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [features, setFeatures] = useState<FeatureType[]>([]);
