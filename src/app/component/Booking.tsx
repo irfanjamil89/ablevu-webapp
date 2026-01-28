@@ -26,7 +26,7 @@ export default function Booking() {
           alt="Book"
         />
         <h3 className="mb-2 text-xl font-semibold">Book</h3>
-        <p className="text-center text-base text-gray-600">
+        <p className="text-center text-base text-[#00B4FF]">
           Book an introductory <br /> call
         </p>
       </div>
@@ -50,7 +50,7 @@ export default function Booking() {
           alt="Growth"
         />
         <h3 className="mb-2 text-xl font-semibold">Growth</h3>
-        <p className="text-center text-base text-gray-600">
+        <p className="text-center text-base text-[#00B4FF]">
           Partner with AbleVu to grow <br />
           accessibility
         </p>
@@ -58,7 +58,7 @@ export default function Booking() {
     </div>
 
     <div className="mt-12 text-center font-['Roboto']">
-      <button className="rounded-full text-[16px] bg-gray-800 px-8 py-3 font-medium text-white transition hover:bg-gray-900 cursor-pointer">
+      <button className="rounded-full text-[16px] bg-[#00B4FF] px-8 py-3 font-medium text-white transition hover:bg-[#00B4FF] cursor-pointer">
         Book a Call
       </button>
     </div>

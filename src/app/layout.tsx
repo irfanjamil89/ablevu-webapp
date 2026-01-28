@@ -1,8 +1,10 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-import { Providers } from "@/app/component/Providers"; // Import Providers
+import { Providers } from "@/app/component/Providers";
+import Chatbot from "./component/Chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,20 +39,21 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-
       <head>
-        {/* ⭐ Google Maps Places API Script */}
+        {/* Google Maps Places API Script */}
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
           strategy="beforeInteractive"
         />
       </head>
 
-
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           {children}
         </Providers>
+        
+        {/* Chatbot appears on all pages */}
+       <Chatbot/>
       </body>
     </html>
   );
