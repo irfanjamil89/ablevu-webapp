@@ -1,4 +1,4 @@
-// app/components/DialogflowChatbot.tsx
+// src/app/component/Chatbot.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -6,18 +6,20 @@ import Script from 'next/script';
 
 export default function Chatbot() {
   useEffect(() => {
-    // Any additional initialization if needed
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://www.gstatic.com/dialogflow-console/fast/df-messenger/prod/v1/themes/df-messenger-default.css';
+    document.head.appendChild(link);
+
+    return () => {
+      if (document.head.contains(link)) {
+        document.head.removeChild(link);
+      }
+    };
   }, []);
 
   return (
     <>
-      {/* Load Dialogflow CSS */}
-      <link
-        rel="stylesheet"
-        href="https://www.gstatic.com/dialogflow-console/fast/df-messenger/prod/v1/themes/df-messenger-default.css"
-      />
-
-      {/* Load Dialogflow Script */}
       <Script
         src="https://www.gstatic.com/dialogflow-console/fast/df-messenger/prod/v1/df-messenger.js"
         strategy="lazyOnload"
@@ -38,7 +40,6 @@ export default function Chatbot() {
           --df-messenger-titlebar-icon-height: 32px;
         }
 
-        /* WCAG 2.2 AA helpers */
         .visually-hidden {
           position: absolute !important;
           height: 1px;
@@ -70,6 +71,7 @@ export default function Chatbot() {
           <h2 id="chat-label" className="visually-hidden">
             AbleVu Assistant
           </h2>
+          {/* @ts-expect-error - Web component not recognized by TypeScript */}
           <df-messenger
             project-id="ablevu-2"
             agent-id="2659afb8-bfbf-4610-b0c2-1c37d55d5d8b"
@@ -80,13 +82,17 @@ export default function Chatbot() {
             location="us-central1"
             url-allowlist="https://cozy-narwhal-217323.netlify.app/"
           >
+            {/* @ts-expect-error - Web component not recognized by TypeScript */}
             <df-messenger-chat-bubble
               chat-title="AbleBot"
               chat-subtitle="Ask about accessibility by city & features"
               expanded
               chat-icon="https://cozy-narwhal-217323.netlify.app/Ablebot-Logo.png"
               chat-title-icon="https://cozy-narwhal-217323.netlify.app/Ablebot-Logo.png"
-            ></df-messenger-chat-bubble>
+            >
+              {/* @ts-expect-error - Web component not recognized by TypeScript */}
+            </df-messenger-chat-bubble>
+            {/* @ts-expect-error - Web component not recognized by TypeScript */}
           </df-messenger>
         </section>
       </section>
