@@ -79,7 +79,7 @@ type StatusFilter =
   | "draft"
   | "pending approval"
   | "approved"
-  | "pending acclaim"
+  | "pending claim"
   | "claimed";
 
 
@@ -175,8 +175,8 @@ export default function Page() {
         ? "Approval Request"
         : statusFilter === "approved"
           ? "Approved"
-          : statusFilter === "pending acclaim"
-            ? "Pending Acclaim"
+          : statusFilter === "pending claim"
+            ? "Pending Claim"
             : statusFilter === "claimed"
               ? "Claimed"
               : "";
@@ -357,7 +357,7 @@ export default function Page() {
     | "draft"
     | "pending approval"
     | "approved"
-    | "pending acclaim"
+    | "pending claim"
     | "claimed";
 
   const STATUS_BADGE: Record<
@@ -371,8 +371,8 @@ export default function Page() {
       text: "#B46A00",
     },
     approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
-    "pending acclaim": {
-      label: "Pending Acclaim",
+    "pending claim": {
+      label: "Pending Claim",
       bg: "#EEF2FF",
       text: "#3730A3",
     },
@@ -384,7 +384,7 @@ export default function Page() {
 
     // backend aliases
     if (s === "pending" || s === "pending approved") return "pending approval";
-    if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
+    if (s === "pending claim" || s === "pending claim") return "pending claim";
 
     if (s === "draft") return "draft";
     if (s === "pending approval") return "pending approval";
@@ -425,8 +425,8 @@ export default function Page() {
           case "approved":
             return canonical === "approved";
 
-          case "pending acclaim":
-            return canonical === "pending acclaim";
+          case "pending claim":
+            return canonical === "pending claim";
 
           case "claimed":
             return canonical === "claimed";

@@ -66,14 +66,14 @@ type StatusFilter =
   | "draft"
   | "pending approval"
   | "approved"
-  | "pending acclaim"
+  | "pending claim"
   | "claimed";
 
 type StatusKey =
   | "draft"
   | "pending approval"
   | "approved"
-  | "pending acclaim"
+  | "pending claim"
   | "claimed";
 
 
@@ -108,8 +108,8 @@ const normalizeStatusKey = (raw: string | null | undefined): StatusKey | "" => {
   if (s === "pending" || s === "pending approved" || s === "pending approval")
     return "pending approval";
 
-  if (s === "pending acclaim" || s === "pending claim")
-    return "pending acclaim";
+  if (s === "pending claim" || s === "pending claim")
+    return "pending claim";
 
   if (s === "approved") return "approved";
   if (s === "draft") return "draft";
@@ -129,8 +129,8 @@ const STATUS_UI: Record<
     text: "#B46A00",
   },
   approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
-  "pending acclaim": {
-    label: "Pending Acclaim",
+  "pending claim": {
+    label: "Pending Claim",
     bg: "#EDE9FE",
     text: "#5B21B6",
   },
@@ -198,8 +198,8 @@ export default function Page() {
         ? "Pending Approval"
         : statusFilter === "approved"
           ? "Approved"
-          : statusFilter === "pending acclaim"
-            ? "Pending Acclaim"
+          : statusFilter === "pending claim"
+            ? "Pending Claim"
             : statusFilter === "claimed"
               ? "Claimed"
               : "";
@@ -355,8 +355,8 @@ export default function Page() {
             ? "claimed"
             : s === "pending" || s === "pending approval" || s === "pending approved"
               ? "pending approval"
-              : s === "pending acclaim" || s === "pending claim"
-                ? "pending acclaim"
+              : s === "pending claim" || s === "pending claim"
+                ? "pending claim"
                 : "";
 
     // ✅ if unknown or empty status
@@ -374,8 +374,8 @@ export default function Page() {
         text: "#B46A00",
       },
       approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
-      "pending acclaim": {
-        label: "Pending Acclaim",
+      "pending claim": {
+        label: "Pending Claim",
         bg: "#EDE9FE",
         text: "#5B21B6",
       },
@@ -408,8 +408,8 @@ export default function Page() {
                   status === "pending approval" ||
                   status === "pending approved"
                   ? "pending approval"
-                  : status === "pending acclaim" || status === "pending claim"
-                    ? "pending acclaim"
+                  : status === "pending claim" || status === "pending claim"
+                    ? "pending claim"
                     : "";
 
         // normalize filter
@@ -418,8 +418,8 @@ export default function Page() {
             filterKey === "pending approval" ||
             filterKey === "pending approved"
             ? "pending approval"
-            : filterKey === "pending acclaim" || filterKey === "pending claim"
-              ? "pending acclaim"
+            : filterKey === "pending claim" || filterKey === "pending claim"
+              ? "pending claim"
               : filterKey;
 
         return businessKey === filterNormalized;
@@ -807,10 +807,10 @@ export default function Page() {
                       <li>
                         <button
                           type="button"
-                          onClick={() => setStatusFilter("pending acclaim")}
+                          onClick={() => setStatusFilter("pending claim")}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
-                          Pending Acclaim
+                          Pending Claim
                         </button>
                       </li>
                       <li>
