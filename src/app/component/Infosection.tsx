@@ -34,9 +34,9 @@ export default function Infosection() {
         <p className="mb-3 text-gray-600 font-['Montserrat'] pt-2 text-[18px] lg:text-[18px] md:text-sm sm:text-sm">
           Sign up as a contributor
         </p>
-        <button className="rounded-full bg-[#26A8DC] px-6 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 font-['Montserrat'] lg:text-[16px]">
+        <a href='https://us02web.zoom.us/webinar/register/WN_JjZF98d0QlehZOzf79a6og' className="rounded-full bg-[#26A8DC] px-6 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 font-['Montserrat'] lg:text-[16px]">
           Sign Up
-        </button>
+        </a>
       </div>
 
       {/* Step 2 */}
@@ -57,9 +57,9 @@ export default function Infosection() {
         <p className="mb-3 text-gray-600 font-['Montserrat'] mt-2 text-[18px] lg:text-[18px] md:text-sm sm:text-sm">
           Learn how you can contribute
         </p>
-        <button className="mt-5 rounded-full bg-[#26A8DC] px-6 py-2 mb-3 text-sm font-semibold text-white transition hover:bg-blue-500 font-['Montserrat'] lg:text-[16px]">
+        <a href='https://us02web.zoom.us/webinar/register/WN_JjZF98d0QlehZOzf79a6og' className="mt-5 rounded-full bg-[#26A8DC] px-6 py-2 mb-3 text-sm font-semibold text-white transition hover:bg-blue-500 font-['Montserrat'] lg:text-[16px]">
           Join
-        </button>
+        </a>
         <p className="mt-1 text-gray-500 font-['Montserrat'] text-[18px] lg:text-[18px] md:text-sm sm:text-sm">
           Our Info Session
         </p>

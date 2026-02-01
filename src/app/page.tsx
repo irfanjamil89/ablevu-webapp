@@ -1,6 +1,5 @@
 import React from "react";
 import Header from "./component/Header";
-import Footer from "./component/Footer";
 import Herosection from "./component/Herosection";
 import Citiesslider from "./component/Citiesslider";
 import Mapsection from "./component/Mapsection";
@@ -12,6 +11,7 @@ import Expand from "./component/Expand";
 import Testimonials from "./component/Testimonials";
 import Partner from "./component/Partner";
 import About from "./component/About";
+import Footer from "./component/Footer";
 
 
 export const metadata = {
@@ -35,15 +35,15 @@ export default function Homepage() {
       <Herosection />
       <Citiesslider />
       <Mapsection/>
+      <Social />
       <Booking />
       <Cta />
       <Benefit />
-      <Social />
       <Expand />
       <Testimonials />
       <Partner />
       <About />
-      <Footer />
+      <Footer/>
     </main>
   );
 }
