@@ -109,7 +109,7 @@ type StatusKey =
   | "draft"
   | "pending approval"
   | "approved"
-  | "pending acclaim"
+  | "pending claim"
   | "claimed";
 
 // Label mapping for UI
@@ -117,7 +117,7 @@ const STATUS_LABELS: Record<StatusKey, string> = {
   draft: "Draft",
   "pending approval": "Pending Approval",
   approved: "Approved",
-  "pending acclaim": "Pending Acclaim",
+  "pending claim": "Pending claim",
   claimed: "Claimed",
 };
 
@@ -125,7 +125,7 @@ const ALL_STATUSES: StatusKey[] = [
   "draft",
   "pending approval",
   "approved",
-  "pending acclaim",
+  "pending claim",
   "claimed",
 ];
 
@@ -636,8 +636,8 @@ export default function BusinessSidebar({
     },
     {
       key: "submit_acclaim",
-      label: "Submit for Acclaim",
-      toStatus: "pending acclaim",
+      label: "Submit for Claim",
+      toStatus: "pending claim",
       roles: ["Business", "Contributor"],
     },
   ];
@@ -654,7 +654,7 @@ export default function BusinessSidebar({
       draft: ["submit_approval"],
       "pending approval": [],
       approved: ["submit_acclaim"],
-      "pending acclaim": [],
+      "pending claim": [],
       claimed: [],
     };
 

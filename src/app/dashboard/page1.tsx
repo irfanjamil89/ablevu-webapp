@@ -152,7 +152,7 @@ type StatusKey =
   | "draft"
   | "pending approval"
   | "approved"
-  | "pending acclaim"
+  | "pending claim"
   | "claimed";
 
 const STATUS_BADGE: Record<
@@ -166,8 +166,8 @@ const STATUS_BADGE: Record<
     text: "#B46A00",
   },
   approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
-  "pending acclaim": {
-    label: "Pending Acclaim",
+  "pending claim": {
+    label: "Pending Claim",
     bg: "#EEF2FF",
     text: "#3730A3",
   },
@@ -180,8 +180,8 @@ const toCanonicalStatus = (raw: string, b?: Business): StatusKey | null => {
 
   // aliases
   if (s === "pending" || s === "pending approved") return "pending approval";
-  if (s === "pending acclaim" || s === "pending claim")
-    return "pending acclaim";
+  if (s === "pending claim" || s === "pending claim")
+    return "pending claim";
 
   if (s === "draft") return "draft";
   if (s === "pending approval") return "pending approval";
