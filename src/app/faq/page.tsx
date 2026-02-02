@@ -2,9 +2,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import Header from '../component/Header';
 import Footer from '../component/Footer';
-import Header1 from '../component/Header1';
 import Header2 from '../component/Header2';
 
 interface FAQItem {
@@ -291,7 +289,7 @@ const FAQAccordionItem: React.FC<{
     );
 };
 
-const page: React.FC = () => {
+const Page: React.FC = () => {
     const [openItems, setOpenItems] = useState<Set<string>>(new Set());
 
     const toggleItem = (sectionIndex: number, itemIndex: number) => {
@@ -358,4 +356,4 @@ const page: React.FC = () => {
     );
 };
 
-export default page;
+export default Page;
