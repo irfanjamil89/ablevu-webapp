@@ -113,6 +113,7 @@ export default function Mappp() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [backgroundLoading, setBackgroundLoading] = useState(false);
   const ITEMS_PER_PAGE = 30; // Adjust as needed
 
   // Old modal (login/signup)
@@ -132,6 +133,9 @@ export default function Mappp() {
   // Plan modal states
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
+
+  // ✅ Ref to track background loading
+  const backgroundLoadingRef = useRef(false);
 
   // ===== Helper Functions =====
   const getToken = () =>
@@ -174,15 +178,10 @@ export default function Mappp() {
     return batch;
   };
 
-  // ✅ Debounce search input
+  // ✅ Debounce search input (only for filtering, not for API calls)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-      // Reset to first page when search changes
-      if (searchTerm !== debouncedSearch) {
-        setCurrentPage(1);
-        setBusinesses([]);
-      }
     }, 300);
 
     return () => clearTimeout(timer);
@@ -207,19 +206,38 @@ export default function Mappp() {
     fetchBusinesses(1);
   }, []);
 
-  // ✅ Fetch when debounced search changes
+  // ✅ Start background loading after totalPages is set
   useEffect(() => {
-    if (debouncedSearch !== searchTerm) return; // Prevent double fetch
-    fetchBusinesses(1);
-  }, [debouncedSearch]);
+    if (totalPages > 1 && !backgroundLoadingRef.current && businesses.length === ITEMS_PER_PAGE) {
+      loadRemainingPages();
+    }
+  }, [totalPages]);
 
-  // ✅ Filter and validate businesses
+  // ✅ Filter and validate businesses - search across multiple fields
   const filteredBusinesses = useMemo(() => {
-    return businesses.filter(
-      (business) =>
-        business.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-        business.address.toLowerCase().includes(debouncedSearch.toLowerCase())
-    );
+    if (!debouncedSearch.trim()) {
+      return businesses;
+    }
+
+    const searchLower = debouncedSearch.toLowerCase().trim();
+    
+    return businesses.filter((business) => {
+      // Search across multiple fields
+      const searchableFields = [
+        business.name,
+        business.address,
+        business.city,
+        business.state,
+        business.country,
+        business.zipcode,
+        business.description,
+        business.business_status,
+      ];
+
+      return searchableFields.some(field => 
+        field?.toLowerCase().includes(searchLower)
+      );
+    });
   }, [businesses, debouncedSearch]);
 
   // ✅ Filter businesses with valid coordinates for map display
@@ -246,6 +264,26 @@ export default function Mappp() {
     }
   }, [map, validBusinesses, shouldFitBounds]);
 
+  // ✅ Auto-fit map when search results change
+  useEffect(() => {
+    if (map && validBusinesses.length > 0 && debouncedSearch) {
+      // When searching, always fit bounds to show search results
+      const bounds = new google.maps.LatLngBounds();
+      validBusinesses.forEach((business) => {
+        bounds.extend({ lat: business.validLat, lng: business.validLng });
+      });
+      map.fitBounds(bounds);
+      
+      // If only one result, zoom in more
+      if (validBusinesses.length === 1) {
+        setTimeout(() => map.setZoom(15), 100);
+      }
+    } else if (map && !debouncedSearch && validBusinesses.length > 0) {
+      // When clearing search, fit to all businesses
+      fitBoundsToMarkers();
+    }
+  }, [debouncedSearch, validBusinesses, map]);
+
   // ✅ Debug: Log businesses with invalid coordinates
   useEffect(() => {
     if (businesses.length > 0) {
@@ -267,11 +305,11 @@ export default function Mappp() {
   }, [businesses]);
 
   // ✅ Fetch businesses with pagination support
-  const fetchBusinesses = async (page = 1) => {
+  const fetchBusinesses = async (page = 1, isBackground = false) => {
     try {
-      if (page === 1) {
+      if (page === 1 && !isBackground) {
         setLoading(true);
-      } else {
+      } else if (!isBackground) {
         setLoadingMore(true);
       }
 
@@ -293,22 +331,59 @@ export default function Mappp() {
       const result: ApiResponse = await response.json();
       
       // Append to existing businesses or replace if first page
-      setBusinesses(prev => page === 1 ? result.data || [] : [...prev, ...(result.data || [])]);
+      setBusinesses(prev => page === 1 && !isBackground ? result.data || [] : [...prev, ...(result.data || [])]);
       setTotalPages(result.totalPages || 1);
-      setCurrentPage(page);
       
-      if (page === 1) setShouldFitBounds(true);
+      if (!isBackground) {
+        setCurrentPage(page);
+      }
+      
+      if (page === 1 && !isBackground) setShouldFitBounds(true);
       setError(null);
+      
+      return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       console.error("Fetch error:", err);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (!isBackground) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   };
 
-  // ✅ Load more businesses
+  // ✅ Load remaining pages in background
+  const loadRemainingPages = async () => {
+    if (backgroundLoadingRef.current) return;
+    
+    backgroundLoadingRef.current = true;
+    setBackgroundLoading(true);
+    
+    console.log(`Starting background loading: Pages 2 to ${totalPages}`);
+    
+    try {
+      // Wait a bit to let initial render complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Load pages 2 to totalPages sequentially
+      for (let page = 2; page <= totalPages; page++) {
+        console.log(`Background loading page ${page}/${totalPages}`);
+        await fetchBusinesses(page, true);
+        // Small delay between requests to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      console.log('Background loading complete!');
+    } catch (err) {
+      console.error("Background loading error:", err);
+    } finally {
+      setBackgroundLoading(false);
+      backgroundLoadingRef.current = false;
+    }
+  };
+
+  // ✅ Load more businesses (for manual loading in sidebar)
   const loadMoreBusinesses = () => {
     if (currentPage < totalPages && !loadingMore) {
       fetchBusinesses(currentPage + 1);
@@ -658,7 +733,7 @@ export default function Mappp() {
 
             <input
               type="text"
-              placeholder="Search Business..."
+              placeholder="Search by name, location, city, state..."
               className="w-full outline-none text-gray-700"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -674,12 +749,42 @@ export default function Mappp() {
             )}
           </div>
 
-          {/* ✅ Results count */}
-          {!loading && filteredBusinesses.length > 0 && (
-            <p className="text-sm text-gray-600 mb-2">
-              Showing {filteredBusinesses.length} business{filteredBusinesses.length !== 1 ? 'es' : ''}
-              {debouncedSearch && ` for "${debouncedSearch}"`}
-            </p>
+          {/* ✅ Results count with background loading indicator */}
+          {!loading && businesses.length > 0 && (
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-600">
+                {debouncedSearch ? (
+                  <>
+                    Found {filteredBusinesses.length} of {businesses.length} businesses
+                  </>
+                ) : (
+                  <>
+                    Showing {filteredBusinesses.length} business{filteredBusinesses.length !== 1 ? 'es' : ''}
+                  </>
+                )}
+              </p>
+              {backgroundLoading && (
+                <div className="flex items-center gap-1 text-xs text-blue-600">
+                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  <span>Loading more...</span>
+                </div>
+              )}
+            </div>
           )}
 
           {/* ✅ Location List with Loading States */}
@@ -716,11 +821,22 @@ export default function Mappp() {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-                <p className="text-gray-500">No businesses found</p>
-                {debouncedSearch && (
-                  <p className="text-gray-400 text-sm mt-2">
-                    Try adjusting your search
-                  </p>
+                {debouncedSearch ? (
+                  <>
+                    <p className="text-gray-500 font-medium">No businesses found for &quot;{debouncedSearch}&quot;</p>
+                    <p className="text-gray-400 text-sm mt-2">
+                      {backgroundLoading 
+                        ? "Still loading more businesses..." 
+                        : `Searched ${businesses.length} businesses`}
+                    </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      Try: city name, state, business name, or address
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-gray-500">No businesses found</p>
+                  </>
                 )}
               </div>
             ) : (
@@ -823,8 +939,8 @@ export default function Mappp() {
                   );
                 })}
 
-                {/* ✅ Load More Button */}
-                {currentPage < totalPages && (
+                {/* ✅ Load More Button - Only show if not background loading and more pages available */}
+                {!backgroundLoading && currentPage < totalPages && (
                   <button
                     onClick={loadMoreBusinesses}
                     disabled={loadingMore}

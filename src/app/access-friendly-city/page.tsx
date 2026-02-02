@@ -31,12 +31,12 @@ export default function page() {
     <div>
         <Header/>
         <Citieshero/>
-        <Partner/>
-        <Social/>
         <CitiesMap/>
+        <Social/>
         <Cta/>
-        <Expand/>
-        <About/>
+        {/* <Expand/> */}
+        <Partner/>
+        {/* <About/> */}
         <Footer/>
     </div>
   )
