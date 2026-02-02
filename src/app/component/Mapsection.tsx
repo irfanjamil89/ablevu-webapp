@@ -823,7 +823,7 @@ export default function Mappp() {
                 </svg>
                 {debouncedSearch ? (
                   <>
-                    <p className="text-gray-500 font-medium">No businesses found for "{debouncedSearch}"</p>
+                    <p className="text-gray-500 font-medium">No businesses found for &quot;{debouncedSearch}&quot;</p>
                     <p className="text-gray-400 text-sm mt-2">
                       {backgroundLoading 
                         ? "Still loading more businesses..." 
