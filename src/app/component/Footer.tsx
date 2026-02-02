@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import axios from "axios";
+import Link from "next/link";
 
 export default function Footer() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -18,7 +19,7 @@ export default function Footer() {
     setErrorMsg("");
 
     try {
-      const res = await axios.post(`${API_BASE_URL}subscribe/create`, {
+      await axios.post(`${API_BASE_URL}subscribe/create`, {
         email: email,
         active: true,
       });
@@ -49,18 +50,15 @@ export default function Footer() {
               alt="AbleVu Logo"
               className="mr-2 h-20 object-contain"
             />
-            {/* <p>AbleVu is committed to making our website accessible and usable for everyone. Accessibility is an ongoing effort, and we continue to improve our digital experience.
-              If you experience difficulty accessing any part of our site, please contact us at support@ablevu.com.
-            </p> */}
           </div>
           <div className="mt-4 flex space-x-4 justify-center lg:justify-start">
-            <a href="#" className="hover:text-blue-400">
+            <a href="#" className="hover:text-blue-400" aria-label="LinkedIn">
               <i className="fab fa-linkedin fa-lg"></i>
             </a>
-            <a href="#" className="hover:text-blue-400">
+            <a href="#" className="hover:text-blue-400" aria-label="Facebook">
               <i className="fab fa-facebook fa-lg"></i>
             </a>
-            <a href="#" className="hover:text-blue-400">
+            <a href="#" className="hover:text-blue-400" aria-label="X Twitter">
               <i className="fab fa-x-twitter fa-lg"></i>
             </a>
           </div>
@@ -73,19 +71,24 @@ export default function Footer() {
           </h3>
           <ul className="space-y-2 font-['Helvetica'] text-sm">
             <li>
-              <a href="#" className="hover:underline">
-                FAQ
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:underline">
+              <Link href="/blog" className="hover:underline">
                 Blog
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:underline">
+              <Link href="mailto:support@ablevu.com" className="hover:underline">
                 Support
-              </a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms-and-conditions" className="hover:underline">
+                Terms and Conditions
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy-policy" className="hover:underline">
+                Privacy Policy
+              </Link>
             </li>
           </ul>
         </div>
@@ -97,19 +100,24 @@ export default function Footer() {
           </h3>
           <ul className="space-y-2 font-['Helvetica'] text-sm">
             <li>
-              <a href="/business" className="hover:underline">
+              <Link href="/faq" className="hover:underline">
+                FAQ
+              </Link>
+            </li>
+            <li>
+              <Link href="/business" className="hover:underline">
                 Businesses
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/contributor" className="hover:underline">
+              <Link href="/contributor" className="hover:underline">
                 Contributor
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/access-friendly-city" className="hover:underline">
-                Access-friendly Cities
-              </a>
+              <Link href="/access-friendly-city" className="hover:underline">
+                Access-Friendly Cities
+              </Link>
             </li>
           </ul>
         </div>
