@@ -41,32 +41,33 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#0A1733] px-6 py-10 text-white text-center sm:pt-[50px] sm:text-center md:px-20 md:pt-[150px] md:text-start lg:pt-[150px] lg:text-start">
-      <div className="grid max-w-7xl grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4 lg:mx-auto">
+      <div className="max-w-7xl mx-auto flex flex-col gap-8 justify-content-center md:justify-between md:flex-row md:flex-wrap md:gap-4">
         {/* Logo and Social Icons */}
-        <div>
-          <div className="mb-4">
+        <div className="w-full md:w-[48%] lg:w-[30%]">
+          <div className="mb-4 flex justify-center md:justify-start">
             <img
               src="/assets/images/ablevu-white-logo.png"
               alt="AbleVu Logo"
               className="mr-2 h-20 object-contain"
             />
           </div>
-          <div className="mt-4 flex space-x-4 justify-center lg:justify-start">
-            <a href="#" className="hover:text-blue-400" aria-label="LinkedIn">
+          <div className="mt-5 flex space-x-4 justify-center lg:justify-start">
+            {/* <Link href="#" className="hover:text-blue-400" aria-label="LinkedIn">
               <i className="fab fa-linkedin fa-lg"></i>
-            </a>
-            <a href="#" className="hover:text-blue-400" aria-label="Facebook">
+            </Link>
+            <Link href="#" className="hover:text-blue-400" aria-label="Facebook">
               <i className="fab fa-facebook fa-lg"></i>
-            </a>
-            <a href="#" className="hover:text-blue-400" aria-label="X Twitter">
+            </Link>
+            <Link href="#" className="hover:text-blue-400" aria-label="X Twitter">
               <i className="fab fa-x-twitter fa-lg"></i>
-            </a>
+            </Link> */}
+            <p>AbleVu is committed to making our website accessible to as many people as possible. We want <Link href="/" className="underline text-[#95CC68]">AbleVu.com</Link> to be usable for visitors with a wide range of access needs, including people who use screen readers, keyboard navigation, captions, zoom, voice input, or other assistive technologies.</p>
           </div>
         </div>
 
         {/* Information */}
-        <div>
-          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">
+        <div className="w-full md:w-[48%] lg:w-[18%]">
+          <h3 className="mb-4 mt-5 font-['Roboto'] text-lg font-semibold">
             Information
           </h3>
           <ul className="space-y-2 font-['Helvetica'] text-sm">
@@ -76,9 +77,8 @@ export default function Footer() {
               </Link>
             </li>
             <li>
-              <Link href="mailto:support@ablevu.com" className="hover:underline">
-                Support
-              </Link>
+              <a href="mailto:support@ablevu.com">Support</a>
+
             </li>
             <li>
               <Link href="/terms-and-conditions" className="hover:underline">
@@ -94,8 +94,8 @@ export default function Footer() {
         </div>
 
         {/* Quick Links */}
-        <div>
-          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">
+        <div className="w-full md:w-[48%] lg:w-[18%]">
+          <h3 className="mb-4 mt-5 font-['Roboto'] text-lg font-semibold">
             Quick Links
           </h3>
           <ul className="space-y-2 font-['Helvetica'] text-sm">
@@ -123,8 +123,8 @@ export default function Footer() {
         </div>
 
         {/* Subscribe */}
-        <div className="bg-[rgb(34,44,68)] p-4 text-start rounded-xl">
-          <h3 className="mb-4 font-['Roboto'] text-lg font-semibold">
+        <div className="w-full md:w-[48%] lg:w-[20%] bg-[rgb(34,44,68)] p-4 rounded-xl h-fit">
+          <h3 className="mb-5 font-['Roboto'] text-lg font-semibold">
             Subscribe
           </h3>
 
@@ -176,7 +176,7 @@ export default function Footer() {
       </div>
 
       <div className="mt-10 border-t border-gray-700 pt-6 text-center font-['Roboto'] text-sm text-gray-400">
-        &copy; 2025 AbleVu. All rights reserved.
+        &copy; 2026 AbleVu. All rights reserved.
       </div>
     </footer>
   );
