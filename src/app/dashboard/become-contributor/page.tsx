@@ -102,7 +102,7 @@ export default function Page() {
               </div>
             </div>
             <h2 className="text-lg font-bold mb-2">Success</h2>
-            <p className="mb-4">You are now a Contributor</p>
+            <p className="mb-4">You are now a volunteer contributor (one more step to get paid!)</p>
             <button
               className="bg-[#0519CE] text-white px-4 py-2 rounded-lg cursor-pointer"
               onClick={() => {

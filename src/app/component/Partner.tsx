@@ -63,7 +63,7 @@ export default function Partner() {
   const fetchPartners = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}partner/list?page=1&limit=1000`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}partner/list?page=1&limit=10`);
       const data: ApiResponse = await response.json();
 
       // Filter only active partners

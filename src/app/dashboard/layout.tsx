@@ -1336,7 +1336,7 @@ export default function DashboardLayout({
 
                     <img src="/assets/images/overview.svg" className='w-5 h-5' alt="" />
 
-                    Overview
+                    My Contributions
 
                   </Link>
                   {user?.paid_contributor ? (
