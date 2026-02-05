@@ -108,23 +108,26 @@ const normalizeStatus = (status: string) =>
 type StatusKey =
   | "draft"
   | "pending approval"
-  | "approved"
+  | "pending review"
+  | "submitted"
   | "pending claim"
   | "claimed";
 
 // Label mapping for UI
 const STATUS_LABELS: Record<StatusKey, string> = {
   draft: "Draft",
+  "pending review": "Pending Review",
   "pending approval": "Pending Approval",
-  approved: "Approved",
+  submitted: "Submitted",
   "pending claim": "Pending claim",
   claimed: "Claimed",
 };
 
 const ALL_STATUSES: StatusKey[] = [
   "draft",
+  "pending review",
   "pending approval",
-  "approved",
+  "submitted",
   "pending claim",
   "claimed",
 ];
@@ -598,7 +601,11 @@ export default function BusinessSidebar({
 
   // ✅ status helpers
   const normalizedStatus = useMemo(
-    () => normalizeStatus(status) as StatusKey,
+    () => {
+      const s = normalizeStatus(status);
+      if (s === "approved") return "submitted";
+      return s as StatusKey;
+    },
     [status]
   );
 
@@ -652,8 +659,9 @@ export default function BusinessSidebar({
 
     const byStatus: Record<StatusKey, Array<StatusAction["key"]>> = {
       draft: ["submit_approval"],
+      "pending review": [], 
       "pending approval": [],
-      approved: ["submit_acclaim"],
+      submitted: ["submit_acclaim"],
       "pending claim": [],
       claimed: [],
     };

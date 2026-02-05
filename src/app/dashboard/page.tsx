@@ -147,6 +147,7 @@ const normalizeStatus = (status?: string | null) =>
     
 type StatusKey =
   | "draft"
+  | "pending review"
   | "pending approval"
   | "approved"
   | "pending claim"
@@ -154,6 +155,11 @@ type StatusKey =
 
 const STATUS_BADGE: Record<StatusKey, { label: string; bg: string; text: string }> = {
   draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+  "pending review": {      
+    label: "Pending Review",
+    bg: "#F3E8FF",
+    text: "#6B21A8",
+  },
   "pending approval": {
     label: "Pending Approval",
     bg: "#FFEFD5",
@@ -172,6 +178,7 @@ const STATUS_BADGE: Record<StatusKey, { label: string; bg: string; text: string 
 const toCanonicalStatus = (raw: string, b?: Business): StatusKey | null => {
   const s = normalizeStatus(raw);
 
+  if (s === "pending review" || s === "review pending") return "pending review";
   if (s === "pending" || s === "pending approved") return "pending approval";
   if (s === "pending claim" || s === "pending claim")
     return "pending claim";

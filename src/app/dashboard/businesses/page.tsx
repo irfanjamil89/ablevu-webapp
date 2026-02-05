@@ -59,10 +59,16 @@ type FeatureType = {
   slug: string;
 };
 
-type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
+type SortOption =
+  | ""
+  | "name-asc"
+  | "name-desc"
+  | "created-asc"
+  | "created-desc";
 type StatusFilter =
   | ""
   | "draft"
+  | "pending review"
   | "pending approval"
   | "approved"
   | "pending claim"
@@ -70,6 +76,7 @@ type StatusFilter =
 
 type StatusKey =
   | "draft"
+  | "pending review"
   | "pending approval"
   | "approved"
   | "pending claim"
@@ -114,8 +121,7 @@ const normalizeStatusKey = (raw: string | null | undefined): StatusKey | "" => {
   if (s === "pending" || s === "pending approved" || s === "pending approval")
     return "pending approval";
 
-  if (s === "pending claim" || s === "pending claim")
-    return "pending claim";
+  if (s === "pending claim" || s === "pending claim") return "pending claim";
 
   if (s === "approved") return "approved";
   if (s === "draft") return "draft";
@@ -129,6 +135,12 @@ const STATUS_UI: Record<
   { label: string; bg: string; text: string }
 > = {
   draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+  "pending review": {
+    // ✅ ADD
+    label: "Pending Review",
+    bg: "#F3E8FF",
+    text: "#6B21A8",
+  },
   "pending approval": {
     label: "Pending Approval",
     bg: "#FFEFD5",
@@ -144,7 +156,10 @@ const STATUS_UI: Record<
 };
 
 const normalizeStatus = (status: string) =>
-  status.toLowerCase().trim().replace(/[\s_-]+/g, " ");
+  status
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_-]+/g, " ");
 
 // ---------- Address helper ----------
 
@@ -174,7 +189,7 @@ export default function Page() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [totalBusinesses, setTotalBusinesses] = useState(0); // ✅ Total from API
   const [totalPages, setTotalPages] = useState(0); // ✅ Total pages from API
-  
+
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [features, setFeatures] = useState<FeatureType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,6 +217,8 @@ export default function Page() {
   const statusFilterLabel =
     statusFilter === "draft"
       ? "Draft"
+      : statusFilter === "pending review"
+      ? "Pending Review"
       : statusFilter === "pending approval"
         ? "Pending Approval"
         : statusFilter === "approved"
@@ -247,7 +264,7 @@ export default function Page() {
   // ✅ NEW: Server-side pagination fetch function
   const fetchBusinesses = useCallback(async () => {
     const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    
+
     // ✅ Build URL with server-side parameters
     const params = new URLSearchParams({
       page: currentPage.toString(),
@@ -261,33 +278,36 @@ export default function Page() {
 
     // ✅ Add status filter parameter (adjust key based on your API)
     if (statusFilter) {
-      params.append("status", statusFilter);
+      params.append("business_status", statusFilter);
     }
 
     // ✅ Add sort parameter (adjust format based on your API)
     if (sortOption) {
-      // Convert our format to API format
-      // Adjust these based on your actual API requirements
-      switch (sortOption) {
-        case "name-asc":
-          params.append("sortBy", "name");
-          params.append("sortOrder", "asc");
-          break;
-        case "name-desc":
-          params.append("sortBy", "name");
-          params.append("sortOrder", "desc");
-          break;
-        case "created-asc":
-          params.append("sortBy", "created_at");
-          params.append("sortOrder", "asc");
-          break;
-        case "created-desc":
-          params.append("sortBy", "created_at");
-          params.append("sortOrder", "desc");
-          break;
-      }
-    }
+  let sort_by: "name" | "created_at" | "views" = "created_at";
+  let sort_order: "ASC" | "DESC" = "DESC";
 
+  switch (sortOption) {
+    case "name-asc":
+      sort_by = "name";
+      sort_order = "ASC";
+      break;
+    case "name-desc":
+      sort_by = "name";
+      sort_order = "DESC";
+      break;
+    case "created-asc":
+      sort_by = "created_at";
+      sort_order = "ASC";
+      break;
+    case "created-desc":
+      sort_by = "created_at";
+      sort_order = "DESC";
+      break;
+  }
+
+  params.append("sort_by", sort_by);
+  params.append("sort_order", sort_order);
+}
     const url = `${base}business/list?${params.toString()}`;
 
     const token =
@@ -389,23 +409,29 @@ export default function Page() {
     const key =
       s === "draft"
         ? "draft"
-        : s === "approved"
-          ? "approved"
-          : s === "claimed"
-            ? "claimed"
-            : s === "pending" || s === "pending approval" || s === "pending approved"
-              ? "pending approval"
-              : s === "pending claim" || s === "pending claim"
-                ? "pending claim"
-                : "";
+        : s === "pending review" // ✅ ADD
+          ? "pending review"
+          : s === "approved"
+            ? "approved"
+            : s === "claimed"
+              ? "claimed"
+              : s === "pending" ||
+                  s === "pending approval" ||
+                  s === "pending approved"
+                ? "pending approval"
+                : s === "pending claim" || s === "pending claim"
+                  ? "pending claim"
+                  : "";
 
     if (!key) return { label: "", bg: "", text: "" };
 
-    const uiMap: Record<
-      string,
-      { label: string; bg: string; text: string }
-    > = {
+    const uiMap: Record<string, { label: string; bg: string; text: string }> = {
       draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+      "pending review": {        // ✅ ADD
+    label: "Pending Review",
+    bg: "#F3E8FF",
+    text: "#6B21A8",
+  },
       "pending approval": {
         label: "Pending Approval",
         bg: "#FFEFD5",
@@ -460,7 +486,7 @@ export default function Page() {
     const todayKey = getTodayKey();
 
     const todaySchedule = list.find(
-      (sch) => sch.day.toLowerCase() === todayKey && sch.active
+      (sch) => sch.day.toLowerCase() === todayKey && sch.active,
     );
 
     if (!todaySchedule) {
@@ -518,20 +544,20 @@ export default function Page() {
   // ✅ NEW: Pagination handlers
   const goToPage = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const goToNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const goToPreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -570,10 +596,13 @@ export default function Page() {
     return pages;
   };
 
-  const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
-    if (!url) return '';
+  const getCacheBustedUrl = (
+    url: string | undefined,
+    timestamp?: Date | string,
+  ) => {
+    if (!url) return "";
     const t = timestamp ? new Date(timestamp).getTime() : Date.now();
-    const separator = url.includes('?') ? '&' : '?';
+    const separator = url.includes("?") ? "&" : "?";
     return `${url}${separator}_t=${t}`;
   };
 
@@ -788,6 +817,19 @@ export default function Page() {
                         <button
                           type="button"
                           onClick={() => {
+                            setStatusFilter("pending review");
+                            setCurrentPage(1);
+                          }}
+                          className="w-full text-left block px-3 py-1 hover:bg-gray-100"
+                        >
+                          Pending Review
+                        </button>
+                      </li>
+
+                      <li>
+                        <button
+                          type="button"
+                          onClick={() => {
                             setStatusFilter("pending approval");
                             setCurrentPage(1);
                           }}
@@ -928,7 +970,10 @@ export default function Page() {
                             <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
                               {/* Saved */}
                               <label className="inline-flex items-center gap-1 cursor-pointer">
-                                <input type="checkbox" className="peer hidden" />
+                                <input
+                                  type="checkbox"
+                                  className="peer hidden"
+                                />
                                 <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"

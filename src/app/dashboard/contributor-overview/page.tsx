@@ -5,7 +5,6 @@ import Link from "next/link";
 import AddBusinessModal from "@/app/component/AddBusinessModal";
 import { useUser } from "@/app/component/UserContext";
 
-
 // ---------- Types ----------
 
 type LinkedType = {
@@ -75,15 +74,20 @@ type FeatureType = {
   slug: string;
 };
 
-type SortOption = "" | "name-asc" | "name-desc" | "created-asc" | "created-desc";
+type SortOption =
+  | ""
+  | "name-asc"
+  | "name-desc"
+  | "created-asc"
+  | "created-desc";
 type StatusFilter =
   | ""
   | "draft"
+  | "pending review"
   | "pending approval"
   | "approved"
   | "pending claim"
   | "claimed";
-
 
 type BusinessSchedule = {
   id: string;
@@ -132,7 +136,10 @@ function extractAddressParts(result: { address_components?: any[] }) {
 
 // 🔹 status normalize helper (same across app)
 const normalizeStatus = (status?: string | null) =>
-  (status || "").toLowerCase().trim().replace(/[\s_-]+/g, " ");
+  (status || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_-]+/g, " ");
 
 // ---------- Component ----------
 
@@ -165,7 +172,6 @@ export default function Page() {
 
   const [OpenAddBusinessModal, setOpenAddBusinessModal] = useState(false);
 
-
   const [isCreating, setIsCreating] = useState(false);
   const [isOnboardingLoading, setIsOnboardingLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -195,7 +201,9 @@ export default function Page() {
 
   const handleCompleteAccountDetails = async () => {
     const token =
-      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
 
     if (!token) {
       alert("Please login first.");
@@ -205,17 +213,17 @@ export default function Page() {
     try {
       setIsOnboardingLoading(true);
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}stripe/create-account`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      }
-    );
+      );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -238,7 +246,6 @@ export default function Page() {
     }
   };
 
-
   // ---------- Fetch business types & accessible features ----------
 
   useEffect(() => {
@@ -247,7 +254,6 @@ export default function Page() {
     fetch(base + "business-type/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-
         setBusinessTypes(data.data || []);
       })
       .catch((error) => {
@@ -257,7 +263,6 @@ export default function Page() {
     fetch(base + "accessible-feature/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data) => {
-
         setFeatures(data.items || []);
       })
       .catch((error) => {
@@ -267,7 +272,6 @@ export default function Page() {
     fetch(base + "business-schedules/list?page=1&limit=1000")
       .then((response) => response.json())
       .then((data: ScheduleListResponse) => {
-
         setSchedules(data.data || []);
       })
       .catch((error) => {
@@ -300,7 +304,6 @@ export default function Page() {
     fetch(url, { headers })
       .then((response) => response.json())
       .then((data) => {
-
         const list: Business[] = data.data || [];
         setBusinesses(list);
       })
@@ -355,7 +358,6 @@ export default function Page() {
   // ---------- Callback for modal to refresh list ----------
 
   const handleBusinessCreated = () => {
-    // re-fetch businesses with current search filter
     fetchBusinesses(appliedSearch);
   };
 
@@ -413,6 +415,7 @@ export default function Page() {
 
   type StatusKey =
     | "draft"
+    | "pending review"
     | "pending approval"
     | "approved"
     | "pending claim"
@@ -423,6 +426,14 @@ export default function Page() {
     { label: string; bg: string; text: string }
   > = {
     draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
+
+    "pending review": {
+      // ✅ add
+      label: "Pending Review",
+      bg: "#F3E8FF",
+      text: "#6B21A8",
+    },
+
     "pending approval": {
       label: "Pending Approval",
       bg: "#FFEFD5",
@@ -441,6 +452,8 @@ export default function Page() {
     const s = normalizeStatus(raw);
 
     // backend aliases
+    if (s === "pending review" || s === "review pending")
+      return "pending review";
     if (s === "pending" || s === "pending approved") return "pending approval";
     if (s === "pending claim" || s === "pending claim") return "pending claim";
 
@@ -494,7 +507,6 @@ export default function Page() {
       });
     }
 
-
     switch (sortOption) {
       case "name-asc":
         arr.sort((a, b) => a.name.localeCompare(b.name));
@@ -505,15 +517,13 @@ export default function Page() {
       case "created-asc":
         arr.sort(
           (a, b) =>
-            new Date(a.created_at).getTime() -
-            new Date(b.created_at).getTime()
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
         );
         break;
       case "created-desc":
         arr.sort(
           (a, b) =>
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
         );
         break;
       default:
@@ -557,7 +567,7 @@ export default function Page() {
     const todayKey = getTodayKey();
 
     const todaySchedule = list.find(
-      (sch) => sch.day.toLowerCase() === todayKey && sch.active
+      (sch) => sch.day.toLowerCase() === todayKey && sch.active,
     );
 
     if (!todaySchedule) {
@@ -672,10 +682,8 @@ export default function Page() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(payload),
-        }
+        },
       );
-
-
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}));
@@ -689,7 +697,7 @@ export default function Page() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       const listData = await listRes.json();
       const list: Business[] = listData.data || [];
@@ -710,7 +718,7 @@ export default function Page() {
       setSelectedCategoryId("");
 
       const checkbox = document.getElementById(
-        "business-toggle"
+        "business-toggle",
       ) as HTMLInputElement | null;
       if (checkbox) checkbox.checked = false;
     } catch (err: any) {
@@ -789,10 +797,13 @@ export default function Page() {
 
     return pages;
   };
-  const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
-    if (!url) return '';
+  const getCacheBustedUrl = (
+    url: string | undefined,
+    timestamp?: Date | string,
+  ) => {
+    if (!url) return "";
     const t = timestamp ? new Date(timestamp).getTime() : Date.now();
-    const separator = url.includes('?') ? '&' : '?';
+    const separator = url.includes("?") ? "&" : "?";
     return `${url}${separator}_t=${t}`;
   };
 
@@ -808,7 +819,9 @@ export default function Page() {
               className="w-12 h-12 animate-spin"
               alt="Favicon"
             />
-            <p className="text-gray-700 font-semibold">Redirecting to Stripe…</p>
+            <p className="text-gray-700 font-semibold">
+              Redirecting to Stripe…
+            </p>
           </div>
         </div>
       )}
@@ -989,14 +1002,20 @@ export default function Page() {
                       </p>
 
                       {createError && (
-                        <p className="text-red-500 text-sm mb-2">{createError}</p>
+                        <p className="text-red-500 text-sm mb-2">
+                          {createError}
+                        </p>
                       )}
 
-                      <form className="space-y-4" onSubmit={handleCreateBusiness}>
+                      <form
+                        className="space-y-4"
+                        onSubmit={handleCreateBusiness}
+                      >
                         {/* Business Name */}
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Business Name <span className="text-red-500">*</span>
+                            Business Name{" "}
+                            <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -1028,8 +1047,6 @@ export default function Page() {
                               }))
                             }
                             onSelect={(result) => {
-
-
                               const { city, state, country, zipcode } =
                                 extractAddressParts(result);
 
@@ -1058,9 +1075,7 @@ export default function Page() {
                               type="file"
                               accept=".svg,.png,.jpg,.gif"
                               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              onChange={(e) => {
-
-                              }}
+                              onChange={(e) => {}}
                             />
                             <div className="flex flex-col items-center border border-gray-200 rounded-lg p-6 text:center hover:bg-gray-50 cursor-pointer h-fit">
                               <img
@@ -1192,11 +1207,10 @@ export default function Page() {
                           Paid Contributor
                         </h2>
                         <p className="text-gray-600 text-md mb-4">
-                          As a paid contributor, you have the opportunity to earn
-                          when businesses approve the profiles you create for them.
+                          As a paid contributor, you have the opportunity to
+                          earn when businesses approve the profiles you create
+                          for them.
                         </p>
-
-
 
                         {/* FORM */}
                         <form className="space-y-4">
@@ -1208,9 +1222,9 @@ export default function Page() {
                                 className="w-5 h-5"
                               />
                               <p className="ml-3 text-gray-800">
-                                Once a business approves a profile you’ve submitted
-                                or claim it, they will pay you a creation fee of
-                                $100 for that profile.
+                                Once a business approves a profile you’ve
+                                submitted or claim it, they will pay you a
+                                creation fee of $100 for that profile.
                               </p>
                             </li>
 
@@ -1235,7 +1249,9 @@ export default function Page() {
                               disabled={isOnboardingLoading}
                               className="px-5 py-3 w-full text-center text-sm font-bold bg-[#0519CE] text-white rounded-full cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                              {isOnboardingLoading ? "Processing..." : "Complete Account Details"}
+                              {isOnboardingLoading
+                                ? "Processing..."
+                                : "Complete Account Details"}
                             </button>
                           </div>
                         </form>
@@ -1245,8 +1261,6 @@ export default function Page() {
                   </div>
                 </section>
               )}
-
-
 
               {/* Business cards */}
               <section>
@@ -1289,7 +1303,10 @@ export default function Page() {
                             <div className="flex flex-wrap md:flex-nowrap gap-2 ['Helvetica']">
                               {/* Saved */}
                               <label className="inline-flex items-center gap-1 cursor-pointer">
-                                <input type="checkbox" className="peer hidden" />
+                                <input
+                                  type="checkbox"
+                                  className="peer hidden"
+                                />
                                 <div className="bg-[#F0F1FF] text-[#1B19CE] text-xs px-3 py-1 rounded-full hover:bg-[#e0e2ff] transition flex items-center gap-1">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -1379,7 +1396,8 @@ export default function Page() {
                               </span>
                               <ul className="flex flex-wrap md:flex-nowrap md:gap-0 gap-5 md:space-x-2 space-x-0">
                                 {(() => {
-                                  const list = business.accessibilityFeatures || [];
+                                  const list =
+                                    business.accessibilityFeatures || [];
                                   const count = list.length;
 
                                   if (count === 0) return <li>No features</li>;
@@ -1407,7 +1425,6 @@ export default function Page() {
                                   );
                                 })()}
                               </ul>
-
                             </div>
                           </div>
 
@@ -1453,10 +1470,11 @@ export default function Page() {
                       <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                          currentPage === 1
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                       >
                         Previous
                       </button>
@@ -1466,14 +1484,17 @@ export default function Page() {
                         {getPageNumbers().map((page, idx) => (
                           <React.Fragment key={idx}>
                             {page === "..." ? (
-                              <span className="px-3 py-1 text-gray-500">...</span>
+                              <span className="px-3 py-1 text-gray-500">
+                                ...
+                              </span>
                             ) : (
                               <button
                                 onClick={() => goToPage(page as number)}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
-                                  ? "bg-[#0519CE] text-white"
-                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                  }`}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                                  currentPage === page
+                                    ? "bg-[#0519CE] text-white"
+                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                }`}
                               >
                                 {page}
                               </button>
@@ -1486,10 +1507,11 @@ export default function Page() {
                       <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
+                          currentPage === totalPages
+                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        }`}
                       >
                         Next
                       </button>
@@ -1503,7 +1525,7 @@ export default function Page() {
         {OpenAddBusinessModal && (
           <AddBusinessModal
             setOpenAddBusinessModal={setOpenAddBusinessModal}
-            onBusinessCreated={() => { }}
+            onBusinessCreated={handleBusinessCreated}
           />
         )}
       </div>
