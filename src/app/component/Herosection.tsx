@@ -4,7 +4,7 @@ import React from "react";
 export default function HeroSection() {
   return (
     <section
-      className="relative h-[600px] sm:h-[650px] md:h-[700px] lg:h-[750px] xl:h-[800px] bg-cover bg-top bg-no-repeat flex items-center"
+      className="relative h-[650px] sm:h-[650px] md:h-[650px] xl:h-[700px] bg-cover bg-top bg-no-repeat flex items-center"
       style={{ backgroundImage: "url('/assets/images/hero.jpg')" }}
       aria-labelledby="hero-heading"
       role="region"
