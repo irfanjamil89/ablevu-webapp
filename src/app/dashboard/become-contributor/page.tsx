@@ -60,7 +60,7 @@ export default function Page() {
         </h2>
         {/* First Paragraph */}
         <p className="text-gray-700 leading-relaxed mb-6">
-          AbleVu Contributors play a key role in making communities more accessible by creating detailed accessibility profiles for local businesses. As a paid contributor, you&apos;ll visit businesses, document their accessibility features, and submit profiles for approval. If the business unlocks its profile with a yearly subscription, you&apos;ll earn $100 per approved listing.
+          AbleVu Contributors play a key role in making communities more accessible by creating detailed accessibility profiles for local businesses. As a paid contributor, you&apos;ll visit businesses, document their accessibility features, and submit profiles for approval. If the business unlocks its profile with a yearly subscription, you&apos;ll earn $99 per approved listing.
         </p>
         {/* Second Paragraph */}
         <p className="text-gray-700 leading-relaxed mb-6">

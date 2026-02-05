@@ -144,7 +144,7 @@ const normalizeStatus = (status?: string | null) =>
     .trim()
     .replace(/[\s_-]+/g, " ");
 
-    
+
 type StatusKey =
   | "draft"
   | "pending review"
@@ -706,7 +706,10 @@ export default function Page() {
                                 color: statusInfo.text,
                               }}
                             >
-                              {statusInfo.label}
+                              {statusInfo?.label === "approved"
+                                ? "Submitted"
+                                : statusInfo?.label}
+
                             </span>
                           )}
                         </div>
@@ -902,11 +905,10 @@ export default function Page() {
                         <button
                           onClick={goToPreviousPage}
                           disabled={currentPage === 1}
-                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${
-                            currentPage === 1
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${currentPage === 1
                               ? "border-gray-200 text-gray-400 cursor-not-allowed"
                               : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                            }`}
                         >
                           <span className="hidden sm:inline">Previous</span>
                           <span className="sm:hidden">Prev</span>
@@ -922,11 +924,10 @@ export default function Page() {
                               ) : (
                                 <button
                                   onClick={() => goToPage(page as number)}
-                                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${
-                                    safePage === page
+                                  className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors cursor-pointer ${safePage === page
                                       ? "bg-[#0519CE] text-white"
                                       : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                  }`}
+                                    }`}
                                 >
                                   {page}
                                 </button>
@@ -942,11 +943,10 @@ export default function Page() {
                         <button
                           onClick={goToNextPage}
                           disabled={currentPage === totalPages}
-                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${
-                            currentPage === totalPages
+                          className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border text-xs sm:text-sm font-medium transition-colors ${currentPage === totalPages
                               ? "border-gray-200 text-gray-400 cursor-not-allowed"
                               : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                          }`}
+                            }`}
                         >
                           Next
                         </button>

@@ -67,7 +67,7 @@ const validateCoordinates = (
   if (isNaN(latitude) || isNaN(longitude)) {
     return null;
   }
-  
+
   // Check if they're actual numbers (not empty strings that became 0)
   if (latitude === 0 && longitude === 0) {
     return null; // Likely invalid data
@@ -220,7 +220,7 @@ export default function Mappp() {
     }
 
     const searchLower = debouncedSearch.toLowerCase().trim();
-    
+
     return businesses.filter((business) => {
       // Search across multiple fields
       const searchableFields = [
@@ -234,7 +234,7 @@ export default function Mappp() {
         business.business_status,
       ];
 
-      return searchableFields.some(field => 
+      return searchableFields.some(field =>
         field?.toLowerCase().includes(searchLower)
       );
     });
@@ -273,7 +273,7 @@ export default function Mappp() {
         bounds.extend({ lat: business.validLat, lng: business.validLng });
       });
       map.fitBounds(bounds);
-      
+
       // If only one result, zoom in more
       if (validBusinesses.length === 1) {
         setTimeout(() => map.setZoom(15), 100);
@@ -291,13 +291,13 @@ export default function Mappp() {
         const coords = validateCoordinates(b.latitude, b.longitude);
         return !coords;
       });
-      
+
       if (invalid.length > 0) {
-        console.warn(`Found ${invalid.length} businesses with invalid coordinates:`, 
-          invalid.map(b => ({ 
-            name: b.name, 
-            lat: b.latitude, 
-            lng: b.longitude 
+        console.warn(`Found ${invalid.length} businesses with invalid coordinates:`,
+          invalid.map(b => ({
+            name: b.name,
+            lat: b.latitude,
+            lng: b.longitude
           }))
         );
       }
@@ -329,18 +329,18 @@ export default function Mappp() {
       if (!response.ok) throw new Error("Failed to fetch businesses");
 
       const result: ApiResponse = await response.json();
-      
+
       // Append to existing businesses or replace if first page
       setBusinesses(prev => page === 1 && !isBackground ? result.data || [] : [...prev, ...(result.data || [])]);
       setTotalPages(result.totalPages || 1);
-      
+
       if (!isBackground) {
         setCurrentPage(page);
       }
-      
+
       if (page === 1 && !isBackground) setShouldFitBounds(true);
       setError(null);
-      
+
       return result;
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -356,16 +356,16 @@ export default function Mappp() {
   // ✅ Load remaining pages in background
   const loadRemainingPages = async () => {
     if (backgroundLoadingRef.current) return;
-    
+
     backgroundLoadingRef.current = true;
     setBackgroundLoading(true);
-    
+
     console.log(`Starting background loading: Pages 2 to ${totalPages}`);
-    
+
     try {
       // Wait a bit to let initial render complete
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Load pages 2 to totalPages sequentially
       for (let page = 2; page <= totalPages; page++) {
         console.log(`Background loading page ${page}/${totalPages}`);
@@ -373,7 +373,7 @@ export default function Mappp() {
         // Small delay between requests to avoid overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 200));
       }
-      
+
       console.log('Background loading complete!');
     } catch (err) {
       console.error("Background loading error:", err);
@@ -486,13 +486,13 @@ export default function Mappp() {
   // ✅ Handle business click from sidebar
   const handleBusinessClick = (business: Business) => {
     const coords = validateCoordinates(business.latitude, business.longitude);
-    
+
     if (!coords) {
       console.warn(`Invalid coordinates for business: ${business.name}`);
       alert("This business location is not available on the map");
       return;
     }
-    
+
     setShouldFitBounds(false);
     setSelectedBusiness(business);
     setMapCenter({ lat: coords.lat, lng: coords.lng });
@@ -574,12 +574,12 @@ export default function Mappp() {
               {validBusinesses.map((business) => {
                 const isApproved =
                   business.business_status?.toLowerCase() === "approved";
-                
+
                 // Additional safety check
                 if (!business.validLat || !business.validLng) {
                   return null;
                 }
-                
+
                 return (
                   <Marker
                     key={business.id}
@@ -606,7 +606,7 @@ export default function Mappp() {
                     selectedBusiness.latitude,
                     selectedBusiness.longitude
                   );
-                  
+
                   // Return null if coordinates are invalid
                   if (!coords) return null;
 
@@ -645,7 +645,10 @@ export default function Mappp() {
                               color: isApproved ? "#991b1b" : "#1e40af",
                             }}
                           >
-                            {selectedBusiness.business_status.toUpperCase()}
+                            {/* {selectedBusiness.business_status.toUpperCase()} */}
+                            {selectedBusiness?.business_status === "Approved"
+                              ? "SUBMITTED"
+                              : selectedBusiness?.business_status?.toUpperCase()}
                           </span>
                         )}
                         <p
@@ -738,7 +741,7 @@ export default function Mappp() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            
+
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
@@ -825,8 +828,8 @@ export default function Mappp() {
                   <>
                     <p className="text-gray-500 font-medium">No businesses found for &quot;{debouncedSearch}&quot;</p>
                     <p className="text-gray-400 text-sm mt-2">
-                      {backgroundLoading 
-                        ? "Still loading more businesses..." 
+                      {backgroundLoading
+                        ? "Still loading more businesses..."
                         : `Searched ${businesses.length} businesses`}
                     </p>
                     <p className="text-gray-400 text-xs mt-1">
@@ -843,7 +846,7 @@ export default function Mappp() {
               <>
                 {filteredBusinesses.map((business) => {
                   const isApproved =
-                    business.business_status?.toLowerCase() === "approved";
+                    business.business_status?.toLowerCase() === "Approved";
                   const hasValidCoords = validateCoordinates(
                     business.latitude,
                     business.longitude
@@ -860,11 +863,10 @@ export default function Mappp() {
                             alert("This business location is not available on the map");
                           }
                         }}
-                        className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${
-                          hasValidCoords
-                            ? "hover:bg-gray-50 cursor-pointer"
-                            : "opacity-60 cursor-not-allowed"
-                        }`}
+                        className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${hasValidCoords
+                          ? "hover:bg-gray-50 cursor-pointer"
+                          : "opacity-60 cursor-not-allowed"
+                          }`}
                       >
                         <img
                           src={business?.logo_url || "assets/images/b-img.png"}
@@ -881,7 +883,10 @@ export default function Mappp() {
                               {business.name}
                             </h3>
                             <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-blue-100 text-blue-800">
-                              {business.business_status}
+                              {business.business_status === "Approved"
+                                ? "Submitted"
+                                : business.business_status}
+
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
@@ -902,9 +907,8 @@ export default function Mappp() {
                       key={business.id}
                       onClick={() => hasValidCoords && handleBusinessClick(business)}
                       href={`/business-profile/${business.id}`}
-                      className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${
-                        !hasValidCoords ? "opacity-60" : "hover:bg-gray-50"
-                      }`}
+                      className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${!hasValidCoords ? "opacity-60" : "hover:bg-gray-50"
+                        }`}
                     >
                       <img
                         src={business?.logo_url || "assets/images/b-img.png"}
@@ -922,7 +926,9 @@ export default function Mappp() {
                           </h3>
                           {business.business_status && (
                             <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-green-100 text-green-800">
-                              {business.business_status}
+                              {business.business_status === "Approved"
+                                ? "Submitted"
+                                : business.business_status}
                             </span>
                           )}
                         </div>
@@ -1051,11 +1057,10 @@ export default function Mappp() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Monthly Plan */}
               <div
-                className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${
-                  selectedPlan === "monthly"
-                    ? "ring-4 ring-blue-400"
-                    : "hover:shadow-xl"
-                }`}
+                className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${selectedPlan === "monthly"
+                  ? "ring-4 ring-blue-400"
+                  : "hover:shadow-xl"
+                  }`}
                 onClick={() => setSelectedPlan("monthly")}
               >
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
@@ -1100,11 +1105,10 @@ export default function Mappp() {
 
               {/* Yearly Plan */}
               <div
-                className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${
-                  selectedPlan === "yearly"
-                    ? "ring-4 ring-blue-400"
-                    : "hover:shadow-xl"
-                }`}
+                className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${selectedPlan === "yearly"
+                  ? "ring-4 ring-blue-400"
+                  : "hover:shadow-xl"
+                  }`}
                 onClick={() => setSelectedPlan("yearly")}
               >
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
