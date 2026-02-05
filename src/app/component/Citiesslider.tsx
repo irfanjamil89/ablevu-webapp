@@ -48,7 +48,7 @@ export default function Citiesslider() {
 
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-city/list`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-city/list/?page=1&limit=1000`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch cities');
@@ -110,7 +110,7 @@ export default function Citiesslider() {
   }, [cities.length, visibleCards, maxIndex]);
 
   return (
-    <div className="mx-auto relative space-y-10 z-10 w-full margin-top md:-mt-28 mt-10 flex md:w-10/12 lg:w-10/12 custom-container flex-col items-center justify-between gap-0 rounded-[25px] bg-white/70 p-6 shadow-2xl backdrop-blur-md md:p-10 lg:flex-row">
+    <div className="mx-auto relative space-y-10 z-10 w-full md:-mt-28 mt-10 flex md:w-10/12 lg:w-10/12 custom-container flex-col items-center justify-between gap-0 rounded-[25px] bg-white/70 p-6 shadow-2xl backdrop-blur-md md:p-10 lg:flex-row">
       {/* LEFT SIDE */}
       <div className="flex flex-wrap lg:w-1/4 text-center lg:text-left">
         <h2 className="w-full font-['Helvetica'] mb-5 font-bold text-gray-900 md:text-4xl lg:text-[48px] text-4xl">

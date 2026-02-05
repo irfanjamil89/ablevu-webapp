@@ -1,7 +1,6 @@
 import React from 'react'
 import type { Metadata } from "next";
 import Header from '../component/Header'
-import Footer from '../component/Footer'
 import Mapsection from '../component/Mapsection'
 import Cta from '../component/Cta'
 import Social from '../component/Social'
@@ -12,6 +11,7 @@ import About from '../component/About'
 import Contributorhero from '../component/Contributorhero'
 import Infosection from '../component/Infosection'
 import Contribute from '../component/Contribute'
+import Footer from '../component/Footer';
 
 export const metadata: Metadata = {
   title: "Become a Contributor | AbleVu Accessibility Platform",
@@ -40,8 +40,8 @@ export default function Contributor() {
         <Contribute/>
         <Infosection/>
         <Mapsection/>
-        <Cta/>
         <Social/>
+        <Cta/>
         <Testimonials/>
         <Expand/>
         <Partner/>

@@ -30,7 +30,7 @@ export default function About() {
       <img
         src="/assets/images/image 22.png"
         alt="Meegan Winters"
-        className="mx-auto max-w-[300px] sm:mt-[-100px] md:mt-[30px] lg:max-w-[350px] md:max-w-[280px] lg:mt-[-25px]"
+        className="mx-auto max-w-[300px] sm:mt-[-100px] md:mt-[30px] lg:max-w-[350px] md:max-w-[280px] lg:mt-[-63px]"
       />
     </div>
   </div>

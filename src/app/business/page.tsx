@@ -5,13 +5,14 @@ import Social from "../component/Social";
 import Testimonials from "../component/Testimonials";
 import Partner from "../component/Partner";
 import About from "../component/About";
-import Footer from "../component/Footer";
+
 import Mapsections from "../component/Mapsection";
 import Cta from "../component/Cta";
 import Package from "../component/Package";
 import Feature from "../component/Feature";
 import Businesshero from "../component/Businesshero";
 import Features from "../component/Features";
+import Footer from "../component/Footer";
 
 export const metadata: Metadata = {
   title: "For Businesses | Showcase Accessibility on AbleVu",
@@ -37,14 +38,14 @@ export default function Business() {
       <Businesshero />
       <Features />
       <Mapsections />
+      <Social />
       <Feature />
-      <Partner />
       <Package />
       <Cta />
-      <Social />
       <Testimonials />
+      <Partner />
       <About />
-      <Footer />
+      <Footer/>
     </div>
   );
 }
