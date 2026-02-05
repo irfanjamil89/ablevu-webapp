@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
 import Cropper from "react-easy-crop";
+import { jwtDecode } from "jwt-decode";
 
 // ---------- Types ----------
 
@@ -26,6 +27,28 @@ type BusinessType = {
 
 // ✅ Plan type
 type PlanKey = "monthly" | "yearly";
+
+type UserTypeKey = "Admin" | "Contributor" | "Business";
+
+const isBypassUser = (t?: string | null) => t === "Admin" || t === "Contributor";
+
+function getUserTypeFromToken(token: string): UserTypeKey | null {
+  try {
+    const payload: any = jwtDecode(token);
+    return (
+      payload?.user_role ||        // ✅ YOUR CASE
+      payload?.type ||
+      payload?.userType ||
+      payload?.user_type ||
+      payload?.role ||
+      null
+    ) as UserTypeKey | null;
+  } catch {
+    return null;
+  }
+}
+
+
 
 // ---------- Address helper ----------
 
@@ -61,6 +84,11 @@ function fileToBase64(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+const toDataUri = (rawBase64: string) => {
+  if (rawBase64.startsWith("data:image")) return rawBase64;
+  return `data:image/jpeg;base64,${rawBase64}`; // default jpeg
+};
+
 
 // ---------- Component ----------
 interface AddBusinessProps {
@@ -70,6 +98,7 @@ interface AddBusinessProps {
 
 export default function AddBusinessModal({
   setOpenAddBusinessModal,
+  onBusinessCreated,
 }: AddBusinessProps) {
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [newBusiness, setNewBusiness] = useState<NewBusinessForm>({
@@ -97,11 +126,198 @@ export default function AddBusinessModal({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  console.log("USER ROLE:", userRole);
+
+const isBypassRole = (role?: string | null) =>
+  role === "Admin" || role === "Contributor";
+
 
 
   // ✅ NEW: plan modal states
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
+
+function getUserIdFromToken(token: string): string | null {
+  try {
+    const payload: any = jwtDecode(token);
+    return payload?.id || payload?.user_id || payload?.sub || null;
+  } catch {
+    return null;
+  }
+}
+
+useEffect(() => {
+  (async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    const userId = getUserIdFromToken(token);
+    if (!userId) return;
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}users/me/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        // ✅ YOUR FIELD
+        setUserRole(data?.user_role || null);
+      } else {
+        console.error("me api error:", data);
+        setUserRole(null);
+      }
+    } catch (e) {
+      console.error("me api failed:", e);
+      setUserRole(null);
+    }
+  })();
+}, []);
+
+
+  const createBusinessDirect = async () => {
+  setCreateError(null);
+  setSuccessMessage(null);
+  setIsCreating(true);
+
+  try {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+
+    if (!token) {
+      setCreateError("You must be logged in.");
+      return;
+    }
+
+    // ✅ 1) Create business first
+    const dto = {
+      name: newBusiness.name.trim(),
+      business_type: [selectedCategoryId],
+      description: newBusiness.description || "",
+
+      address: newBusiness.fullAddress,
+      place_id: newBusiness.place_id,
+      latitude: newBusiness.latitude,
+      longitude: newBusiness.longitude,
+
+      city: newBusiness.city || "",
+      state: newBusiness.state || "",
+      country: newBusiness.country || "",
+      zipcode: newBusiness.zipcode || "",
+
+      active: true,
+      business_status: "draft",
+    };
+
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}business/create`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(dto),
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data?.message || "Business create failed");
+    }
+
+    const businessId = data?.id;
+    if (!businessId) {
+      throw new Error("Business created but id missing in response");
+    }
+
+    // ✅ 2) Upload image if selected
+    if (selectedImage) {
+      try {
+        const rawBase64 = await fileToBase64(selectedImage);
+
+        const imageUploadPayload = {
+          data: toDataUri(rawBase64), // ✅ important
+          folder: "business",
+          fileName: businessId,
+        };
+
+        const imageRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(imageUploadPayload),
+          }
+        );
+
+        console.log("Image upload – status:", imageRes.status);
+
+        if (!imageRes.ok) {
+          const imageError = await imageRes.json().catch(() => ({}));
+          console.error("Image upload error:", imageError);
+          throw new Error(imageError?.message || "Failed to upload image");
+        }
+
+        const imageResponse = await imageRes.json().catch(() => ({}));
+        console.log("Image uploaded successfully:", imageResponse);
+      } catch (imageErr: any) {
+        throw new Error(
+          `Business created but image upload failed: ${imageErr?.message || imageErr}`
+        );
+      }
+    }
+
+    // ✅ Success message only after both operations
+    setSuccessMessage(
+      selectedImage
+        ? "Business and logo uploaded successfully!"
+        : "Business created successfully!"
+    );
+
+    // ✅ Reset form
+    setNewBusiness({
+      name: "",
+      fullAddress: "",
+      description: "",
+      place_id: undefined,
+      latitude: undefined,
+      longitude: undefined,
+      city: "",
+      state: "",
+      country: "",
+      zipcode: "",
+    });
+    setSelectedCategoryId("");
+    setSelectedImage(null);
+    setImagePreview(null);
+
+    setTimeout(() => setSuccessMessage(null), 3000);
+
+    // optional: close modal
+    setOpenAddBusinessModal(false);
+    onBusinessCreated?.();
+
+  } catch (err: any) {
+    setCreateError(err?.message || "Something went wrong");
+  } finally {
+    setIsCreating(false);
+  }
+};
+
+
 
   const getPriceIdByPlan = (plan: PlanKey) => {
     if (plan === "monthly") {
@@ -240,37 +456,39 @@ export default function AddBusinessModal({
   };
 
   // ✅ Step-1: validate then open plan modal (NO create here)
-  const handleOpenPlanAfterValidation = () => {
-    setCreateError(null);
-    setSuccessMessage(null);
+  const handleOpenPlanAfterValidation = async () => {
+  setCreateError(null);
+  setSuccessMessage(null);
 
-    if (!newBusiness.name.trim()) {
-      setCreateError("Business name is required.");
-      return;
-    }
-    if (!selectedCategoryId) {
-      setCreateError("Please select a business category.");
-      return;
-    }
-    if (!newBusiness.fullAddress.trim()) {
-      setCreateError("Please select address using Google search.");
-      return;
-    }
+  if (!newBusiness.name.trim())
+    return setCreateError("Business name is required.");
+  if (!selectedCategoryId)
+    return setCreateError("Please select a business category.");
+  if (!newBusiness.fullAddress.trim())
+    return setCreateError("Please select address using Google search.");
 
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
+  if (!userRole) {
+    return setCreateError("Loading user info, please try again...");
+  }
 
-    if (!token) {
-      setCreateError("You must be logged in before creating a business.");
-      return;
+  // ✅ Admin / Contributor → direct create (NO subscription UI)
+  if (isBypassRole(userRole)) {
+    setIsCreating(true);
+    try {
+      await createBusinessDirect(); // calls POST business/create
+    } finally {
+      setIsCreating(false);
     }
+    return;
+  }
 
-    // ✅ all good => open plan popup
-    setSelectedPlan(null);
-    setOpenPlanModal(true);
-  };
+  // ✅ Business → subscription modal
+  setSelectedPlan(null);
+  setOpenPlanModal(true);
+};
+
+
+
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget && !isCreating) {
@@ -632,7 +850,7 @@ export default function AddBusinessModal({
       </div>
 
       {/* ✅ Subscription Plan Popup */}
-      {openPlanModal && (
+      {openPlanModal && !isBypassRole(userRole) && (
         <div className="fixed inset-0 z-[10010] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-white rounded-3xl shadow-1xl p-6 relative">
             <button

@@ -1116,7 +1116,7 @@ export default function Page() {
       {OpenAddBusinessModal && (
         <AddBusinessModal
           setOpenAddBusinessModal={setOpenAddBusinessModal}
-          onBusinessCreated={() => { }}
+          onBusinessCreated={() => { handleBusinessCreated}}
         />
       )}
     </div>
