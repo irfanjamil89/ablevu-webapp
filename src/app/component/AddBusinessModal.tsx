@@ -94,11 +94,13 @@ const toDataUri = (rawBase64: string) => {
 interface AddBusinessProps {
   setOpenAddBusinessModal: React.Dispatch<React.SetStateAction<boolean>>;
   onBusinessCreated: () => void;
+  showSuccessPopup?: boolean;
 }
 
 export default function AddBusinessModal({
   setOpenAddBusinessModal,
   onBusinessCreated,
+  showSuccessPopup = false,
 }: AddBusinessProps) {
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
   const [newBusiness, setNewBusiness] = useState<NewBusinessForm>({
@@ -303,12 +305,23 @@ useEffect(() => {
     setSelectedCategoryId("");
     setSelectedImage(null);
     setImagePreview(null);
+    console.log("✅ showSuccessPopup:", showSuccessPopup);
 
-    setTimeout(() => setSuccessMessage(null), 3000);
-
-    // optional: close modal
-    setOpenAddBusinessModal(false);
-    onBusinessCreated?.();
+     // ✅ ONLY call parent if showSuccessPopup is true (Contributor case)
+    if (showSuccessPopup) {
+      console.log("🔔 Calling onBusinessCreated for popup");
+      onBusinessCreated?.();
+      
+      setTimeout(() => {
+        console.log("🚪 Closing modal");
+        setOpenAddBusinessModal(false);
+      }, 100);
+    } else {
+      console.log("❌ Not showing popup (showSuccessPopup is false)");
+      // ✅ For other users, just close modal normally
+      setOpenAddBusinessModal(false);
+      onBusinessCreated?.(); // still refresh list
+    }
 
   } catch (err: any) {
     setCreateError(err?.message || "Something went wrong");
@@ -316,7 +329,6 @@ useEffect(() => {
     setIsCreating(false);
   }
 };
-
 
 
   const getPriceIdByPlan = (plan: PlanKey) => {
