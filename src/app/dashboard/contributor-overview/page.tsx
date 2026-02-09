@@ -232,11 +232,7 @@ export default function Page() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({}),
-<<<<<<< Updated upstream
-        },
-=======
         }
->>>>>>> Stashed changes
       );
 
       if (!res.ok) {
