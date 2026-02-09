@@ -86,7 +86,7 @@ type StatusFilter =
   | "pending review"
   | "pending approval"
   | "approved"
-  | "pending claim"
+  | "pending acclaim"
   | "claimed";
 
 type BusinessSchedule = {
@@ -203,8 +203,8 @@ export default function Page() {
         ? "Approval Request"
         : statusFilter === "approved"
           ? "Approved"
-          : statusFilter === "pending claim"
-            ? "Pending Claim"
+          : statusFilter === "pending acclaim"
+            ? "Pending Acclaim"
             : statusFilter === "claimed"
               ? "Claimed"
               : "";
@@ -232,7 +232,7 @@ export default function Page() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({}),
-        },
+        }
       );
 
       if (!res.ok) {
@@ -438,7 +438,7 @@ export default function Page() {
     | "pending review"
     | "pending approval"
     | "approved"
-    | "pending claim"
+    | "pending acclaim"
     | "claimed";
 
   const STATUS_BADGE: Record<
@@ -460,8 +460,8 @@ export default function Page() {
       text: "#B46A00",
     },
     approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
-    "pending claim": {
-      label: "Pending Claim",
+    "pending acclaim": {
+      label: "Pending Acclaim",
       bg: "#EEF2FF",
       text: "#3730A3",
     },
@@ -475,7 +475,7 @@ export default function Page() {
     if (s === "pending review" || s === "review pending")
       return "pending review";
     if (s === "pending" || s === "pending approved") return "pending approval";
-    if (s === "pending claim" || s === "pending claim") return "pending claim";
+    if (s === "pending acclaim" || s === "pending claim") return "pending acclaim";
 
     if (s === "draft") return "draft";
     if (s === "pending approval") return "pending approval";
@@ -515,8 +515,8 @@ export default function Page() {
           case "approved":
             return canonical === "approved";
 
-          case "pending claim":
-            return canonical === "pending claim";
+          case "pending acclaim":
+            return canonical === "pending acclaim";
 
           case "claimed":
             return canonical === "claimed";
@@ -1357,7 +1357,9 @@ export default function Page() {
                                 color: statusInfo.text,
                               }}
                             >
-                              {statusInfo.label}
+                              {statusInfo?.label === "approved"
+                                ? "Submitted"
+                                : statusInfo?.label}
                             </span>
                           )}
                         </div>

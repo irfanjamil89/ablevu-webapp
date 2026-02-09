@@ -256,50 +256,50 @@ export default function Page() {
   }, [appliedSearch]);
 
   const fetchBusinesses = useCallback(async (search: string) => {
-        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-        let url = base + "/business/list";
-    
-        if (search) {
-          url += `?search=${encodeURIComponent(search)}`;
-        }
-    
-        const token =
-          typeof window !== "undefined"
-            ? localStorage.getItem("access_token")
-            : null;
-    
-        const headers: Record<string, string> = {};
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-    
-        setLoading(true);
-    
-        try {
-          const response = await fetch(url, { headers });
-          const data = await response.json();
-          
-          const list: Business[] = data.data || [];
-          setBusinesses(list);
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setLoading(false);
-        }
-      }, []);
-    
-      // fetch on first load + whenever appliedSearch changes
-      useEffect(() => {
-        fetchBusinesses(appliedSearch);
-      }, [appliedSearch, fetchBusinesses]);
-    
-      // ---------- Callback for modal to refresh list ----------
-    
-      const handleBusinessCreated = () => {
-        // re-fetch businesses with current search filter
-        fetchBusinesses(appliedSearch);
-      };
-  
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    let url = base + "/business/list";
+
+    if (search) {
+      url += `?search=${encodeURIComponent(search)}`;
+    }
+
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("access_token")
+        : null;
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(url, { headers });
+      const data = await response.json();
+
+      const list: Business[] = data.data || [];
+      setBusinesses(list);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // fetch on first load + whenever appliedSearch changes
+  useEffect(() => {
+    fetchBusinesses(appliedSearch);
+  }, [appliedSearch, fetchBusinesses]);
+
+  // ---------- Callback for modal to refresh list ----------
+
+  const handleBusinessCreated = () => {
+    // re-fetch businesses with current search filter
+    fetchBusinesses(appliedSearch);
+  };
+
 
   // ---------- Maps (ID -> Name) ----------
 
@@ -744,11 +744,11 @@ export default function Page() {
   };
 
   const getCacheBustedUrl = (url: string | undefined, timestamp?: Date | string) => {
-  if (!url) return '';
-  const t = timestamp ? new Date(timestamp).getTime() : Date.now();
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}_t=${t}`;
-};
+    if (!url) return '';
+    const t = timestamp ? new Date(timestamp).getTime() : Date.now();
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}_t=${t}`;
+  };
 
   // ---------- UI ----------
 
@@ -1198,7 +1198,9 @@ export default function Page() {
                               color: statusInfo.text,
                             }}
                           >
-                            {statusInfo.label}
+                            {statusInfo?.label === "approved"
+                              ? "Submitted"
+                              : statusInfo?.label}
                           </span>
                         )}
                       </div>
@@ -1376,8 +1378,8 @@ export default function Page() {
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
                       className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
                         }`}
                     >
                       Previous
@@ -1395,8 +1397,8 @@ export default function Page() {
                             <button
                               onClick={() => goToPage(page as number)}
                               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
-                                  ? "bg-[#0519CE] text-white"
-                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                ? "bg-[#0519CE] text-white"
+                                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
                                 }`}
                             >
                               {page}
@@ -1411,8 +1413,8 @@ export default function Page() {
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
                       className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
-                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
                         }`}
                     >
                       Next
