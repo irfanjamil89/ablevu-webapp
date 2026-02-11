@@ -140,7 +140,7 @@ export default function Footer() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-r bg-blue-500 px-4 py-2 hover:bg-blue-600 disabled:opacity-50"
+              className="rounded-r bg-blue-500 px-4 py-2.5 hover:bg-blue-600 disabled:opacity-50"
             >
               {loading ? (
                 <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

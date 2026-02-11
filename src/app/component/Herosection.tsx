@@ -5,7 +5,7 @@ export default function HeroSection() {
   return (
     <section
       className="relative h-[650px] sm:h-[650px] md:h-[650px] xl:h-[700px] bg-cover bg-top bg-no-repeat flex items-center"
-      style={{ backgroundImage: "url('/assets/images/hero.jpg')" }}
+      style={{ backgroundImage: "url('/assets/images/hero.jpeg')" }}
       aria-labelledby="hero-heading"
       role="region"
     >

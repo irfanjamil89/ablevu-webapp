@@ -88,7 +88,7 @@ export default function Cta() {
 
             <Link href="/access-friendly-city">
               <button className="bg-white text-black font-semibold py-3 px-6 cursor-pointer rounded-full shadow hover:bg-sky-50 transition text-[16px]">
-                Become an Access-friendly City
+                Become an Access-Friendly City
               </button>
             </Link>
           </div>
