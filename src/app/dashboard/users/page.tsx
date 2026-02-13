@@ -1,5 +1,5 @@
 "use client";
-
+import axios from "axios";
 import React, { useState, useEffect } from "react";
 
 // User Interface
@@ -38,6 +38,98 @@ export default function Page() {
     last_name: null,
     email: "",
   });
+  const [OpenCreateUserModal, setOpenCreateUserModal] = useState<boolean>(false);
+
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    emailAddress: "", // Changed from emailAddress to email
+    password: "",
+    userType: "",
+    consent: false,
+  });
+  const [userLoading, setUserLoading] = useState(false);
+  const [userError, setUserError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.id]: e.target.value });
+  };
+
+
+  // Handle user type selection
+  const handleUserType = (type: string) => {
+    setForm({ ...form, userType: type });
+  };
+
+  const [passwordFocus, setPasswordFocus] = useState(false);
+
+  const [rules, setRules] = useState({
+    length: false,
+    lowercase: false,
+    uppercase: false,
+    number: false,
+    special: false,
+  });
+
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    setForm({ ...form, password: value });
+
+    // validation rules
+    setRules({
+      length: value.length >= 12,
+      lowercase: /[a-z]/.test(value),
+      uppercase: /[A-Z]/.test(value),
+      number: /[0-9]/.test(value),
+      special: /[!@#$%]/.test(value),
+    });
+  };
+
+
+  // Submit signup form
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUserLoading(true);
+    setUserError("");
+    setSuccess("");
+
+    // Ensure the correct payload format
+    const payload = {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      emailAddress: form.emailAddress, // Matching field name
+      password: form.password,
+      userType: form.userType,
+      consent: true,
+    };
+
+    try {
+      const response = await axios.post(
+        process.env.NEXT_PUBLIC_API_BASE_URL + "users/signup",
+        payload,
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+
+      if (response.status === 201) {
+        setSuccess("User Account has been created successfully! You’ll be redirected shortly.");
+        setOpenCreateUserModal(false);
+      } else {
+        setError(response.data?.message || "Signup failed. Please try again.");
+      }
+    } catch (err: any) {
+      console.error("Signup error:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Server error. Please try again.");
+    } finally {
+      setUserLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     if (selectedUser) {
@@ -219,9 +311,8 @@ export default function Page() {
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter((user: User) => {
-        const name = `${user.first_name || ""} ${
-          user.last_name || ""
-        }`.toLowerCase();
+        const name = `${user.first_name || ""} ${user.last_name || ""
+          }`.toLowerCase();
         const email = user.email.toLowerCase();
         const search = searchTerm.toLowerCase();
         return name.includes(search) || email.includes(search);
@@ -447,6 +538,12 @@ export default function Page() {
                     className="w-full border-none focus:outline-none focus:ring-0 font-medium text-sm text-gray-700 placeholder-gray-700 ml-2"
                   />
                 </div>
+                <button
+                  onClick={() => setOpenCreateUserModal(true)}
+                  className="px-4 py-3 text-sm font-bold bg-[#0519CE] text-white rounded-lg cursor-pointer hover:bg-blue-700 transition"
+                >
+                  Create User
+                </button>
               </div>
             </div>
 
@@ -567,11 +664,10 @@ export default function Page() {
                       <button
                         onClick={goToPreviousPage}
                         disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === 1
-                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === 1
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
                       >
                         Previous
                       </button>
@@ -587,11 +683,10 @@ export default function Page() {
                             ) : (
                               <button
                                 onClick={() => goToPage(page as number)}
-                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                                  currentPage === page
-                                    ? "bg-[#0519CE] text-white"
-                                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                }`}
+                                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors cursor-pointer ${currentPage === page
+                                  ? "bg-[#0519CE] text-white"
+                                  : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                  }`}
                               >
                                 {page}
                               </button>
@@ -604,11 +699,10 @@ export default function Page() {
                       <button
                         onClick={goToNextPage}
                         disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${
-                          currentPage === totalPages
-                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                            : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
-                        }`}
+                        className={`px-3 py-1 rounded-lg border text-sm font-medium transition-colors ${currentPage === totalPages
+                          ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer"
+                          }`}
                       >
                         Next
                       </button>
@@ -708,9 +802,9 @@ export default function Page() {
                             onChange={(e) =>
                               setPendingRole(
                                 e.target.value as
-                                  | "Contributor"
-                                  | "Business"
-                                  | "User"
+                                | "Contributor"
+                                | "Business"
+                                | "User"
                               )
                             }
                             className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
@@ -761,7 +855,7 @@ export default function Page() {
                             closeEditModal();
 
                             await fetchUsers();
-                            setCurrentPage(1); 
+                            setCurrentPage(1);
                             openPopup(
                               "success",
                               "User Updated",
@@ -779,11 +873,10 @@ export default function Page() {
                         }}
                         disabled={saving}
                         className={`px-4 py-2 rounded-lg text-sm font-medium text-white
-    ${
-      saving
-        ? "bg-gray-400 cursor-not-allowed"
-        : "bg-[#0519CE] hover:opacity-95"
-    }
+    ${saving
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : "bg-[#0519CE] hover:opacity-95"
+                          }
   `}
                       >
                         Save Changes
@@ -799,9 +892,8 @@ export default function Page() {
                 <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
                   <div className="flex justify-center mb-4">
                     <div
-                      className={`rounded-full p-3 ${
-                        popup.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
-                      }`}
+                      className={`rounded-full p-3 ${popup.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
+                        }`}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -832,9 +924,8 @@ export default function Page() {
                   <p className="mb-4">{popup.message}</p>
 
                   <button
-                    className={`px-4 py-2 rounded-lg cursor-pointer text-white ${
-                      popup.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
-                    }`}
+                    className={`px-4 py-2 rounded-lg cursor-pointer text-white ${popup.type === "success" ? "bg-[#0519CE]" : "bg-red-600"
+                      }`}
                     onClick={closePopup}
                   >
                     OK
@@ -842,6 +933,255 @@ export default function Page() {
                 </div>
               </div>
             )}
+            {success && (
+
+              <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-2xl w-[350px] text-center p-8 relative">
+                  {/* Check Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className="bg-[#0519CE] rounded-full p-3">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-8 w-8 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Modal content */}
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-2">Success</h2>
+                  <p className="text-gray-600 text-sm mb-6">User account has been created</p>
+
+                  {/* OK Button */}
+                  <button
+                    onClick={() => setSuccess("")}
+                    className="bg-[#0519CE] hover:bg-[#0212a0] text-white font-medium rounded-full px-6 py-2 w-full transition-all cursor-pointer"
+                  >
+                    OK
+                  </button>
+                </div>
+              </div>
+            )}
+            {OpenCreateUserModal && (
+              <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-xs">
+                <div className="relative bg-white rounded-2xl shadow-2xl w-[550px]  p-8">
+                  {/* Close Button */}
+                  <button
+                    onClick={() => setOpenCreateUserModal(false)}
+                    className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-xl font-bold cursor-pointer"
+                  >
+                    ×
+                  </button>
+                  <div className="mb-6 text-center">
+                    <img
+                      src="https://411bac323421e63611e34ce12875d6ae.cdn.bubble.io/cdn-cgi/image/w=128,h=128,f=auto,dpr=1,fit=contain/f1734964303683x924828582539070500/Profile.png"
+                      alt="User Icon"
+                      className="mx-auto mb-2"
+                    />
+                    <h2 className="text-2xl font-semibold text-black">
+                      Create User Account
+                    </h2>
+
+                  </div>
+
+                  <form className="space-y-6" onSubmit={handleSignup}>
+                    {/* Name Fields */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          id="firstName"
+                          value={form.firstName}
+                          onChange={handleChange}
+                          required
+                          placeholder=" "
+                          maxLength={50}
+                          pattern="^[A-Za-z\s]{1,50}$"
+                          className="peer block w-full rounded-lg border border-solid border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] hover:border-[#0519CE]"
+                        />
+                        <label
+                          htmlFor="firstName"
+                          className=" absolute start-1 top-2 text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:scale-75"
+                        >
+                          First Name
+                        </label>
+                      </div>
+
+                      <div className="relative">
+                        <input
+                          type="text"
+                          id="lastName"
+                          value={form.lastName}
+                          onChange={handleChange}
+                          required
+                          placeholder=" "
+                          maxLength={50}
+                          pattern="^[A-Za-z\s]{1,50}$"
+                          className="peer block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] hover:border-[#0519CE]"
+                        />
+                        <label
+                          htmlFor="lastName"
+                          className="absolute start-1 top-2 text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:scale-75"
+                        >
+                          Last Name
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="relative">
+                      <select
+                        id="userType"
+                        value={form.userType}
+                        onChange={(e) => setForm({ ...form, userType: e.target.value })}
+                        required
+                        className="block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] hover:border-[#0519CE] focus:outline-none appearance-none"
+                      >
+                        <option value="" disabled hidden></option>
+                        <option value="User">User</option>
+                        <option value="Contributor">Contributor</option>
+                        <option value="Business">Business</option>
+                      </select>
+                      <label
+                        htmlFor="userType"
+                        className={`absolute start-1 bg-white px-2 text-sm duration-300 transform ${form.userType
+                          ? "top-2 -translate-y-4 scale-75 text-gray-500"
+                          : "top-4 scale-100 translate-y-0 text-gray-500"
+                          }`}
+                      >
+                        User Type
+                      </label>
+                      {/* Chevron icon */}
+                      <div className="pointer-events-none absolute right-3 top-4">
+                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 10 6">
+                          <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Email */}
+                    <div className="relative">
+                      <input
+                        type="email"
+                        id="emailAddress"
+                        value={form.emailAddress}
+                        onChange={handleChange}
+                        required
+                        placeholder=" "
+                        className="peer block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 text-sm text-gray-900 focus:border-[#0519CE] hover:border-[#0519CE]"
+                      />
+                      <label
+                        htmlFor="email"
+                        className="absolute start-1 top-2 text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:scale-75"
+                      >
+                        Email Address
+                      </label>
+                    </div>
+
+
+
+                    {/* Password */}
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={form.password}
+                        onChange={handlePasswordChange}
+                        required
+                        placeholder=" "
+                        onFocus={() => setPasswordFocus(true)}
+                        onBlur={() => setPasswordFocus(false)}
+                        className="peer block w-full rounded-lg border border-gray-500 bg-transparent px-2.5 pt-4 pb-2.5 pr-10 text-sm text-gray-900 focus:border-[#0519CE] hover:border-[#0519CE]"
+                      />
+                      <label
+                        htmlFor="password"
+                        className="absolute start-1 top-2 text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 bg-white px-2 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:scale-75"
+                      >
+                        Password
+                      </label>
+
+                      {/* Toggle button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+                      >
+                        {showPassword ? (
+                          // Eye slash icon (password visible)
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                          </svg>
+                        ) : (
+                          // Eye icon (password hidden)
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        )}
+                      </button>
+
+                      {/* Password validation rules */}
+                      <div
+                        style={{
+                          maxHeight: passwordFocus ? "200px" : "0",
+                          opacity: passwordFocus ? 1 : 0,
+                        }}
+                        className="mt-2 text-xs transition-all duration-500 overflow-hidden mb-2"
+                      >
+                        <p className="text-[14px] mt-2">Password must:</p>
+                        <ul className="list-disc pl-5 space-y-1 mt-2">
+
+                          <li className={`${rules.length ? "text-green-600" : "text-red-600"}`}>
+                            Be a minimum of 12 characters
+                          </li>
+
+                          <li className={`${rules.lowercase ? "text-green-600" : "text-red-600"}`}>
+                            Include at least one lowercase letter (a-z)
+                          </li>
+
+                          <li className={`${rules.uppercase ? "text-green-600" : "text-red-600"}`}>
+                            Include at least one uppercase letter (A-Z)
+                          </li>
+
+                          <li className={`${rules.number ? "text-green-600" : "text-red-600"}`}>
+                            Include at least one number (0-9)
+                          </li>
+
+                          <li className={`${rules.special ? "text-green-600" : "text-red-600"}`}>
+                            Include at least one special character (!@#$%)
+                          </li>
+
+                        </ul>
+                      </div>
+                    </div>
+
+
+
+
+                    {/* Error and Success Messages */}
+                    {userError && <p className="text-red-500 text-sm">{userError}</p>}
+                    {success && <p className="text-green-600 text-sm">{success}</p>}
+
+                    {/* Submit Button */}
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full rounded-lg bg-[#0519CE] py-2 font-medium text-white transition hover:bg-[#0414a8] disabled:opacity-50 cursor-pointer"
+                    >
+                      {userLoading ? "Creating Account..." : "Create User"}
+                    </button>
+
+
+                  </form>
+                </div>
+              </div>
+            )}
+
+
             {/* ===== SAVE CHANGES LOADER ===== */}
             {saving && (
               <div className="fixed inset-0 z-[12000] flex items-center justify-center ">

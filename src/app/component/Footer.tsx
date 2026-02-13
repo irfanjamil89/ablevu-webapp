@@ -11,6 +11,7 @@ export default function Footer() {
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [openSupportModal, setOpenSupportModal] = useState(false);
 
   const handleSubscribe = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -76,9 +77,8 @@ export default function Footer() {
                 Blog
               </Link>
             </li>
-            <li>
-              <a href="mailto:support@ablevu.com">Support</a>
-
+            <li onClick={() => setOpenSupportModal(true)}>
+              <a className="cursor-pointer">Support</a>
             </li>
             <li>
               <Link href="/terms-and-conditions" className="hover:underline">
@@ -174,10 +174,111 @@ export default function Footer() {
           </p>
         </div>
       </div>
+      {openSupportModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/10 backdrop-blur-xs"
+          onClick={() => setOpenSupportModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-[400px] p-8 relative text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close X Button */}
+            <button
+              onClick={() => setOpenSupportModal(false)}
+              className="absolute top-3 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold cursor-pointer"
+            >
+              ×
+            </button>
+
+            {/* Headset Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#0519CE] rounded-full p-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 3C7.03 3 3 7.03 3 12v4a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H4.07A8.003 8.003 0 0112 5a8.003 8.003 0 017.93 6H18a2 2 0 00-2 2v3a2 2 0 002 2h1a2 2 0 002-2v-4c0-4.97-4.03-9-9-9z"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Title */}
+            <h2 className="text-2xl font-semibold text-gray-900 mb-1">
+              Contact Support
+            </h2>
+            <p className="text-gray-500 text-sm mb-6">
+              Our team is here to help you. Reach out to us anytime.
+            </p>
+
+            {/* Email Card — plain <a> is correct for mailto in Next.js */}
+
+            <a href="mailto:support@ablevu.com"
+              className="flex items-center gap-4 border border-gray-200 rounded-xl px-4 py-3 hover:border-[#0519CE] hover:bg-blue-50 transition-all group"
+            >
+              
+              {/* Email Icon */}
+              <div className="bg-[#0519CE] rounded-full p-2 shrink-0">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={1.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 7.5-9.75-7.5"
+                  />
+                </svg>
+              </div>
+
+              {/* Email Text */}
+              <div className="text-left">
+                <p className="text-xs text-black mb-0.5">Email us at</p>
+                <p className="text-sm font-semibold text-[#0519CE] group-hover:underline">
+                  support@ablevu.com
+                </p>
+              </div>
+
+              {/* Arrow */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4 text-gray-400 ml-auto group-hover:text-[#0519CE] shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </a>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setOpenSupportModal(false)}
+              className="mt-6 w-full bg-[#0519CE] hover:bg-[#0212a0] text-white font-medium rounded-full py-2.5 transition-all cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )
+      }
 
       <div className="mt-10 border-t border-gray-700 pt-6 text-center font-['Roboto'] text-sm text-gray-400">
         &copy; 2026 AbleVu. All rights reserved.
       </div>
-    </footer>
+    </footer >
   );
 }
