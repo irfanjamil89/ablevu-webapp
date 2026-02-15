@@ -440,7 +440,7 @@ export default function CitiesMap() {
   return (
     <section className="w-full lg:w-5/6 lg:mx-auto px-4 py-8 sm:py-12 mt-6 sm:mt-10 bg-[#f7f7f7] ">
       <h1 className="font-['Helvetica'] text-2xl sm:text-3xl lg:text-[28px] font-bold pb-4 sm:pb-6 pl-2 sm:pl-4 mb-6 sm:mb-8 border-[#e5e5e7] border-b">
-        {viewMode === 'cities' ? 'All Access-friendly Cities' : `Businesses in ${currentCityName}`}
+        {viewMode === 'cities' ? 'All Access-Friendly Cities' : `Businesses in ${currentCityName}`}
       </h1>
 
       <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
