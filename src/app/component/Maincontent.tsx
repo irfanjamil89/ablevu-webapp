@@ -250,6 +250,7 @@ type BusinessProfile = {
   businessSchedule?: BusinessScheduleItem[];
   businessRecomendations?: any[];
   additionalaccessibilityresources?: AdditionalAccessibilityResource[];
+  businessImages?: BusinessImage[];
 };
 
 interface MaincontentProps {
@@ -532,9 +533,9 @@ export default function Maincontent({
       ?.map((m: any) => m.image_url || m.media_url || m.url)
       .filter(Boolean) || [];
 
-  const currentBusinessImages = businessImages.filter(
-    (img) => img.business_id === business?.id && img.active
-  );
+  const currentBusinessImages =
+  (business?.businessImages ?? []).filter((img) => img.active);
+
 
   const handleEditClick = (imageId: string) => {
     setSelectedImageId(imageId); // Store which image to edit
