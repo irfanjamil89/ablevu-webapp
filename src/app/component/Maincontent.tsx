@@ -425,7 +425,7 @@ export default function Maincontent({
 
   const [ImageOpenModal, setImageOpenModal] = useState<boolean>(false);
   const [selectedPropertyImage, setSelectedPropertyImage] = useState<BusinessImage | null>(null);
-
+  const [visibleImageCount, setVisibleImageCount] = useState<number>(8);
 
 
   // ⭐ master lists
@@ -534,7 +534,7 @@ export default function Maincontent({
       .filter(Boolean) || [];
 
   const currentBusinessImages =
-  (business?.businessImages ?? []).filter((img) => img.active);
+    (business?.businessImages ?? []).filter((img) => img.active);
 
 
   const handleEditClick = (imageId: string) => {
@@ -803,7 +803,7 @@ export default function Maincontent({
 
           {currentBusinessImages.length > 0 ? (
             <div className="flex flex-wrap gap-2 items-center">
-              {currentBusinessImages.map((image, index) => (
+              {currentBusinessImages.slice(0, visibleImageCount).map((image, index) => (  // 👈 .slice()
                 <div
                   key={image.id || index}
                   className="relative box-content overflow-hidden w-full md:w-[49%] lg:w-[24%]"
@@ -811,6 +811,7 @@ export default function Maincontent({
                   <img
                     src={image.image_url || undefined}
                     alt={image.name || `Property image ${index + 1}`}
+                    loading="lazy"   // 👈 lazy load
                     className="w-full my-1.5 rounded-2xl cursor-pointer object-cover h-36"
                     onClick={() => {
                       setSelectedPropertyImage(image);
@@ -818,30 +819,28 @@ export default function Maincontent({
                     }}
                   />
                   <div className="absolute top-2 right-2 w-auto px-1 py-0.5 icon-box flex items-center gap-2 box-content rounded bg-[#9c9c9c91]">
-                    <img
-                      src="/assets/images/green-tick.svg"
-                      alt="green-tick"
-                      className="w-5 h-5 cursor-pointer"
-                    />
+                    <img src="/assets/images/green-tick.svg" alt="green-tick" className="w-5 h-5 cursor-pointer" />
                     {canEdit && (
-                      <img
-                        src="/assets/images/yellow-pencil.svg"
-                        alt="yellow-pencil"
-                        className="w-5 h-5 cursor-pointer"
-                        onClick={() => handleEditClick(image.id)}
-                      />
+                      <img src="/assets/images/yellow-pencil.svg" alt="yellow-pencil" className="w-5 h-5 cursor-pointer" onClick={() => handleEditClick(image.id)} />
                     )}
                     {canEdit && (
-                      <img
-                        src="/assets/images/red-delete.svg"
-                        alt="red-delete"
-                        className="w-5 h-5 cursor-pointer"
-                        onClick={() => onDeleteBusinessImage?.(image)}
-                      />
+                      <img src="/assets/images/red-delete.svg" alt="red-delete" className="w-5 h-5 cursor-pointer" onClick={() => onDeleteBusinessImage?.(image)} />
                     )}
                   </div>
                 </div>
               ))}
+
+              {/* 👇 Load More button */}
+              {visibleImageCount < currentBusinessImages.length && (
+                <div className="w-full flex justify-center mt-4">
+                  <button
+                    onClick={() => setVisibleImageCount((prev) => prev + 4)}
+                    className="px-6 py-2 text-sm font-bold text-[#0519CE] border border-[#0519CE] rounded-full hover:bg-[#0519CE] hover:text-white transition-colors"
+                  >
+                    Load More
+                  </button>
+                </div>
+              )}
               {ImageOpenModal && selectedPropertyImage && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                   <div className="bg-white rounded-2xl max-w-4xl w-[500px] mx-auto  overflow-hidden shadow-2xl">

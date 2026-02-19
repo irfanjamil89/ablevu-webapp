@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import GoogleAddressInput from "@/app/component/GoogleAddressInput";
 import Cropper from "react-easy-crop";
 import { jwtDecode } from "jwt-decode";
@@ -25,18 +25,15 @@ type BusinessType = {
   name: string;
 };
 
-// ✅ Plan type
 type PlanKey = "monthly" | "yearly";
 
 type UserTypeKey = "Admin" | "Contributor" | "Business";
-
-const isBypassUser = (t?: string | null) => t === "Admin" || t === "Contributor";
 
 function getUserTypeFromToken(token: string): UserTypeKey | null {
   try {
     const payload: any = jwtDecode(token);
     return (
-      payload?.user_role ||        // ✅ YOUR CASE
+      payload?.user_role ||
       payload?.type ||
       payload?.userType ||
       payload?.user_type ||
@@ -48,10 +45,7 @@ function getUserTypeFromToken(token: string): UserTypeKey | null {
   }
 }
 
-
-
 // ---------- Address helper ----------
-
 function extractAddressParts(result: { address_components?: any[] }) {
   const components = result.address_components || [];
 
@@ -71,7 +65,7 @@ function extractAddressParts(result: { address_components?: any[] }) {
   return { city, state, country, zipcode };
 }
 
-// ---------- Helper to convert file to base64 ----------
+// ---------- File to base64 ----------
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -84,11 +78,11 @@ function fileToBase64(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+
 const toDataUri = (rawBase64: string) => {
   if (rawBase64.startsWith("data:image")) return rawBase64;
-  return `data:image/jpeg;base64,${rawBase64}`; // default jpeg
+  return `data:image/jpeg;base64,${rawBase64}`;
 };
-
 
 // ---------- Component ----------
 interface AddBusinessProps {
@@ -116,7 +110,9 @@ export default function AddBusinessModal({
     zipcode: "",
   });
 
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  // ✅ Multiple category ids
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -130,323 +126,375 @@ export default function AddBusinessModal({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  console.log("USER ROLE:", userRole);
+  // ✅ Category dropdown state + ref
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
-const isBypassRole = (role?: string | null) =>
-  role === "Admin" || role === "Contributor";
-
-
-
-  // ✅ NEW: plan modal states
   const [openPlanModal, setOpenPlanModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
 
-function getUserIdFromToken(token: string): string | null {
-  try {
-    const payload: any = jwtDecode(token);
-    return payload?.id || payload?.user_id || payload?.sub || null;
-  } catch {
-    return null;
+  const isBypassRole = (role?: string | null) =>
+    role === "Admin" || role === "Contributor";
+
+  function getUserIdFromToken(token: string): string | null {
+    try {
+      const payload: any = jwtDecode(token);
+      return payload?.id || payload?.user_id || payload?.sub || null;
+    } catch {
+      return null;
+    }
   }
-}
 
-useEffect(() => {
-  (async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) return;
+  // ✅ Toggle category
+  const toggleCategory = (id: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+  };
 
-    const userId = getUserIdFromToken(token);
-    if (!userId) return;
+  // ✅ Remove pill tag
+  const removeCategory = (id: string) => {
+    setSelectedCategoryIds((prev) => prev.filter((c) => c !== id));
+  };
+
+  // ✅ Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(e.target as Node)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ✅ Fetch user role
+  useEffect(() => {
+    (async () => {
+      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const userId = getUserIdFromToken(token);
+      if (!userId) return;
+
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}users/me/${userId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok) {
+          setUserRole(data?.user_role || null);
+        } else {
+          setUserRole(null);
+        }
+      } catch (e) {
+        setUserRole(null);
+      }
+    })();
+  }, []);
+
+  // ✅ Fetch business types
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    fetch(base + "business-type/list?page=1&limit=1000")
+      .then((res) => res.json())
+      .then((data) => setBusinessTypes(data.data || []))
+      .catch((err) => console.error("Error fetching business types:", err));
+  }, []);
+  // ✅ Create business directly (Admin / Contributor)
+  const createBusinessDirect = async () => {
+    setCreateError(null);
+    setSuccessMessage(null);
+    setIsCreating(true);
 
     try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
+
+      if (!token) {
+        setCreateError("You must be logged in.");
+        return;
+      }
+
+      // ✅ Send full array of selected category ids
+      const dto = {
+        name: newBusiness.name.trim(),
+        business_type: selectedCategoryIds,
+        description: newBusiness.description || "",
+
+        address: newBusiness.fullAddress,
+        place_id: newBusiness.place_id,
+        latitude: newBusiness.latitude,
+        longitude: newBusiness.longitude,
+
+        city: newBusiness.city || "",
+        state: newBusiness.state || "",
+        country: newBusiness.country || "",
+        zipcode: newBusiness.zipcode || "",
+
+        active: true,
+        business_status: "draft",
+      };
+
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}users/me/${userId}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}business/create`,
         {
+          method: "POST",
           headers: {
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify(dto),
         }
       );
 
       const data = await res.json().catch(() => ({}));
 
-      if (res.ok) {
-        // ✅ YOUR FIELD
-        setUserRole(data?.user_role || null);
-      } else {
-        console.error("me api error:", data);
-        setUserRole(null);
+      if (!res.ok) {
+        throw new Error(data?.message || "Business create failed");
       }
-    } catch (e) {
-      console.error("me api failed:", e);
-      setUserRole(null);
-    }
-  })();
-}, []);
 
-
-  const createBusinessDirect = async () => {
-  setCreateError(null);
-  setSuccessMessage(null);
-  setIsCreating(true);
-
-  try {
-    const token =
-      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-
-    if (!token) {
-      setCreateError("You must be logged in.");
-      return;
-    }
-
-    // ✅ 1) Create business first
-    const dto = {
-      name: newBusiness.name.trim(),
-      business_type: [selectedCategoryId],
-      description: newBusiness.description || "",
-
-      address: newBusiness.fullAddress,
-      place_id: newBusiness.place_id,
-      latitude: newBusiness.latitude,
-      longitude: newBusiness.longitude,
-
-      city: newBusiness.city || "",
-      state: newBusiness.state || "",
-      country: newBusiness.country || "",
-      zipcode: newBusiness.zipcode || "",
-
-      active: true,
-      business_status: "draft",
-    };
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}business/create`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(dto),
+      const businessId = data?.id;
+      if (!businessId) {
+        throw new Error("Business created but id missing in response");
       }
-    );
 
-    const data = await res.json().catch(() => ({}));
+      // ✅ Upload image if selected
+      if (selectedImage) {
+        try {
+          const rawBase64 = await fileToBase64(selectedImage);
 
-    if (!res.ok) {
-      throw new Error(data?.message || "Business create failed");
-    }
+          const imageUploadPayload = {
+            data: toDataUri(rawBase64),
+            folder: "business",
+            fileName: businessId,
+          };
 
-    const businessId = data?.id;
-    if (!businessId) {
-      throw new Error("Business created but id missing in response");
-    }
+          const imageRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify(imageUploadPayload),
+            }
+          );
 
-    // ✅ 2) Upload image if selected
-    if (selectedImage) {
-      try {
-        const rawBase64 = await fileToBase64(selectedImage);
-
-        const imageUploadPayload = {
-          data: toDataUri(rawBase64), // ✅ important
-          folder: "business",
-          fileName: businessId,
-        };
-
-        const imageRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}images/upload-base64`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify(imageUploadPayload),
+          if (!imageRes.ok) {
+            const imageError = await imageRes.json().catch(() => ({}));
+            throw new Error(imageError?.message || "Failed to upload image");
           }
-        );
 
-        console.log("Image upload – status:", imageRes.status);
-
-        if (!imageRes.ok) {
-          const imageError = await imageRes.json().catch(() => ({}));
-          console.error("Image upload error:", imageError);
-          throw new Error(imageError?.message || "Failed to upload image");
+          const imageResponse = await imageRes.json().catch(() => ({}));
+          console.log("Image uploaded successfully:", imageResponse);
+        } catch (imageErr: any) {
+          throw new Error(
+            `Business created but image upload failed: ${imageErr?.message || imageErr}`
+          );
         }
-
-        const imageResponse = await imageRes.json().catch(() => ({}));
-        console.log("Image uploaded successfully:", imageResponse);
-      } catch (imageErr: any) {
-        throw new Error(
-          `Business created but image upload failed: ${imageErr?.message || imageErr}`
-        );
       }
-    }
 
-    // ✅ Success message only after both operations
-    setSuccessMessage(
-      selectedImage
-        ? "Business and logo uploaded successfully!"
-        : "Business created successfully!"
-    );
+      setSuccessMessage(
+        selectedImage
+          ? "Business and logo uploaded successfully!"
+          : "Business created successfully!"
+      );
 
-    // ✅ Reset form
-    setNewBusiness({
-      name: "",
-      fullAddress: "",
-      description: "",
-      place_id: undefined,
-      latitude: undefined,
-      longitude: undefined,
-      city: "",
-      state: "",
-      country: "",
-      zipcode: "",
-    });
-    setSelectedCategoryId("");
-    setSelectedImage(null);
-    setImagePreview(null);
-    console.log("✅ showSuccessPopup:", showSuccessPopup);
+      // ✅ Reset form
+      setNewBusiness({
+        name: "",
+        fullAddress: "",
+        description: "",
+        place_id: undefined,
+        latitude: undefined,
+        longitude: undefined,
+        city: "",
+        state: "",
+        country: "",
+        zipcode: "",
+      });
 
-     // ✅ ONLY call parent if showSuccessPopup is true (Contributor case)
-    if (showSuccessPopup) {
-      console.log("🔔 Calling onBusinessCreated for popup");
-      onBusinessCreated?.();
-      
-      setTimeout(() => {
-        console.log("🚪 Closing modal");
+      // ✅ Reset array & image
+      setSelectedCategoryIds([]);
+      setSelectedImage(null);
+      setImagePreview(null);
+
+      if (showSuccessPopup) {
+        onBusinessCreated?.();
+        setTimeout(() => {
+          setOpenAddBusinessModal(false);
+        }, 100);
+      } else {
         setOpenAddBusinessModal(false);
-      }, 100);
-    } else {
-      console.log("❌ Not showing popup (showSuccessPopup is false)");
-      // ✅ For other users, just close modal normally
-      setOpenAddBusinessModal(false);
-      onBusinessCreated?.(); // still refresh list
+        onBusinessCreated?.();
+      }
+    } catch (err: any) {
+      setCreateError(err?.message || "Something went wrong");
+    } finally {
+      setIsCreating(false);
     }
+  };
 
-  } catch (err: any) {
-    setCreateError(err?.message || "Something went wrong");
-  } finally {
-    setIsCreating(false);
-  }
-};
-
-
+  // ✅ Subscription checkout (Business users)
   const getPriceIdByPlan = (plan: PlanKey) => {
-    if (plan === "monthly") {
+    if (plan === "monthly")
       return process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY || "";
-    }
-    if (plan === "yearly") {
+    if (plan === "yearly")
       return process.env.NEXT_PUBLIC_STRIPE_PRICE_YEARLY || "";
-    }
     return "";
   };
 
   const startSubscriptionCheckout = async (plan: PlanKey) => {
-  try {
-    const token =
-      typeof window !== "undefined"
-        ? localStorage.getItem("access_token")
-        : null;
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("access_token")
+          : null;
 
-    if (!token) {
-      setCreateError("You must be logged in.");
-      return;
-    }
-
-    const priceId = getPriceIdByPlan(plan);
-    if (!priceId) {
-      setCreateError("Stripe price id missing.");
-      return;
-    }
-
-    // ✅ Build draft payload (NO business create here)
-    const businessDraftPayload = {
-      name: newBusiness.name.trim(),
-      business_type: [selectedCategoryId],
-      description: newBusiness.description || "",
-
-      address: newBusiness.fullAddress,
-      place_id: newBusiness.place_id,
-      latitude: newBusiness.latitude,
-      longitude: newBusiness.longitude,
-
-      city: newBusiness.city || "",
-      state: newBusiness.state || "",
-      country: newBusiness.country || "",
-      zipcode: newBusiness.zipcode || "",
-
-      active: false,
-      business_status: "draft",
-      subscription_plan: plan,
-    };
-
-    // ✅ image base64 (optional)
-    let businessImageBase64: string | null = null;
-    if (selectedImage) {
-      try {
-        businessImageBase64 = await fileToBase64(selectedImage);
-      } catch (e: any) {
-        setCreateError(e?.message || "Failed to read image");
+      if (!token) {
+        setCreateError("You must be logged in.");
         return;
       }
-    }
 
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          price_id: priceId,
-          package: plan,
-          businessDraftPayload,
-          businessImageBase64,
-        }),
+      const priceId = getPriceIdByPlan(plan);
+      if (!priceId) {
+        setCreateError("Stripe price id missing.");
+        return;
       }
-    );
 
-    const data = await res.json().catch(() => ({}));
+      // ✅ Send full array
+      const businessDraftPayload = {
+        name: newBusiness.name.trim(),
+        business_type: selectedCategoryIds,
+        description: newBusiness.description || "",
 
-    if (!res.ok) {
-      setCreateError(data?.message || "Subscription checkout failed");
+        address: newBusiness.fullAddress,
+        place_id: newBusiness.place_id,
+        latitude: newBusiness.latitude,
+        longitude: newBusiness.longitude,
+
+        city: newBusiness.city || "",
+        state: newBusiness.state || "",
+        country: newBusiness.country || "",
+        zipcode: newBusiness.zipcode || "",
+
+        active: false,
+        business_status: "draft",
+        subscription_plan: plan,
+      };
+
+      let businessImageBase64: string | null = null;
+      if (selectedImage) {
+        try {
+          businessImageBase64 = await fileToBase64(selectedImage);
+        } catch (e: any) {
+          setCreateError(e?.message || "Failed to read image");
+          return;
+        }
+      }
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}subscriptions/checkout`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            price_id: priceId,
+            package: plan,
+            businessDraftPayload,
+            businessImageBase64,
+          }),
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setCreateError(data?.message || "Subscription checkout failed");
+        return;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        setCreateError("Stripe URL missing");
+      }
+    } catch (e: any) {
+      setCreateError(e?.message || "Something went wrong");
+    }
+  };
+
+  // ✅ Validate then decide flow
+  const handleOpenPlanAfterValidation = async () => {
+    setCreateError(null);
+    setSuccessMessage(null);
+
+    if (!newBusiness.name.trim())
+      return setCreateError("Business name is required.");
+
+    // ✅ Check array length
+    if (selectedCategoryIds.length === 0)
+      return setCreateError("Please select at least one business category.");
+
+    if (!newBusiness.fullAddress.trim())
+      return setCreateError("Please select address using Google search.");
+
+    if (!userRole)
+      return setCreateError("Loading user info, please try again...");
+
+    if (isBypassRole(userRole)) {
+      setIsCreating(true);
+      try {
+        await createBusinessDirect();
+      } finally {
+        setIsCreating(false);
+      }
       return;
     }
 
-    if (data?.url) {
-      // ✅ redirect to Stripe
-      window.location.href = data.url;
-    } else {
-      setCreateError("Stripe URL missing");
+    setSelectedPlan(null);
+    setOpenPlanModal(true);
+  };
+
+  // ✅ Plan confirm
+  const handleConfirmPlan = async (plan: PlanKey) => {
+    setCreateError(null);
+    setIsCreating(true);
+    try {
+      await startSubscriptionCheckout(plan);
+    } finally {
+      setIsCreating(false);
     }
-  } catch (e: any) {
-    console.error(e);
-    setCreateError(e?.message || "Something went wrong");
-  }
-};
+  };
 
-  // ---------- Fetch business types on mount ----------
-  useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+  // ✅ Backdrop click
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && !isCreating) {
+      setOpenAddBusinessModal(false);
+    }
+  };
 
-    fetch(base + "business-type/list?page=1&limit=1000")
-      .then((response) => response.json())
-      .then((data) => {
-        setBusinessTypes(data.data || []);
-      })
-      .catch((error) => {
-        console.error("Error fetching business types:", error);
-      });
-  }, []);
-
-  // ---------- Handle image selection ----------
+  // ✅ Image change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       setCreateError("Please select a valid image file");
       return;
     }
@@ -467,67 +515,13 @@ useEffect(() => {
     reader.readAsDataURL(file);
   };
 
-  // ✅ Step-1: validate then open plan modal (NO create here)
-  const handleOpenPlanAfterValidation = async () => {
-  setCreateError(null);
-  setSuccessMessage(null);
-
-  if (!newBusiness.name.trim())
-    return setCreateError("Business name is required.");
-  if (!selectedCategoryId)
-    return setCreateError("Please select a business category.");
-  if (!newBusiness.fullAddress.trim())
-    return setCreateError("Please select address using Google search.");
-
-  if (!userRole) {
-    return setCreateError("Loading user info, please try again...");
-  }
-
-  // ✅ Admin / Contributor → direct create (NO subscription UI)
-  if (isBypassRole(userRole)) {
-    setIsCreating(true);
-    try {
-      await createBusinessDirect(); // calls POST business/create
-    } finally {
-      setIsCreating(false);
-    }
-    return;
-  }
-
-  // ✅ Business → subscription modal
-  setSelectedPlan(null);
-  setOpenPlanModal(true);
-};
-
-
-
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !isCreating) {
-      setOpenAddBusinessModal(false);
-    }
-  };
-
-  // ✅ Plan modal confirm
-  const handleConfirmPlan = async (plan: PlanKey) => {
-    setCreateError(null);
-
-    // full screen loader ON
-    setIsCreating(true);
-
-    try {
-      // ✅ ONLY start checkout (draft will be created in backend)
-      await startSubscriptionCheckout(plan);
-    } finally {
-      // Stripe redirect ho jata hai, warna yahan OFF ho jayega
-      setIsCreating(false);
-    }
-  };
-
-
-  const onCropComplete = useCallback((croppedArea: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels);
-  }, []);
+  // ✅ Crop complete callback
+  const onCropComplete = useCallback(
+    (croppedArea: any, croppedAreaPixels: any) => {
+      setCroppedAreaPixels(croppedAreaPixels);
+    },
+    []
+  );
 
   const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -545,9 +539,7 @@ useEffect(() => {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
 
-    if (!ctx) {
-      throw new Error("No 2d context");
-    }
+    if (!ctx) throw new Error("No 2d context");
 
     canvas.width = pixelCrop.width;
     canvas.height = pixelCrop.height;
@@ -565,14 +557,20 @@ useEffect(() => {
     );
 
     return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const file = new File([blob], selectedImage?.name || "cropped.jpg", {
-            type: "image/jpeg",
-          });
-          resolve(file);
-        }
-      }, "image/jpeg", 0.9);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const file = new File(
+              [blob],
+              selectedImage?.name || "cropped.jpg",
+              { type: "image/jpeg" }
+            );
+            resolve(file);
+          }
+        },
+        "image/jpeg",
+        0.9
+      );
     });
   };
 
@@ -583,7 +581,6 @@ useEffect(() => {
       const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
       setSelectedImage(croppedFile);
 
-      // Update preview
       const reader = new FileReader();
       reader.onload = () => {
         setImagePreview(reader.result as string);
@@ -593,13 +590,9 @@ useEffect(() => {
       setShowCropper(false);
       setImageSrc(null);
     } catch (e) {
-      console.error(e);
       setCreateError("Failed to crop image");
     }
   };
-
-
-
 
   return (
     <>
@@ -666,7 +659,6 @@ useEffect(() => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Address <span className="text-red-500">*</span>
                 </label>
-
                 <GoogleAddressInput
                   value={newBusiness.fullAddress}
                   onChangeText={(text) =>
@@ -675,7 +667,6 @@ useEffect(() => {
                   onSelect={(result) => {
                     const { city, state, country, zipcode } =
                       extractAddressParts(result);
-
                     setNewBusiness((prev) => ({
                       ...prev,
                       fullAddress: result.formatted_address,
@@ -691,7 +682,7 @@ useEffect(() => {
                 />
               </div>
 
-              {/* Logo upload */}
+              {/* Logo Upload */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Upload Business Logo/Photo
@@ -723,8 +714,18 @@ useEffect(() => {
                         </div>
                       ) : (
                         <>
-                          <svg className="w-10 h-10 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          <svg
+                            className="w-10 h-10 text-gray-400 mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                            />
                           </svg>
                           <p className="text-blue-600 font-semibold text-sm">
                             Click to upload{" "}
@@ -783,7 +784,6 @@ useEffect(() => {
                       >
                         Cancel
                       </button>
-
                       <button
                         type="button"
                         onClick={handleCropConfirm}
@@ -799,7 +799,7 @@ useEffect(() => {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Description <span className="text-red-500">*</span>
+                  Business Description
                 </label>
                 <textarea
                   placeholder="Write a short description..."
@@ -807,48 +807,119 @@ useEffect(() => {
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                   value={newBusiness.description}
                   onChange={(e) =>
-                    setNewBusiness((prev) => ({ ...prev, description: e.target.value }))
+                    setNewBusiness((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
                   }
                 />
               </div>
 
-              {/* Category select */}
+              {/* ✅ Multi-select Category with Pill Tags + Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Business Categories <span className="text-red-500">*</span>
                 </label>
-                <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                  value={selectedCategoryId}
-                  onChange={(e) => setSelectedCategoryId(e.target.value)}
-                >
-                  <option value="">Select Category</option>
-                  {businessTypes.map((bt) => (
-                    <option key={bt.id} value={bt.id}>
-                      {bt.name.trim()}
-                    </option>
-                  ))}
-                </select>
+
+                {/* ✅ Selected pill tags */}
+                {selectedCategoryIds.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedCategoryIds.map((id) => {
+                      const bt = businessTypes.find((b) => b.id === id);
+                      if (!bt) return null;
+                      return (
+                        <span
+                          key={id}
+                          className="flex items-center gap-1 bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full"
+                        >
+                          {bt.name.trim()}
+                          <button
+                            type="button"
+                            onClick={() => removeCategory(id)}
+                            className="ml-1 text-blue-500 hover:text-red-500 transition font-bold text-sm"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* ✅ Dropdown with ref for outside click */}
+                <div className="relative" ref={categoryDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCategoryDropdownOpen((prev) => !prev)
+                    }
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-left flex justify-between items-center focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <span className="text-gray-500">
+                      {selectedCategoryIds.length === 0
+                        ? "Select categories..."
+                        : `${selectedCategoryIds.length} categor${selectedCategoryIds.length === 1 ? "y" : "ies"} selected`}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                        categoryDropdownOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* ✅ Checkbox list dropdown */}
+                  {categoryDropdownOpen && (
+                    <div className="absolute z-[10001] w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                      {businessTypes.length === 0 ? (
+                        <p className="text-sm text-gray-400 px-3 py-2">
+                          Loading categories...
+                        </p>
+                      ) : (
+                        businessTypes.map((bt) => {
+                          const isChecked = selectedCategoryIds.includes(bt.id);
+                          return (
+                            <label
+                              key={bt.id}
+                              className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-blue-50 transition ${
+                                isChecked ? "bg-blue-50" : ""
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => toggleCategory(bt.id)}
+                                className="w-4 h-4 accent-blue-600 cursor-pointer"
+                              />
+                              <span className="text-sm text-gray-700">
+                                {bt.name.trim()}
+                              </span>
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* ✅ Submit Button (NOW opens plan popup) */}
-              {/* <div className="pt-2">
-                <button
-                  onClick={handleOpenPlanAfterValidation}
-                  disabled={isCreating}
-                  className="w-full px-5 py-3 text-center text-sm font-bold bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
-                >
-                  {isCreating ? "Creating..." : "Create Business"}
-                </button>
-              </div> */}
-              {/* ✅ Submit Button (NOW opens plan popup) */}
+              {/* ✅ Submit Button */}
               <div className="pt-2">
                 <button
                   onClick={handleOpenPlanAfterValidation}
                   disabled={
                     isCreating ||
                     !newBusiness.name.trim() ||
-                    !selectedCategoryId ||
+                    selectedCategoryIds.length === 0 ||
                     !newBusiness.fullAddress.trim()
                   }
                   className="w-full px-5 py-3 text-center text-sm font-bold bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
@@ -861,10 +932,10 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* ✅ Subscription Plan Popup */}
+      {/* ✅ Subscription Plan Modal */}
       {openPlanModal && !isBypassRole(userRole) && (
         <div className="fixed inset-0 z-[10010] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-1xl p-6 relative">
+          <div className="w-full max-w-2xl bg-white rounded-3xl shadow-xl p-6 relative">
             <button
               type="button"
               disabled={isCreating}
@@ -881,23 +952,21 @@ useEffect(() => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Monthly */}
               <div
-                className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${selectedPlan === "monthly"
+                className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${
+                  selectedPlan === "monthly"
                     ? "ring-4 ring-blue-400"
                     : "hover:shadow-xl"
-                  }`}
+                }`}
                 onClick={() => setSelectedPlan("monthly")}
               >
-                {/* pill (no cut) */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow whitespace-nowrap">
                   Monthly
                 </div>
 
-                {/* content */}
                 <div className="p-8 pt-20 flex-1">
                   <div className="text-center text-5xl font-extrabold text-gray-900 mb-8">
                     $29
                   </div>
-
                   <ul className="space-y-4 text-gray-700">
                     <li className="flex gap-3 items-start">
                       <span className="text-blue-500 text-xl">✓</span>
@@ -914,42 +983,38 @@ useEffect(() => {
                   </ul>
                 </div>
 
-                {/* button (aligned) */}
                 <div className="p-6 mt-auto">
                   <button
                     type="button"
                     className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleConfirmPlan("monthly"); // ✅ direct plan
+                      handleConfirmPlan("monthly");
                     }}
                     disabled={isCreating}
                   >
                     Choose Plan
                   </button>
-
                 </div>
               </div>
 
               {/* Yearly */}
               <div
-                className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${selectedPlan === "yearly"
+                className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${
+                  selectedPlan === "yearly"
                     ? "ring-4 ring-blue-400"
                     : "hover:shadow-xl"
-                  }`}
+                }`}
                 onClick={() => setSelectedPlan("yearly")}
               >
-                {/* pill (no cut) */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow whitespace-nowrap">
                   Yearly
                 </div>
 
-                {/* content */}
                 <div className="bg-[#06A7E8] text-white p-8 pt-20 flex-1 rounded-[36px]">
                   <div className="text-center text-5xl font-extrabold mb-8">
                     $299
                   </div>
-
                   <ul className="space-y-4">
                     <li className="flex gap-3 items-start">
                       <span className="text-white text-xl">✓</span>
@@ -970,26 +1035,26 @@ useEffect(() => {
                   </ul>
                 </div>
 
-                {/* button (aligned) */}
                 <div className="p-6 bg-white mt-auto rounded-b-[36px]">
                   <button
                     type="button"
                     className="w-full rounded-full bg-white text-[#06A7E8] border-2 border-[#06A7E8] font-bold py-4 text-lg hover:bg-[#06A7E8] hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleConfirmPlan("yearly"); // ✅ direct plan
+                      handleConfirmPlan("yearly");
                     }}
                     disabled={isCreating}
                   >
                     Choose Plan
                   </button>
-
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* ✅ Full screen loader */}
       {isCreating && (
         <div className="fixed inset-0 z-[99999] bg-black/60 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white rounded-2xl px-8 py-6 shadow-2xl flex flex-col items-center gap-3">
