@@ -734,51 +734,6 @@ export default function Page({
     };
 
 
-    // const handleDeleteBusinessImage = async (image: BusinessImage) => {
-    //     if (!API_BASE_URL || !business) return;
-
-    //     const token = getToken();
-    //     if (!token) {
-    //         alert("No access token");
-    //         return;
-    //     }
-
-    //     const confirmDelete = window.confirm("Delete this business image?");
-    //     if (!confirmDelete) return;
-
-    //     try {
-    //         const res = await fetch(
-    //             `${API_BASE_URL}/business-images/delete/${image.id}`,
-    //             {
-    //                 method: "DELETE",
-    //                 headers: {
-    //                     Authorization: `Bearer ${token}`,
-    //                 },
-    //             }
-    //         );
-
-    //         if (!res.ok) {
-    //             let msg = "Failed to delete business image";
-    //             try {
-    //                 const body = await res.json();
-    //                 if (body?.message) {
-    //                     msg = Array.isArray(body.message)
-    //                         ? body.message.join(", ")
-    //                         : body.message;
-    //                 }
-    //             } catch {
-    //                 // ignore JSON parse error
-    //             }
-    //             throw new Error(msg);
-    //         }
-
-    //         await fetchAllData();
-    //     } catch (err: any) {
-    //         console.error(err);
-    //         alert(err.message || "Failed to delete business image");
-    //     }
-    // };
-
     // ---- Accessibility Media: Add button popup handler ----
     const handleSetOpenAccessibilityMediaPopup: React.Dispatch<
         React.SetStateAction<boolean>

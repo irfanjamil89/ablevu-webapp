@@ -9,6 +9,7 @@ interface User {
   last_name: string | null;
   email: string;
   user_role: "Contributor" | "Business" | "User";
+  account_status: string;
   created_at: string;
 }
 
@@ -361,6 +362,84 @@ export default function Page() {
     setSelectedRole(role);
   };
 
+  const [confirmPopup, setConfirmPopup] = useState<{
+  open: boolean;
+  userId: string;
+  status: "Active" | "Inactive" | "Suspended" | "Deleted";
+  title: string;
+  message: string;
+} | null>(null);
+
+
+const requestStatusChange = (
+  userId: string,
+  status: "Active" | "Inactive" | "Suspended" | "Deleted"
+) => {
+  const messages: Record<string, { title: string; message: string }> = {
+    Active:    { title: "Activate User",    message: "Are you sure you want to mark this user as Active?" },
+    Inactive:  { title: "Deactivate User",  message: "Are you sure you want to mark this user as Inactive?" },
+    Suspended: { title: "Suspend User",     message: "Are you sure you want to suspend this user?" },
+    Deleted:   { title: "Delete User",      message: "Are you sure you want to permanently delete this user? This action cannot be undone." },
+  };
+
+  setConfirmPopup({
+    open: true,
+    userId,
+    status,
+    ...messages[status],
+  });
+};
+
+
+
+  const handleAccountStatusChange = async (
+    userId: string,
+    status: "Active" | "Inactive" | "Suspended" | "Deleted"
+  ) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}users/${userId}/account-status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+          body: JSON.stringify({ status }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update status");
+      }
+
+       await fetchUsers();
+
+      const result = await response.json();
+
+      // Update UI locally
+      setUsers((prevUsers: any[]) =>
+        prevUsers.map((user) =>
+          user.id === userId ? { ...user, status } : user
+        )
+      );
+
+      // ✅ Show success popup
+      openPopup(
+        "success",
+        "Status Updated",
+        `User has been ${status === "Deleted" ? "deleted" : `marked as ${status}`} successfully.`
+      );
+
+    } catch (error) {
+      console.error("Error updating status:", error);
+
+      // ✅ Show error popup
+      openPopup("error", "Update Failed", "Could not update account status. Please try again.");
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="flex justify-center w-full items-center h-[400px]">
@@ -579,6 +658,9 @@ export default function Page() {
                       <th scope="col" className="w-auto lg:w-[200px] px-6 py-3">
                         User Role
                       </th>
+                      <th scope="col" className="w-auto lg:w-[200px] px-6 py-3">
+                        Account Status
+                      </th>
                       <th scope="col" className="px-6 py-3">
                         Profiles Created
                       </th>
@@ -610,7 +692,13 @@ export default function Page() {
                           <td className="px-6 py-5 w-4/5">
                             {formatDate(user.created_at)}
                           </td>
-                          <td className="px-6 py-5 w-4/5">{user.user_role}</td>
+
+                          <td className="px-6 py-5 w-4/5">
+                          {user.user_role}
+                          </td>
+                          <td className="px-6 py-5 w-4/5">
+                          {user.account_status}
+                          </td>
 
                           {/* Dropdown Cell */}
                           <td className="relative px-6 py-5 text-right">
@@ -646,6 +734,39 @@ export default function Page() {
                                 >
                                   Edit
                                 </button>
+
+                                {/* SUSPEND */}
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                  onClick={() => { setOpenMenuId(null); requestStatusChange(user.id, "Suspended"); }}
+                                >
+                                  Suspend
+                                </button>
+
+                                {/* INACTIVE */}
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                  onClick={() => { setOpenMenuId(null); requestStatusChange(user.id, "Inactive"); }}
+                                >
+                                  Inactive
+                                </button>
+
+                                {/* ACTIVE */}
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 border-b border-gray-100"
+                                  onClick={() => { setOpenMenuId(null); requestStatusChange(user.id, "Active"); }}
+                                >
+                                  Active
+                                </button>
+
+                                {/* DELETE */}
+                                <button
+                                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
+                                  onClick={() => { setOpenMenuId(null); requestStatusChange(user.id, "Deleted"); }}
+                                >
+                                  Delete
+                                </button>
+
                               </div>
                             )}
                           </td>
@@ -1183,6 +1304,54 @@ export default function Page() {
 
 
                   </form>
+                </div>
+              </div>
+            )}
+
+
+            {/* ===== CONFIRM ACTION POPUP ===== */}
+            {confirmPopup?.open && (
+              <div className="fixed inset-0 z-[11000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-2xl w-[380px] text-center p-8 relative">
+
+                  {/* Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className={`rounded-full p-3 ${confirmPopup.status === "Deleted" ? "bg-red-600" : "bg-[#0519CE]"}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        {confirmPopup.status === "Deleted" ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M12 21a9 9 0 100-18 9 9 0 000 18z" />
+                        )}
+                      </svg>
+                    </div>
+                  </div>
+
+                  <h2 className="text-lg font-bold mb-2 text-gray-900">{confirmPopup.title}</h2>
+                  <p className="text-sm text-gray-500 mb-6">{confirmPopup.message}</p>
+
+                  {/* Buttons */}
+                  <div className="flex gap-3">
+                    {/* Cancel */}
+                    <button
+                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium cursor-pointer"
+                      onClick={() => setConfirmPopup(null)}
+                    >
+                      Cancel
+                    </button>
+
+                    {/* Confirm */}
+                    <button
+                      className={`flex-1 px-4 py-2 rounded-lg text-white text-sm font-medium cursor-pointer ${confirmPopup.status === "Deleted" ? "bg-red-600 hover:bg-red-700" : "bg-[#0519CE] hover:opacity-90"
+                        }`}
+                      onClick={async () => {
+                        setConfirmPopup(null);
+                        await handleAccountStatusChange(confirmPopup.userId, confirmPopup.status);
+                      }}
+                    >
+                      Confirm
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
