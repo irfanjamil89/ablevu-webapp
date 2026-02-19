@@ -132,7 +132,7 @@ export default function Page() {
       };
 
       if (formData.expires_at) {
-        requestBody.expires_at = new Date(formData.expires_at).toISOString();
+        requestBody.expires_at = formData.expires_at;
       }
 
       if (formData.usage_limit !== "") {
