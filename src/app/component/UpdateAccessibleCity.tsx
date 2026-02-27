@@ -62,7 +62,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
     const fetchBusinesses = async () => {
       try {
         const token = localStorage.getItem("access_token");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list?limit=5`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list2?limit=1000`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
