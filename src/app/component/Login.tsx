@@ -18,36 +18,35 @@ const Login: React.FC<LoginProps> = ({ setOpenLoginModal, setOpenSignupModal, se
   const [showPassword, setShowPassword] = useState(false);
 
   // Login handler
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+ // Login handler
+ 
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      const response = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + "auth/login", {
-        username: email,
-        password: password,
-      });
+  try {
+    const response = await axios.post(process.env.NEXT_PUBLIC_API_BASE_URL + "auth/login", {
+      username: email,
+      password: password,
+    });
 
-      // The API returns { access_token: "..." } with status 201
-      if (response.status === 201 && response.data?.access_token) {
-        localStorage.setItem("access_token", response.data.access_token);
-        if (response.data?.refresh_token) {
-          localStorage.setItem("refresh_token", response.data.refresh_token);
-        }
-        window.location.href = "/dashboard";
+    if (response.status === 201 && response.data?.access_token) {
+      localStorage.setItem("access_token", response.data.access_token);
+      if (response.data?.refresh_token) {
+        localStorage.setItem("refresh_token", response.data.refresh_token);
       }
-      else {
-        setError("Username or Password is incorrect.");
-      }
-    } catch (err: any) {
-      console.error("Login failed:", err?.response?.data || err);
-      setError("Username or Password is incorrect.");
-    } finally {
-      setLoading(false);
+      window.location.href = "/dashboard";
+    } else {
+      setError(response.data?.message || "Login failed. Please try again.");
     }
-
-  };
+  } catch (err: any) {
+    console.error("Login failed:", err?.response?.data || err);
+    setError(err?.response?.data?.message || "Login failed. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
 
