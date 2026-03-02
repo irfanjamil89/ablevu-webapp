@@ -291,7 +291,7 @@ export default function CitiesMap() {
     try {
       setLoading(true);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-city/list/?page=1&limit=1000`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}accessible-city/list1/?page=1&limit=1000`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch cities');
