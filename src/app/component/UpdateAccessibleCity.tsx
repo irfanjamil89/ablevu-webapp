@@ -62,7 +62,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
     const fetchBusinesses = async () => {
       try {
         const token = localStorage.getItem("access_token");
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list?limit=5`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}business/list?limit=1000`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -253,7 +253,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
   
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[400px]">
+      <div className="flex absolute w-full top-0 left-0 bg-white  justify-center items-center h-full">
         <img src="/assets/images/favicon.png" className="w-15 h-15 animate-spin" alt="Favicon" />
       </div>
     );

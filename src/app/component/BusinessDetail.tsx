@@ -23,6 +23,7 @@ type LinkedType = {
 
 type BusinessProfileApi = BusinessProfile & {
   owner_email?: string;
+  owner_user_id?: string;
   linkedTypes?: LinkedType[];
 };
 
@@ -157,6 +158,28 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
             ?.map((lt) => lt.business_type_id)
             .filter((id): id is string => Boolean(id)) ?? [];
 
+        let ownerEmail = data.owner_email || "";
+
+        if (data.owner_user_id) {
+          try {
+            const userRes = await fetch(
+              `${API_BASE_URL}users/me/${data.owner_user_id}`,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            if (userRes.ok) {
+              const userData = await userRes.json();
+              ownerEmail = userData.email || ownerEmail;
+            }
+          } catch (userErr) {
+            console.warn("Could not fetch owner email:", userErr);
+          }
+        }
+
         setForm({
           name: data.name || "",
           address: data.address || "",
@@ -257,6 +280,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
         email: form.email,
         phone_number: form.phoneNumber,
         website: form.website,
+        owner_email: form.ownerEmail,
       };
 
       // ✅ Send the full array of selected category UUIDs
@@ -373,11 +397,11 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
               <input
                 name="ownerEmail"
                 type="email"
-                placeholder="alison@visitmesa.com"
+                placeholder={form.ownerEmail}
                 value={form.ownerEmail}
                 onChange={handleChange}
-                disabled
-                className="w-full border border-gray-300 placeholder:text-gray-700 rounded-lg px-3 py-2 text-md hover:border-[#0519CE] focus:ring-1 focus:ring-[#0519CE] outline-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+
+                className="w-full border border-gray-300 placeholder:text-gray-700 rounded-lg px-3 py-2 text-md hover:border-[#0519CE] focus:ring-1 focus:ring-[#0519CE] outline-none "
               />
             </div>
 
@@ -465,7 +489,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
                 placeholder="downtown12west@gmail.com"
                 value={form.email}
                 onChange={handleChange}
-                
+
                 className="w-full border border-gray-300 placeholder:text-gray-700 rounded-lg px-3 py-2 text-md hover:border-[#0519CE] focus:ring-1 focus:ring-[#0519CE] outline-none"
               />
             </div>
