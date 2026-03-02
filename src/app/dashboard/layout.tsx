@@ -941,18 +941,18 @@ export default function DashboardLayout({
       )}
       <div className="flex">
         <div className={`
-    fixed lg:sticky 
-    top-0 left-0 
-    h-screen
-    w-[240px] sm:w-[260px] md:w-[280px] lg:w-[300px]
-    pt-3 sm:pt-4 lg:pt-5 
-    bg-white border-r border-gray-200
-    flex flex-col justify-between
-    transition-transform duration-300 ease-in-out
-    z-50 lg:z-auto
-    overflow-y-auto
-    ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-  `}>
+          fixed lg:sticky 
+          top-0 left-0 
+          h-screen
+          w-[240px] sm:w-[260px] md:w-[280px] lg:w-[300px]
+          pt-3 sm:pt-4 lg:pt-5 
+          bg-white border-r border-gray-200
+          flex flex-col justify-between
+          transition-transform duration-300 ease-in-out
+          z-50 lg:z-auto
+          overflow-y-auto
+          ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="lg:hidden absolute top-3 right-3 p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition z-10"

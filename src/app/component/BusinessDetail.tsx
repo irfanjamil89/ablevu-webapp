@@ -23,6 +23,7 @@ type LinkedType = {
 
 type BusinessProfileApi = BusinessProfile & {
   owner_email?: string;
+  owner_user_id?: string;
   linkedTypes?: LinkedType[];
 };
 
@@ -65,7 +66,8 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
     email: "",
     phoneNumber: "",
     website: "",
-    businessCategory: "", // will store UUID of business_type.id
+    // ✅ Now stores an array of UUIDs for multiple categories
+    businessCategories: [] as string[],
   });
 
   // ---------- Fetch business types ----------
@@ -97,7 +99,6 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
         }
 
         const data = await res.json();
-        // Response shape: { page, limit, total, totalPages, data: BusinessType[] }
         setBusinessTypes(data.data || []);
         setBtLoading(false);
       } catch (err: unknown) {
@@ -151,6 +152,34 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
 
         const data: BusinessProfileApi = await res.json();
 
+        // ✅ Extract all linked business_type_ids into an array
+        const linkedIds =
+          data.linkedTypes
+            ?.map((lt) => lt.business_type_id)
+            .filter((id): id is string => Boolean(id)) ?? [];
+
+        let ownerEmail = data.owner_email || "";
+
+        if (data.owner_user_id) {
+          try {
+            const userRes = await fetch(
+              `${API_BASE_URL}users/me/${data.owner_user_id}`,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            if (userRes.ok) {
+              const userData = await userRes.json();
+              ownerEmail = userData.email || ownerEmail;
+            }
+          } catch (userErr) {
+            console.warn("Could not fetch owner email:", userErr);
+          }
+        }
+
         setForm({
           name: data.name || "",
           address: data.address || "",
@@ -163,8 +192,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
           email: data.email || "",
           phoneNumber: data.phone_number || "",
           website: data.website || "",
-          // yahan backend se aane wala business_type_id UUID store ho raha hai
-          businessCategory: data.linkedTypes?.[0]?.business_type_id ?? "",
+          businessCategories: linkedIds,
         });
 
         setLoading(false);
@@ -188,6 +216,34 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ---------- Category: Add from dropdown ----------
+  const handleCategoryAdd = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    if (!selectedId) return;
+
+    setForm((prev) => {
+      // Avoid duplicates
+      if (prev.businessCategories.includes(selectedId)) return prev;
+      return {
+        ...prev,
+        businessCategories: [...prev.businessCategories, selectedId],
+      };
+    });
+
+    // Reset dropdown back to placeholder
+    e.target.value = "";
+  };
+
+  // ---------- Category: Remove pill ----------
+  const handleCategoryRemove = (idToRemove: string) => {
+    setForm((prev) => ({
+      ...prev,
+      businessCategories: prev.businessCategories.filter(
+        (id) => id !== idToRemove
+      ),
+    }));
   };
 
   // ---------- Submit / Update ----------
@@ -224,11 +280,12 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
         email: form.email,
         phone_number: form.phoneNumber,
         website: form.website,
+        owner_email: form.ownerEmail,
       };
 
-      if (form.businessCategory) {
-        // yahan pe UUID jaa raha hai jo select se aya hai
-        payload.business_type = [form.businessCategory];
+      // ✅ Send the full array of selected category UUIDs
+      if (form.businessCategories.length > 0) {
+        payload.business_type = form.businessCategories;
       }
 
       const res = await fetch(
@@ -299,9 +356,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
         ) : (
           <form className="space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <p className="text-red-500 text-sm mb-2">
-                {error}
-              </p>
+              <p className="text-red-500 text-sm mb-2">{error}</p>
             )}
 
             {/* Business Name */}
@@ -342,10 +397,11 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
               <input
                 name="ownerEmail"
                 type="email"
-                placeholder="alison@visitmesa.com"
+                placeholder={form.ownerEmail}
                 value={form.ownerEmail}
                 onChange={handleChange}
-                className="w-full border border-gray-300 placeholder:text-gray-700 rounded-lg px-3 py-2 text-md hover:border-[#0519CE] focus:ring-1 focus:ring-[#0519CE] outline-none"
+
+                className="w-full border border-gray-300 placeholder:text-gray-700 rounded-lg px-3 py-2 text-md hover:border-[#0519CE] focus:ring-1 focus:ring-[#0519CE] outline-none "
               />
             </div>
 
@@ -433,6 +489,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
                 placeholder="downtown12west@gmail.com"
                 value={form.email}
                 onChange={handleChange}
+
                 className="w-full border border-gray-300 placeholder:text-gray-700 rounded-lg px-3 py-2 text-md hover:border-[#0519CE] focus:ring-1 focus:ring-[#0519CE] outline-none"
               />
             </div>
@@ -467,34 +524,59 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
               />
             </div>
 
-            {/* Business Category (ID) */}
+            {/* ✅ Business Categories — Multi-select with pills */}
             <div>
               <label className="block text-md font-medium text-gray-700 mb-1">
                 Business Categories
               </label>
 
               {btError && (
-                <p className="text-xs text-red-500 mb-1">
-                  {btError}
-                </p>
+                <p className="text-xs text-red-500 mb-1">{btError}</p>
               )}
 
+              {/* Dropdown to add a category */}
               <select
-                name="businessCategory"
-                value={form.businessCategory}
-                onChange={handleChange}
+                onChange={handleCategoryAdd}
+                defaultValue=""
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-md focus:ring-2 focus:ring-[#0519CE] outline-none"
               >
-                <option value="">
-                  {btLoading ? "Loading categories..." : "Select Category"}
+                <option value="" disabled>
+                  {btLoading ? "Loading categories..." : "Select a category to add"}
                 </option>
-
-                {businessTypes.map((bt) => (
-                  <option key={bt.id} value={bt.id}>
-                    {bt.name}
-                  </option>
-                ))}
+                {businessTypes
+                  // Hide already-selected options
+                  .filter((bt) => !form.businessCategories.includes(bt.id))
+                  .map((bt) => (
+                    <option key={bt.id} value={bt.id}>
+                      {bt.name}
+                    </option>
+                  ))}
               </select>
+
+              {/* Selected pills */}
+              {form.businessCategories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {form.businessCategories.map((id) => {
+                    const bt = businessTypes.find((b) => b.id === id);
+                    return (
+                      <span
+                        key={id}
+                        className="flex items-center gap-1.5 bg-[#0519CE]/10 text-[#0519CE] text-sm font-medium px-3 py-1 rounded-full"
+                      >
+                        {bt?.name ?? id}
+                        <button
+                          type="button"
+                          onClick={() => handleCategoryRemove(id)}
+                          className="text-[#0519CE] hover:text-red-500 font-bold leading-none cursor-pointer"
+                          aria-label={`Remove ${bt?.name}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Buttons */}
