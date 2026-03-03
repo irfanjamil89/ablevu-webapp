@@ -642,7 +642,7 @@ const requestStatusChange = (
                 defaultChecked
               />
 
-              <div className="h-auto overflow-x-auto rounded-lg shadow-sm border border-gray-200">
+              <div className="h-auto  rounded-lg shadow-sm border border-gray-200">
                 <table className="min-w-full text-sm text-left text-gray-700">
                   <thead className="bg-[#EFF0F1] text-gray-500 text-sm font-bold">
                     <tr>
