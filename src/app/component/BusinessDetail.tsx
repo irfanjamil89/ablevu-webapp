@@ -21,8 +21,12 @@ type LinkedType = {
   business_type_id?: string;
 };
 
+type Owner = {
+  email?: string | null;
+};
+
 type BusinessProfileApi = BusinessProfile & {
-  owner_email?: string;
+  owner?: Owner | null;
   owner_user_id?: string;
   linkedTypes?: LinkedType[];
 };
@@ -158,32 +162,12 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
             ?.map((lt) => lt.business_type_id)
             .filter((id): id is string => Boolean(id)) ?? [];
 
-        let ownerEmail = data.owner_email || "";
-
-        if (data.owner_user_id) {
-          try {
-            const userRes = await fetch(
-              `${API_BASE_URL}users/me/${data.owner_user_id}`,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-            if (userRes.ok) {
-              const userData = await userRes.json();
-              ownerEmail = userData.email || ownerEmail;
-            }
-          } catch (userErr) {
-            console.warn("Could not fetch owner email:", userErr);
-          }
-        }
+        const ownerEmail = data.owner?.email ?? "";
 
         setForm({
           name: data.name || "",
           address: data.address || "",
-          ownerEmail: data.owner_email || "",
+          ownerEmail: ownerEmail,
           description: data.description || "",
           city: data.city || "",
           state: data.state || "",
