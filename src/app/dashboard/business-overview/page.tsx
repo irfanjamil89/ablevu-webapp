@@ -1280,14 +1280,14 @@ export default function Page() {
                         {/* Categories */}
                         <div className="text-md">
                           <div className="flex">
-                            <span className="font-medium text-gray-500 pe-2">
+                            <span className="font-medium text-gray-500 mt-0.5 pe-2">
                               Categories
                             </span>
                             <ul className="flex flex-wrap md:flex-nowrap space-x-2">
                               {business.linkedTypes.map((type) => (
                                 <li
                                   key={type.id}
-                                  className="bg-[#F7F7F7] rounded-full px-2"
+                                  className="bg-[#F7F7F7] rounded-full px-2 text-xs py-2"
                                 >
                                   {getBusinessTypeName(type)}
                                 </li>
