@@ -22,7 +22,7 @@ export default function AccessibleCityForm({ onSuccess }: { onSuccess?: () => vo
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
-  const radius = 150; 
+  const radius = 49; 
 
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);

@@ -58,6 +58,16 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
   const [btLoading, setBtLoading] = useState(false);
   const [btError, setBtError] = useState<string | null>(null);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
+
+useEffect(() => {
+  if (typeof window !== "undefined") {
+    const role = window.localStorage.getItem("user_role");
+    setIsAdmin(role === "admin");
+  }
+}, []);
+
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -384,7 +394,7 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
                 placeholder={form.ownerEmail}
                 value={form.ownerEmail}
                 onChange={handleChange}
-
+                disabled={!isAdmin}
                 className="w-full border border-gray-300 placeholder:text-gray-700 rounded-lg px-3 py-2 text-md hover:border-[#0519CE] focus:ring-1 focus:ring-[#0519CE] outline-none "
               />
             </div>

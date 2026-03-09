@@ -43,7 +43,7 @@ export default function UpdateAccessibleCity({ selectedCity, closeModal, onSucce
 
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-  const RADIUS_KM = 150;
+  const RADIUS_KM = 49;
 
   function getDistanceInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
     const R = 6371;
