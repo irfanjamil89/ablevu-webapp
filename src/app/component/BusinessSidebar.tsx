@@ -71,6 +71,7 @@ type BusinessType = {
 
 type UserRole = "Admin" | "Business" | "Contributor" | "User" | string;
 
+// ⭐ NEW: SavedBusiness type
 type SavedBusiness = {
   id: string;
   business_id: string;
@@ -112,6 +113,7 @@ type StatusKey =
   | "pending claim"
   | "claimed";
 
+// Label mapping for UI
 const STATUS_LABELS: Record<StatusKey, string> = {
   draft: "Draft",
   "pending review": "Pending Review",
@@ -145,28 +147,6 @@ const getDayOrder = (day: string) => {
   return DAY_ORDER[key] ?? 999;
 };
 
-// ---------- JWT Helper (module-level, not inside component) ----------
-function decodeJWT(token: string) {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch {
-    return null;
-  }
-}
-
-function getUserIdFromToken(token: string | null): string | null {
-  if (!token || token === "null" || token === "undefined") return null;
-  try {
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-    const payload = JSON.parse(atob(base64));
-    return payload?.sub || payload?.id || null;
-  } catch {
-    return null;
-  }
-}
-
 export default function BusinessSidebar({
   business,
   businessTypes,
@@ -192,81 +172,26 @@ export default function BusinessSidebar({
   const [deleteError, setDeleteError] = useState("");
 
   const [userRole, setUserRole] = useState<UserRole | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-
   const [likeLoading, setLikeLoading] = useState(false);
   const [likeCount, setLikeCount] = useState<number>(0);
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeId, setLikeId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const isOwner = userId === businessOwner?.id;
 
+  const decodeJWT = (token: string) => {
+    try {
+      return JSON.parse(atob(token.split(".")[1]));
+    } catch {
+      return null;
+    }
+  };
+
+  // ⭐ SAVE STATE
   const [saved, setSaved] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveId, setSaveId] = useState<string | null>(null);
 
-  // ---------- FIX: Single unified useEffect for userId + userRole ----------
-  // Reads role from localStorage instantly (set during login), no API delay.
-  // Falls back to API only if localStorage doesn't have user_role.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const token = window.localStorage.getItem("access_token");
-    if (!token) return;
-
-    // Decode token to get userId immediately
-    const payload = decodeJWT(token);
-    const id = payload?.sub || null;
-    setUserId(id);
-
-    // Try to get role from localStorage first (fast, synchronous)
-    const cachedRole = window.localStorage.getItem("user_role");
-    if (cachedRole) {
-      setUserRole(cachedRole);
-      return;
-    }
-
-    // Fallback: fetch from API if not cached
-    if (!id) return;
-    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (!base) return;
-
-    const fetchUserRole = async () => {
-      try {
-        const res = await fetch(`${base}users/me/${id}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data?.user_role) {
-          setUserRole(data.user_role);
-          // Cache it for next time
-          window.localStorage.setItem("user_role", data.user_role);
-        }
-      } catch (err) {
-        console.error("Failed to fetch user role", err);
-      }
-    };
-
-    fetchUserRole();
-  }, []);
-
-  // ---------- FIX: isOwner as useMemo, reactive to both userId and businessOwner ----------
-  const isOwner = useMemo(
-    () => !!userId && !!businessOwner?.id && userId === businessOwner.id,
-    [userId, businessOwner?.id]
-  );
-
-  // ---------- Derived permission flags ----------
-  const isAdmin = userRole === "Admin";
-  const canEdit = isOwner || isAdmin;
-  const isBusinessContributorOrUser =
-    userRole === "Business" ||
-    userRole === "Contributor" ||
-    userRole === "User";
-
-  // ---------- Fetch likes ----------
   const fetchLikesFromApi = async () => {
     if (!business?.id || !API_BASE_URL) return;
 
@@ -275,7 +200,7 @@ export default function BusinessSidebar({
         ? window.localStorage.getItem("access_token")
         : null;
 
-    const currentUserId = getUserIdFromToken(token);
+    const userId = getUserIdFromToken(token);
 
     try {
       const res = await fetch(
@@ -302,8 +227,8 @@ export default function BusinessSidebar({
 
       setLikeCount(likes.length);
 
-      if (currentUserId) {
-        const mine = likes.find((rec: any) => rec?.created_by === currentUserId);
+      if (userId) {
+        const mine = likes.find((rec: any) => rec?.created_by === userId);
         setLikedByUser(!!mine);
         setLikeId(mine?.id || null);
       } else {
@@ -314,13 +239,107 @@ export default function BusinessSidebar({
       console.error("Failed to fetch likes from API", err);
     }
   };
-
   useEffect(() => {
     fetchLikesFromApi();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [business?.id, API_BASE_URL]);
 
-  // ---------- Check saved status on load ----------
+  // ---------- TOKEN HELPER ----------
+  function getUserIdFromToken(token: string | null): string | null {
+    if (!token || token === "null" || token === "undefined") return null;
+
+    try {
+      const parts = token.split(".");
+      if (parts.length < 2) {
+        console.warn("Invalid token format, no payload part");
+        return null;
+      }
+
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const json = atob(base64);
+      const payload = JSON.parse(json);
+
+      return payload?.sub || payload?.id || null;
+    } catch (e) {
+      console.error("Failed to decode token", e);
+      return null;
+    }
+  }
+
+  // ⭐ SAVE TOGGLE
+  const handleSaveToggle = async () => {
+    if (!business || saveLoading) return;
+
+    const token =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("access_token")
+        : null;
+
+    if (!token) {
+      showError("Login Required", "Please login to save businesses.");
+      return;
+    }
+
+    try {
+      setSaveLoading(true);
+
+      // 🔴 UNSAVE
+      if (saved && saveId) {
+        const res = await fetch(
+          `${API_BASE_URL}business-save/delete/${saveId}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!res.ok) throw new Error("Failed to remove save");
+
+        setSaved(false);
+        setSaveId(null);
+        return;
+      }
+
+      // 🟢 SAVE
+      const res = await fetch(`${API_BASE_URL}business-save/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          business_id: business.id,
+          note: "Save Business",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save");
+
+      const resData = await res.json();
+      const created = (resData?.data || resData) as { id?: string };
+
+      setSaved(true);
+      if (created?.id) {
+        setSaveId(created.id);
+      }
+
+    } catch (err: any) {
+      showError("Error", err.message || "Save failed");
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    const payload = decodeJWT(token);
+    setUserId(payload?.sub || null);
+  }, []);
+
+  // ⭐ ON LOAD -> CHECK SAVED
   useEffect(() => {
     const checkSaved = async () => {
       if (!business || !API_BASE_URL) return;
@@ -329,9 +348,9 @@ export default function BusinessSidebar({
         typeof window !== "undefined"
           ? window.localStorage.getItem("access_token")
           : null;
-      const currentUserId = getUserIdFromToken(token);
+      const userId = getUserIdFromToken(token);
 
-      if (!token || !currentUserId) {
+      if (!token || !userId) {
         setSaved(false);
         setSaveId(null);
         return;
@@ -359,7 +378,7 @@ export default function BusinessSidebar({
         const match = items.find(
           (s) =>
             s.business_id === business.id &&
-            (!s.user_id || s.user_id === currentUserId)
+            (!s.user_id || s.user_id === userId)
         );
 
         if (match) {
@@ -377,70 +396,6 @@ export default function BusinessSidebar({
     checkSaved();
   }, [business?.id, API_BASE_URL]);
 
-  // ---------- Sync status from business prop ----------
-  useEffect(() => {
-    if (business?.business_status) {
-      setStatus(normalizeStatus(business.business_status));
-    }
-  }, [business?.business_status]);
-
-  // ---------- Save toggle ----------
-  const handleSaveToggle = async () => {
-    if (!business || saveLoading) return;
-
-    const token =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("access_token")
-        : null;
-
-    if (!token) {
-      showError("Login Required", "Please login to save businesses.");
-      return;
-    }
-
-    try {
-      setSaveLoading(true);
-
-      if (saved && saveId) {
-        const res = await fetch(
-          `${API_BASE_URL}business-save/delete/${saveId}`,
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!res.ok) throw new Error("Failed to remove save");
-        setSaved(false);
-        setSaveId(null);
-        return;
-      }
-
-      const res = await fetch(`${API_BASE_URL}business-save/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          business_id: business.id,
-          note: "Save Business",
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to save");
-
-      const resData = await res.json();
-      const created = (resData?.data || resData) as { id?: string };
-      setSaved(true);
-      if (created?.id) setSaveId(created.id);
-    } catch (err: any) {
-      showError("Error", err.message || "Save failed");
-    } finally {
-      setSaveLoading(false);
-    }
-  };
-
-  // ---------- Like toggle ----------
   const handleRecommendClick = async () => {
     if (!business || likeLoading) return;
 
@@ -457,34 +412,45 @@ export default function BusinessSidebar({
     try {
       setLikeLoading(true);
 
+      // 🔴 UNLIKE
       if (likedByUser && likeId) {
         const res = await fetch(
           `${API_BASE_URL}business-recomendations/delete/${likeId}`,
           {
             method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
         );
+
         if (!res.ok) throw new Error("Failed to remove like");
-        await fetchLikesFromApi();
+
+        await fetchLikesFromApi();        
         return;
       }
 
-      const res = await fetch(`${API_BASE_URL}business-recomendations/create`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          businessId: business.id,
-          label: "like",
-          active: true,
-        }),
-      });
+      // 🟢 LIKE
+      const res = await fetch(
+        `${API_BASE_URL}business-recomendations/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            businessId: business.id,
+            label: "like",
+            active: true,
+          }),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to like");
+
       await fetchLikesFromApi();
+
     } catch (err: any) {
       showError("Error", err.message || "Action failed");
     } finally {
@@ -492,7 +458,6 @@ export default function BusinessSidebar({
     }
   };
 
-  // ---------- Share ----------
   const handleShare = async () => {
     try {
       const url = window.location.href;
@@ -503,7 +468,92 @@ export default function BusinessSidebar({
     }
   };
 
-  // ---------- Status change ----------
+  // useEffect(() => {
+  //   if (!business?.businessRecomendations) {
+  //     setLikedByUser(false);
+  //     setLikeId(null);
+  //     setLikeCount(0);
+  //     return;
+  //   }
+
+  //   const token =
+  //     typeof window !== "undefined"
+  //       ? localStorage.getItem("access_token")
+  //       : null;
+
+  //   const userId = getUserIdFromToken(token);
+
+  //   let found = false;
+  //   let foundLikeId: string | null = null;
+
+  //   const count = business.businessRecomendations.filter((rec: any) => {
+  //     const isLike = rec.label === "like" && rec.active !== false;
+
+  //     if (isLike && rec.created_by === userId) {
+  //       found = true;
+  //       foundLikeId = rec.id; // 🔥 THIS IS IMPORTANT
+  //     }
+
+  //     return isLike;
+  //   }).length;
+
+  //   setLikeCount(count);
+  //   setLikedByUser(found);
+  //   setLikeId(foundLikeId);
+  // }, [business?.businessRecomendations]);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        if (typeof window === "undefined") return;
+
+        const token = window.localStorage.getItem("access_token");
+        const userId = getUserIdFromToken(token);
+
+        if (!token || !userId) {
+          console.warn(
+            "No valid token / userId found, skipping user role fetch"
+          );
+          return;
+        }
+
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (!base) {
+          console.error("API base URL is not configured");
+          return;
+        }
+
+        const res = await fetch(`${base}users/me/${userId}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          console.warn("User role fetch failed with status", res.status);
+          return;
+        }
+
+        const data = await res.json();
+        if (data?.user_role) {
+          setUserRole(data.user_role);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user role", err);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
+  useEffect(() => {
+    if (business?.business_status) {
+      setStatus(normalizeStatus(business.business_status));
+    }
+  }, [business?.business_status]);
+
   const handleStatusChange = async (newStatus: string) => {
     if (!business) return;
 
@@ -518,21 +568,27 @@ export default function BusinessSidebar({
           ? window.localStorage.getItem("access_token")
           : null;
 
-      const res = await fetch(`${API_BASE_URL}business/status/${business.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ business_status: normalized }),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}business/status/${business.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            business_status: normalized,
+          }),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to update");
 
       setStatus(normalized);
       refetchBusiness?.();
+
       showSuccess("Status Updated", "Business status updated successfully.");
-    } catch {
+    } catch (err) {
       setStatusError("Failed to update status");
       showError(
         "Status Update Failed",
@@ -543,19 +599,34 @@ export default function BusinessSidebar({
     }
   };
 
-  // ---------- Status helpers ----------
-  const normalizedStatus = useMemo(() => {
-    const s = normalizeStatus(status);
-    if (s === "approved") return "submitted";
-    return s as StatusKey;
-  }, [status]);
+  // ✅ status helpers
+  const normalizedStatus = useMemo(
+    () => {
+      const s = normalizeStatus(status);
+      if (s === "approved") return "submitted";
+      return s as StatusKey;
+    },
+    [status]
+  );
 
   const currentStatusLabel = STATUS_LABELS[normalizedStatus] || status;
 
+  const isAdmin = userRole === "Admin";
+  const canEdit= isOwner || isAdmin;
+  const isBusinessContributorOrUser =
+    userRole === "Business" ||
+    userRole === "Contributor" ||
+    userRole === "User";
+
+  // ✅ Admin dropdown options: all statuses
   const adminStatusOptions = useMemo(() => {
-    return ALL_STATUSES.map((s) => ({ value: s, label: STATUS_LABELS[s] }));
+    return ALL_STATUSES.map((s) => ({
+      value: s,
+      label: STATUS_LABELS[s],
+    }));
   }, []);
 
+  // ✅ Non-admin actions (Business/Contributor)
   type StatusAction = {
     key: string;
     label: string;
@@ -579,14 +650,16 @@ export default function BusinessSidebar({
   ];
 
   const availableActions = useMemo(() => {
-    if (!userRole || isAdmin) return [];
+    if (!userRole) return [];
+    if (isAdmin) return []; // admin uses dropdown
 
     const role = userRole as any;
+
     if (!["Business", "Contributor", "User"].includes(role)) return [];
 
     const byStatus: Record<StatusKey, Array<StatusAction["key"]>> = {
       draft: ["submit_approval"],
-      "pending review": [],
+      "pending review": [], 
       "pending approval": [],
       submitted: ["submit_acclaim"],
       "pending claim": [],
@@ -594,10 +667,10 @@ export default function BusinessSidebar({
     };
 
     const allowedKeys = byStatus[normalizedStatus] || [];
+
     return ACTIONS.filter((a) => allowedKeys.includes(a.key));
   }, [userRole, isAdmin, normalizedStatus]);
 
-  // ---------- Delete ----------
   const confirmDeleteAction = async () => {
     if (!business) return;
 
@@ -623,16 +696,20 @@ export default function BusinessSidebar({
         return;
       }
 
-      const res = await fetch(`${API_BASE_URL}business/delete/${business.id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}business/delete/${business.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
+        console.error("Delete business error:", body);
         const message =
           (body as { message?: string })?.message ||
           `Failed to delete business (${res.status})`;
@@ -640,10 +717,16 @@ export default function BusinessSidebar({
       }
 
       setOpenDeleteModal(false);
-      showSuccess("Deleted Successfully!", "The business has been removed.", () => {
-        router.push("/dashboard/businesses");
-      });
+
+      showSuccess(
+        "Deleted Successfully!",
+        "The business has been removed.",
+        () => {
+          router.push("/dashboard/businesses");
+        }
+      );
     } catch (err: unknown) {
+      console.error(err);
       const msg =
         err instanceof Error ? err.message : "Failed to delete business";
       setDeleteError(msg);
@@ -651,7 +734,6 @@ export default function BusinessSidebar({
     }
   };
 
-  // ---------- Display helpers ----------
   const businessTypesMap = useMemo(() => {
     const map: Record<string, string> = {};
     businessTypes.forEach((bt) => {
@@ -662,14 +744,18 @@ export default function BusinessSidebar({
 
   const categoryNames = useMemo(() => {
     if (!business?.linkedTypes) return [];
+
     return business.linkedTypes
-      .map(
-        (lt) =>
+      .map((lt) => {
+        return (
           lt.businessType?.name ??
           lt.name ??
           lt.business_type_name ??
-          (lt.business_type_id ? businessTypesMap[lt.business_type_id] : undefined)
-      )
+          (lt.business_type_id
+            ? businessTypesMap[lt.business_type_id]
+            : undefined)
+        );
+      })
       .filter((n): n is string => Boolean(n));
   }, [business, businessTypesMap]);
 
@@ -690,7 +776,6 @@ export default function BusinessSidebar({
       .sort((a, b) => getDayOrder(a.day) - getDayOrder(b.day));
   }, [business?.businessSchedule]);
 
-  // ---------- Render ----------
   if (loading) {
     return (
       <div className="w-3/10 px-10 py-7 border-r border-[#e5e5e7]">
@@ -725,6 +810,7 @@ export default function BusinessSidebar({
           </button>
           Business Details
         </div>
+
         <button
           className="rounded-4xl border py-2 sm:py-3 px-3 sm:px-4 flex border-[#e5e5e7] items-center text-sm sm:text-base"
           onClick={handleShare}
@@ -744,7 +830,9 @@ export default function BusinessSidebar({
           businessId={business.id}
           businessName={business.name}
           initialImageUrl={business.logo_url}
-          onUploadSuccess={() => refetchBusiness()}
+          onUploadSuccess={() => {
+            refetchBusiness();
+          }}
         />
       )}
       {!canEdit && business.logo_url && (
@@ -765,11 +853,12 @@ export default function BusinessSidebar({
           <h3 className="text-xl sm:text-2xl font-semibold">{business.name}</h3>
 
           <div className="flex items-center gap-3">
-            {/* Like Button */}
+            {/* LIKE BUTTON */}
             <button
               onClick={handleRecommendClick}
               disabled={likeLoading}
-              className={`flex items-center gap-1 py-1 px-3 rounded-2xl text-sm sm:text-base ${
+              className={`flex items-center gap-1 py-1 px-3 rounded-2xl text-sm sm:text-base
+              ${
                 likedByUser
                   ? "bg-[#0205d3] text-white"
                   : "bg-[#f0f1ff] text-[#0205d3]"
@@ -783,7 +872,7 @@ export default function BusinessSidebar({
               <span>{likeCount}</span>
             </button>
 
-            {/* Save Button */}
+            {/* SAVE / BOOKMARK BUTTON */}
             <button
               onClick={handleSaveToggle}
               disabled={saveLoading}
@@ -800,9 +889,8 @@ export default function BusinessSidebar({
 
         {/* Categories */}
         <div className="flex flex-col sm:flex-row items-start mt-4 border-b border-[#e5e5e7] pb-6">
-          <p className="mr-0 sm:mr-4 mb-2 sm:mb-0 mt-1 text-gray-500 text-sm sm:text-base">
-            Categories
-          </p>
+          <p className="mr-0 sm:mr-4 mb-2 sm:mb-0 mt-1 text-gray-500 text-sm sm:text-base">Categories</p>
+
           {categoryNames.length > 0 ? (
             <div className="flex gap-2 flex-wrap">
               {categoryNames.map((name, i) => (
@@ -878,9 +966,7 @@ export default function BusinessSidebar({
       {/* Operating Hours */}
       <div className="border-b pb-8 sm:pb-10 mt-8 sm:mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
-            Operating Hours
-          </h3>
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Operating Hours</h3>
           {canEdit && (
             <button
               type="button"
@@ -898,10 +984,7 @@ export default function BusinessSidebar({
 
         {sortedBusinessSchedule.length ? (
           sortedBusinessSchedule.map((s) => (
-            <p
-              key={s.id}
-              className="flex sm:flex-row items-start sm:items-center mb-3 text-sm sm:text-base"
-            >
+            <p key={s.id} className="flex sm:flex-row items-start sm:items-center mb-3 text-sm sm:text-base">
               <BsClock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-[#0205d3] flex-shrink-0 mt-0.5 sm:mt-0" />
               <span className="min-w-[90px] font-medium">{formatDay(s.day)}</span>
               <span className="sm:ml-4 text-gray-600">
@@ -917,9 +1000,7 @@ export default function BusinessSidebar({
       {/* Social Links */}
       <div className="border-b pb-8 sm:pb-10 mt-8 sm:mt-10 border-[#e5e5e7]">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">
-            Social Links
-          </h3>
+          <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6">Social Links</h3>
           {canEdit && (
             <button
               type="button"
@@ -978,12 +1059,10 @@ export default function BusinessSidebar({
             </button>
           )}
         </div>
-        <p className="text-sm sm:text-base text-gray-700">
-          {business.description || "No description added yet."}
-        </p>
+        <p className="text-sm sm:text-base text-gray-700">{business.description || "No description added yet."}</p>
       </div>
 
-      {/* Status Section */}
+      {/* STATUS SECTION */}
       <div className="pb-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-xs sm:text-sm text-gray-500">Business Status</p>
@@ -992,7 +1071,7 @@ export default function BusinessSidebar({
           </span>
         </div>
 
-        {/* Admin: full dropdown */}
+        {/* ADMIN: Dropdown (all statuses) */}
         {isAdmin && (
           <>
             <select
@@ -1007,16 +1086,18 @@ export default function BusinessSidebar({
                 </option>
               ))}
             </select>
+
             {statusSaving && (
               <p className="text-xs text-gray-500 mt-1">Saving...</p>
             )}
+
             {statusError && (
               <p className="text-red-500 text-xs sm:text-sm mt-1">{statusError}</p>
             )}
           </>
         )}
 
-        {/* Business/Contributor/User: action buttons */}
+        {/* Business/Contributor: Action Buttons */}
         {!isAdmin && isBusinessContributorOrUser && (
           <>
             {availableActions.length > 0 ? (
@@ -1038,6 +1119,7 @@ export default function BusinessSidebar({
                 No actions available for current status.
               </p>
             )}
+
             {statusError && (
               <p className="text-red-500 text-xs sm:text-sm mt-2">{statusError}</p>
             )}
@@ -1045,7 +1127,7 @@ export default function BusinessSidebar({
         )}
       </div>
 
-      {/* Delete Business */}
+      {/* Delete Business button */}
       {canEdit && (
         <div className="mt-3">
           <button
@@ -1060,13 +1142,14 @@ export default function BusinessSidebar({
             />
             Delete Business
           </button>
+
           {deleteError && (
             <p className="text-red-500 text-xs sm:text-sm mt-2">{deleteError}</p>
           )}
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation Popup */}
       {openDeleteModal && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[350px] text-center p-6 sm:p-8">
@@ -1088,12 +1171,12 @@ export default function BusinessSidebar({
                 </svg>
               </div>
             </div>
+
             <h2 className="text-base sm:text-lg font-bold mb-2 text-gray-800">
               Delete Business?
             </h2>
-            <p className="mb-4 text-sm sm:text-base text-gray-600">
-              This action cannot be undone.
-            </p>
+            <p className="mb-4 text-sm sm:text-base text-gray-600">This action cannot be undone.</p>
+
             <div className="flex flex-col sm:flex-row gap-3 mt-4">
               <button
                 onClick={() => setOpenDeleteModal(false)}
@@ -1101,6 +1184,7 @@ export default function BusinessSidebar({
               >
                 Cancel
               </button>
+
               <button
                 onClick={confirmDeleteAction}
                 className="w-full px-5 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 cursor-pointer text-sm sm:text-base"
