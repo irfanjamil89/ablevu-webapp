@@ -72,7 +72,7 @@ export default function Page() {
     const item = s.items?.data?.[0];
     const price = item?.price;
 
-    const interval = price?.recurring?.interval; // "month" | "year"
+    const interval = price?.recurring?.interval;
 
     const planName =
       interval === "year"
@@ -85,16 +85,19 @@ export default function Page() {
       ? `$${(price.unit_amount / 100).toFixed(2)}`
       : "-";
 
+    const startTs = item?.current_period_start ?? s.current_period_start;
+    const endTs   = item?.current_period_end   ?? s.current_period_end;
+
     return {
       id: s.id,
       business: s.businessName || "—",
-      plan: planName, // ✅ same style as first one
+      plan: planName,
       status: s.status,
-      start: s.current_period_start
-        ? new Date(s.current_period_start * 1000).toLocaleDateString()
+      start: startTs
+        ? new Date(startTs * 1000).toLocaleDateString()
         : "-",
-      end: s.current_period_end
-        ? new Date(s.current_period_end * 1000).toLocaleDateString()
+      end: endTs
+        ? new Date(endTs * 1000).toLocaleDateString()
         : "-",
       amount,
     };

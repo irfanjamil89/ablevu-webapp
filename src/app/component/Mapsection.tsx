@@ -50,6 +50,12 @@ const defaultCenter = {
   lng: -0.1277589,
 };
 
+// ✅ Helper: check if status is "approved" OR "submitted"
+const isApprovedOrSubmitted = (status: string | null | undefined): boolean => {
+  const s = status?.toLowerCase();
+  return s === "approved" || s === "submitted";
+};
+
 // ✅ Enhanced validation function with better error handling
 const validateCoordinates = (
   lat: any,
@@ -114,7 +120,7 @@ export default function Mappp() {
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [backgroundLoading, setBackgroundLoading] = useState(false);
-  const ITEMS_PER_PAGE = 30; // Adjust as needed
+  const ITEMS_PER_PAGE = 30;
 
   // Old modal (login/signup)
   const [businessForModal, setBusinessForModal] = useState<Business | null>(null);
@@ -178,7 +184,7 @@ export default function Mappp() {
     return batch;
   };
 
-  // ✅ Debounce search input (only for filtering, not for API calls)
+  // ✅ Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchTerm);
@@ -213,7 +219,7 @@ export default function Mappp() {
     }
   }, [totalPages]);
 
-  // ✅ Filter and validate businesses - search across multiple fields
+  // ✅ Filter and validate businesses
   const filteredBusinesses = useMemo(() => {
     if (!debouncedSearch.trim()) {
       return businesses;
@@ -222,7 +228,6 @@ export default function Mappp() {
     const searchLower = debouncedSearch.toLowerCase().trim();
 
     return businesses.filter((business) => {
-      // Search across multiple fields
       const searchableFields = [
         business.name,
         business.address,
@@ -267,19 +272,16 @@ export default function Mappp() {
   // ✅ Auto-fit map when search results change
   useEffect(() => {
     if (map && validBusinesses.length > 0 && debouncedSearch) {
-      // When searching, always fit bounds to show search results
       const bounds = new google.maps.LatLngBounds();
       validBusinesses.forEach((business) => {
         bounds.extend({ lat: business.validLat, lng: business.validLng });
       });
       map.fitBounds(bounds);
 
-      // If only one result, zoom in more
       if (validBusinesses.length === 1) {
         setTimeout(() => map.setZoom(15), 100);
       }
     } else if (map && !debouncedSearch && validBusinesses.length > 0) {
-      // When clearing search, fit to all businesses
       fitBoundsToMarkers();
     }
   }, [debouncedSearch, validBusinesses, map]);
@@ -330,7 +332,6 @@ export default function Mappp() {
 
       const result: ApiResponse = await response.json();
 
-      // Append to existing businesses or replace if first page
       setBusinesses(prev => page === 1 && !isBackground ? result.data || [] : [...prev, ...(result.data || [])]);
       setTotalPages(result.totalPages || 1);
 
@@ -363,14 +364,11 @@ export default function Mappp() {
     console.log(`Starting background loading: Pages 2 to ${totalPages}`);
 
     try {
-      // Wait a bit to let initial render complete
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Load pages 2 to totalPages sequentially
       for (let page = 2; page <= totalPages; page++) {
         console.log(`Background loading page ${page}/${totalPages}`);
         await fetchBusinesses(page, true);
-        // Small delay between requests to avoid overwhelming the server
         await new Promise(resolve => setTimeout(resolve, 200));
       }
 
@@ -383,7 +381,7 @@ export default function Mappp() {
     }
   };
 
-  // ✅ Load more businesses (for manual loading in sidebar)
+  // ✅ Load more businesses (manual)
   const loadMoreBusinesses = () => {
     if (currentPage < totalPages && !loadingMore) {
       fetchBusinesses(currentPage + 1);
@@ -423,9 +421,8 @@ export default function Mappp() {
     return await res.json();
   };
 
-  // ✅ Approved Business Click Handler
+  // ✅ Approved/Submitted Business Click Handler — SAME behavior for both
   const handleApprovedBusinessClick = (business: Business) => {
-    // Validate coordinates before proceeding
     const coords = validateCoordinates(business.latitude, business.longitude);
     if (!coords) {
       alert("This business location is not available on the map");
@@ -509,10 +506,10 @@ export default function Mappp() {
     setMap(mapInstance);
   };
 
-  // ✅ Get marker icon based on status
-  const getMarkerIcon = (isApproved: boolean) => {
+  // ✅ Get marker icon — lock for approved OR submitted, normal for others
+  const getMarkerIcon = (isLocked: boolean) => {
     if (typeof google !== "undefined") {
-      if (isApproved) {
+      if (isLocked) {
         return {
           url: "/assets/images/lock.png",
           scaledSize: new google.maps.Size(32, 42),
@@ -570,12 +567,11 @@ export default function Mappp() {
                 fullscreenControl: true,
               }}
             >
-              {/* ✅ Render markers only for valid businesses */}
+              {/* ✅ Render markers — lock icon for approved OR submitted */}
               {validBusinesses.map((business) => {
-                const isApproved =
-                  business.business_status?.toLowerCase() === "approved";
+                // ✅ CHANGE 1: isLocked = approved OR submitted
+                const isLocked = isApprovedOrSubmitted(business.business_status);
 
-                // Additional safety check
                 if (!business.validLat || !business.validLng) {
                   return null;
                 }
@@ -588,18 +584,17 @@ export default function Mappp() {
                       lng: business.validLng,
                     }}
                     onClick={() => {
-                      // Only set if coordinates are valid
                       const coords = validateCoordinates(business.latitude, business.longitude);
                       if (coords) {
                         setSelectedBusiness(business);
                       }
                     }}
-                    icon={getMarkerIcon(isApproved)}
+                    icon={getMarkerIcon(isLocked)}
                   />
                 );
               })}
 
-              {/* ✅ Info Window with validation */}
+              {/* ✅ Info Window */}
               {selectedBusiness &&
                 (() => {
                   const coords = validateCoordinates(
@@ -607,11 +602,10 @@ export default function Mappp() {
                     selectedBusiness.longitude
                   );
 
-                  // Return null if coordinates are invalid
                   if (!coords) return null;
 
-                  const isApproved =
-                    selectedBusiness.business_status?.toLowerCase() === "approved";
+                  // ✅ CHANGE 2: isApproved = approved OR submitted
+                  const isApproved = isApprovedOrSubmitted(selectedBusiness.business_status);
                   const isClaimed =
                     selectedBusiness.business_status?.toLowerCase() === "claimed";
 
@@ -645,7 +639,6 @@ export default function Mappp() {
                               color: isApproved ? "#991b1b" : "#1e40af",
                             }}
                           >
-                            {/* {selectedBusiness.business_status.toUpperCase()} */}
                             {selectedBusiness?.business_status === "Approved"
                               ? "SUBMITTED"
                               : selectedBusiness?.business_status?.toUpperCase()}
@@ -687,6 +680,7 @@ export default function Mappp() {
                           </button>
                         )}
 
+                        {/* ✅ CHANGE 2: "Claim Business" button for approved OR submitted */}
                         {isApproved && (
                           <button
                             onClick={() =>
@@ -715,7 +709,7 @@ export default function Mappp() {
           )}
         </div>
 
-        {/* ✅ Sidebar with improved list and pagination */}
+        {/* ✅ Sidebar */}
         <div className="w-full lg:w-1/3 bg-gray-50 rounded-lg p-4 shadow flex flex-col font-['Helvetica'] overflow-hidden">
           {/* Search Box */}
           <div className="flex items-center bg-white border rounded-md p-2 mb-4">
@@ -752,7 +746,7 @@ export default function Mappp() {
             )}
           </div>
 
-          {/* ✅ Results count with background loading indicator */}
+          {/* ✅ Results count */}
           {!loading && businesses.length > 0 && (
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-gray-600">
@@ -790,7 +784,7 @@ export default function Mappp() {
             </div>
           )}
 
-          {/* ✅ Location List with Loading States */}
+          {/* ✅ Location List */}
           <div className="space-y-4 overflow-y-auto pr-2 flex-1">
             {loading && currentPage === 1 ? (
               <>
@@ -845,8 +839,8 @@ export default function Mappp() {
             ) : (
               <>
                 {filteredBusinesses.map((business) => {
-                  const isApproved =
-                    business.business_status?.toLowerCase() === "Approved";
+                  // ✅ CHANGE 3: isApproved = approved OR submitted (sidebar)
+                  const isApproved = isApprovedOrSubmitted(business.business_status);
                   const hasValidCoords = validateCoordinates(
                     business.latitude,
                     business.longitude
@@ -883,10 +877,9 @@ export default function Mappp() {
                               {business.name}
                             </h3>
                             <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-blue-100 text-blue-800">
-                              {business.business_status === "Approved"
+                              {business.business_status?.toLowerCase() === "approved"
                                 ? "Submitted"
                                 : business.business_status}
-
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
@@ -945,7 +938,7 @@ export default function Mappp() {
                   );
                 })}
 
-                {/* ✅ Load More Button - Only show if not background loading and more pages available */}
+                {/* Load More Button */}
                 {!backgroundLoading && currentPage < totalPages && (
                   <button
                     onClick={loadMoreBusinesses}
