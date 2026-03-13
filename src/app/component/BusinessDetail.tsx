@@ -60,11 +60,27 @@ const BusinessDetail: React.FC<BusinessDetailProps> = ({
 
   const [isAdmin, setIsAdmin] = useState(false);
 
-
 useEffect(() => {
   if (typeof window !== "undefined") {
-    const role = window.localStorage.getItem("user_role");
-    setIsAdmin(role === "admin");
+    // Try sessionStorage first, fall back to localStorage
+    const raw =
+      window.sessionStorage.getItem("user") ||
+      window.localStorage.getItem("user");
+
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        setIsAdmin(parsed.user_role === "Admin");
+      } catch {
+        setIsAdmin(false);
+      }
+    } else {
+      // If role is stored as a flat string directly
+      const role =
+        window.sessionStorage.getItem("user_role") ||
+        window.localStorage.getItem("user_role");
+      setIsAdmin(role === "Admin");
+    }
   }
 }, []);
 

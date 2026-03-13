@@ -73,7 +73,11 @@ type SortOption =
   | "name-asc"
   | "name-desc"
   | "created-asc"
-  | "created-desc";
+  | "created-desc"
+  | "modified-asc"
+  | "modified-desc"
+  | "status-asc"
+  | "status-desc";
 
 type AccessibleCity = {
   id: string;
@@ -111,7 +115,7 @@ type Subscription = {
   packageName: string;
   start_date: string;
   end_date: string;
-  status: string; // "active" | "expired" | etc.
+  status: string;
   business: { id: string; name: string };
 } | null;
 
@@ -215,6 +219,26 @@ const getSubStatusBadge = (status?: string | null) => {
   );
 };
 
+// ---------- SERVER_SORT_MAP ----------
+// Columns that can be sorted server-side (all entries across all pages)
+const SERVER_SORT_MAP: Partial<
+  Record<TableSortKey, { asc: SortOption; desc: SortOption }>
+> = {
+  name: { asc: "name-asc", desc: "name-desc" },
+  created_at: { asc: "created-asc", desc: "created-desc" },
+  modified_at: { asc: "modified-asc", desc: "modified-desc" },
+  business_status: { asc: "status-asc", desc: "status-desc" },
+};
+
+// Columns that are client-side only (data comes from separate subscription API)
+const CLIENT_SIDE_ONLY_COLUMNS: TableSortKey[] = [
+  "subscription_status",
+  "end_date",
+  "payment_status",
+  "active_profiles",
+  "last_login",
+];
+
 // Sort icon component
 const SortIcon = ({
   column,
@@ -267,6 +291,7 @@ export default function Page() {
   const [partnerTotal, setPartnerTotal] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageChanging, setPageChanging] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [sortOption, setSortOption] = useState<SortOption>("created-desc");
@@ -281,16 +306,19 @@ export default function Page() {
   >({});
   const subscriptionFetchedRef = useRef<Set<string>>(new Set());
 
-  // Table-level sort (client-side for current page data)
+  // Table-level sort state (used for both server-side and client-side)
   const [tableSortKey, setTableSortKey] = useState<TableSortKey | null>(null);
   const [tableSortDir, setTableSortDir] = useState<TableSortDir>("asc");
 
   const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
 
-  const headers: Record<string, string> = {};
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const headers = useMemo<Record<string, string>>(() => {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    const h: Record<string, string> = {};
+    if (token) h["Authorization"] = `Bearer ${token}`;
+    return h;
+  }, []);
 
   // ---------- Debounced Search ----------
   useEffect(() => {
@@ -349,10 +377,17 @@ export default function Page() {
   }, []);
 
   // ---------- Load Businesses ----------
+  const isFirstLoad = useRef(true);
+
   useEffect(() => {
     const loadBusinesses = async () => {
       try {
-        setLoading(true);
+        if (isFirstLoad.current) {
+          setLoading(true);
+        } else {
+          setPageChanging(true);
+        }
+
         let url = `${base}business/list?page=${currentPage}&limit=${itemsPerPage}`;
         if (searchTerm.trim())
           url += `&search=${encodeURIComponent(searchTerm)}`;
@@ -362,7 +397,6 @@ export default function Page() {
         const bJson = await bRes.json();
         const items: Business[] = (bJson.data || []).map((b: any) => ({
           ...b,
-          // ✅ map backend field into existing UI field
           last_login: b.owner_last_login_at ?? b.last_login ?? null,
         }));
 
@@ -371,7 +405,9 @@ export default function Page() {
       } catch (e) {
         console.error("Error loading businesses:", e);
       } finally {
+        isFirstLoad.current = false;
         setLoading(false);
+        setPageChanging(false);
       }
     };
     loadBusinesses();
@@ -387,7 +423,6 @@ export default function Page() {
       );
       if (toFetch.length === 0) return;
 
-      // Mark as fetching
       toFetch.forEach((b) => subscriptionFetchedRef.current.add(b.id));
 
       const results = await Promise.allSettled(
@@ -428,18 +463,40 @@ export default function Page() {
   }, [users]);
 
   // ---------- Table Sort Handler ----------
+  // Server-side columns trigger an API re-fetch (sorts ALL entries across all pages).
+  // Client-side only columns sort the current page in memory.
   const handleTableSort = (key: TableSortKey) => {
-    if (tableSortKey === key) {
-      setTableSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
+    const mapping = SERVER_SORT_MAP[key];
+
+    if (mapping) {
+      // Determine new direction
+      const currentlyAsc = sortOption === mapping.asc;
+      const newDir: TableSortDir = currentlyAsc ? "desc" : "asc";
+      const newSortOption = currentlyAsc ? mapping.desc : mapping.asc;
+
+      // Update server-side sort → triggers useEffect to reload businesses
+      setSortOption(newSortOption);
+      setCurrentPage(1);
+
+      // Sync UI sort indicators
       setTableSortKey(key);
-      setTableSortDir("asc");
+      setTableSortDir(newDir);
+    } else {
+      // Client-side sort only (subscription / last_login columns)
+      if (tableSortKey === key) {
+        setTableSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      } else {
+        setTableSortKey(key);
+        setTableSortDir("asc");
+      }
     }
   };
 
-  // ---------- Sorted businesses (client-side, current page) ----------
+  // ---------- Sorted businesses ----------
+  // For server-side columns: businesses are already sorted by the API — no local sort needed.
+  // For client-side only columns: sort the current page in memory.
   const sortedBusinesses = useMemo(() => {
-    if (!tableSortKey) return businesses;
+    if (!tableSortKey || SERVER_SORT_MAP[tableSortKey]) return businesses;
 
     return [...businesses].sort((a, b) => {
       const subA = subscriptions[a.id];
@@ -448,14 +505,6 @@ export default function Page() {
       let valB: any = "";
 
       switch (tableSortKey) {
-        case "name":
-          valA = a.name?.toLowerCase() || "";
-          valB = b.name?.toLowerCase() || "";
-          break;
-        case "business_status":
-          valA = a.business_status || "";
-          valB = b.business_status || "";
-          break;
         case "subscription_status":
           valA = subA?.status || "";
           valB = subB?.status || "";
@@ -471,14 +520,6 @@ export default function Page() {
         case "active_profiles":
           valA = a.active ? 1 : 0;
           valB = b.active ? 1 : 0;
-          break;
-        case "created_at":
-          valA = new Date(a.created_at).getTime();
-          valB = new Date(b.created_at).getTime();
-          break;
-        case "modified_at":
-          valA = new Date(a.modified_at).getTime();
-          valB = new Date(b.modified_at).getTime();
           break;
         case "last_login":
           valA = a.last_login ? new Date(a.last_login).getTime() : 0;
@@ -528,7 +569,12 @@ export default function Page() {
   };
 
   // ---------- Table columns config ----------
-  const columns: { key: TableSortKey; label: string; width?: string }[] = [
+  const columns: {
+    key: TableSortKey;
+    label: string;
+    width?: string;
+    clientOnly?: boolean;
+  }[] = [
     { key: "name", label: "Business Name", width: "min-w-[180px]" },
     {
       key: "business_status",
@@ -539,13 +585,34 @@ export default function Page() {
       key: "subscription_status",
       label: "Subscription",
       width: "min-w-[130px]",
+      clientOnly: true,
     },
-    { key: "end_date", label: "Renewal / Expiry", width: "min-w-[130px]" },
-    { key: "payment_status", label: "Payment Status", width: "min-w-[130px]" },
-    { key: "active_profiles", label: "Active Profile", width: "min-w-[110px]" },
+    {
+      key: "end_date",
+      label: "Renewal / Expiry",
+      width: "min-w-[130px]",
+      clientOnly: true,
+    },
+    {
+      key: "payment_status",
+      label: "Payment Status",
+      width: "min-w-[130px]",
+      clientOnly: true,
+    },
+    {
+      key: "active_profiles",
+      label: "Active Profile",
+      width: "min-w-[110px]",
+      clientOnly: true,
+    },
     { key: "created_at", label: "Created", width: "min-w-[110px]" },
     { key: "modified_at", label: "Last Updated", width: "min-w-[110px]" },
-    { key: "last_login", label: "Last Login", width: "min-w-[110px]" },
+    {
+      key: "last_login",
+      label: "Last Login",
+      width: "min-w-[110px]",
+      clientOnly: true,
+    },
   ];
 
   // ---------- Loading State ----------
@@ -566,7 +633,7 @@ export default function Page() {
     <div className="w-full overflow-y-auto">
       {user?.user_role === "Admin" ? (
         <div className="w-full min-h-screen bg-white px-4 sm:px-6 py-4 sm:py-5">
-          {/* KPI Cards — unchanged */}
+          {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 pb-6 sm:pb-10 pt-4">
             <a className="block w-full p-3 px-4 bg-[#E9F6FB] rounded-lg shadow-md">
               <h5 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -625,6 +692,8 @@ export default function Page() {
                   onChange={(e) => {
                     setSortOption(e.target.value as SortOption);
                     setCurrentPage(1);
+                    // Clear column sort indicator when using dropdown
+                    setTableSortKey(null);
                   }}
                 >
                   <option value="created-desc">Newest First</option>
@@ -663,6 +732,18 @@ export default function Page() {
 
           {/* Table */}
           <div className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            {/* Subtle top progress bar when changing pages */}
+            {pageChanging && (
+              <div className="h-0.5 w-full bg-gray-100 overflow-hidden">
+                <div className="h-full bg-[#0519CE] animate-[progress_1s_ease-in-out_infinite]" style={{ width: "40%", animation: "slide 1s ease-in-out infinite" }} />
+              </div>
+            )}
+            <style>{`
+              @keyframes slide {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(350%); }
+              }
+            `}</style>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-gray-50 border-b border-gray-200">
@@ -680,6 +761,15 @@ export default function Page() {
                             sortKey={tableSortKey}
                             sortDir={tableSortDir}
                           />
+                          {/* Badge to indicate client-side only columns */}
+                          {col.clientOnly && (
+                            <span
+                              title="Sorts current page only"
+                              className="ml-1 text-[9px] font-normal text-gray-400 border border-gray-300 rounded px-1 leading-tight hidden sm:inline"
+                            >
+                              page
+                            </span>
+                          )}
                         </span>
                       </th>
                     ))}
@@ -689,7 +779,7 @@ export default function Page() {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-100">
+                <tbody className={`divide-y divide-gray-100 transition-opacity duration-150 ${pageChanging ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
                   {loading ? (
                     <tr>
                       <td
@@ -718,7 +808,6 @@ export default function Page() {
                     sortedBusinesses.map((business) => {
                       const statusInfo = getStatusInfo(business);
                       const sub = subscriptions[business.id];
-                      // undefined = still loading, null = no subscription
                       const subLoaded = business.id in subscriptions;
                       const subStatus = sub?.status ?? null;
                       const subBadge = getSubStatusBadge(subStatus);
@@ -776,7 +865,7 @@ export default function Page() {
                             )}
                           </td>
 
-                          {/* Subscription Status → packageName (e.g. "Yearly", "Monthly") */}
+                          {/* Subscription → packageName */}
                           <td className="px-4 py-3">
                             {!subLoaded ? (
                               <span className="inline-block w-16 h-5 bg-gray-100 rounded animate-pulse" />
@@ -795,7 +884,7 @@ export default function Page() {
                             )}
                           </td>
 
-                          {/* Renewal / Expiry Date → end_date */}
+                          {/* Renewal / Expiry Date */}
                           <td className="px-4 py-3 text-gray-700 whitespace-nowrap text-sm">
                             {!subLoaded ? (
                               <span className="inline-block w-20 h-4 bg-gray-100 rounded animate-pulse" />
@@ -804,7 +893,7 @@ export default function Page() {
                             )}
                           </td>
 
-                          {/* Payment Status → status (active / expired / cancelled …) */}
+                          {/* Payment Status */}
                           <td className="px-4 py-3">
                             {!subLoaded ? (
                               <span className="inline-block w-14 h-5 bg-gray-100 rounded animate-pulse" />
