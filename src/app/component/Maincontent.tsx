@@ -659,7 +659,7 @@ export default function Maincontent({
         <div className="tour border p-6 rounded-3xl border-[#e5e5e7] w-full ">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h3 className="text-lg sm:text-xl font-semibold">
-              Virtual Tours
+              Virtual Tours <span>{isOwner}</span> <span>{userId}</span>
             </h3>
 
             {canEdit && (
@@ -785,7 +785,7 @@ export default function Maincontent({
         <div className="property my-8 border p-6 rounded-3xl border-[#e5e5e7] w-full">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h3 className="text-lg sm:text-xl font-semibold">
-              Property Images
+              Property Images 
             </h3>
 
             {canEdit && (

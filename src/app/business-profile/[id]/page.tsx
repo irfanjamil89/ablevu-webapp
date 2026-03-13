@@ -202,6 +202,10 @@ export default function Page({
             const profileData = await profileRes.json();
             setBusiness(profileData);
 
+            // ✅ Temporary log — remove after confirming correct field name
+            console.log("business keys:", Object.keys(profileData));
+            console.log("owner_user_id:", profileData?.owner_user_id);
+
             // 2️⃣ Fetch business-types
             const typeRes = await fetch(
                 `${API_BASE_URL}business-type/list?page=1&limit=1000`,
@@ -891,7 +895,7 @@ export default function Page({
         <BusinessSidebar
           business={business}
           businessTypes={businessTypes}
-          businessOwner={business?.owner} 
+          businessOwner={{ id: business?.owner_user_id }} 
           loading={loading}
           error={error}
           setOpenDetailPopup={setOpenDetailPopup}
@@ -906,7 +910,7 @@ export default function Page({
         <Maincontent
           business={business}
           businessImages={businessImages}
-          businessOwner={business?.owner} 
+          businessOwner={{ id: business?.owner_user_id }} 
           loading={loading}
           error={error}
           setOpenVirtualTour={handleSetOpenVirtualTour}
