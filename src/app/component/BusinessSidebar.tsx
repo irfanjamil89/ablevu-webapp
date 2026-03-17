@@ -84,9 +84,7 @@ type SavedBusiness = {
 interface BusinessSidebarProps {
   business: BusinessProfile | null;
   businessTypes: BusinessType[];
-  businessOwner?: {
-    id: string;
-  };
+  businessOwner:null;
   loading: boolean;
   error: string | null;
   setOpenDetailPopup: React.Dispatch<React.SetStateAction<boolean>>;
@@ -177,7 +175,7 @@ export default function BusinessSidebar({
   const [likedByUser, setLikedByUser] = useState(false);
   const [likeId, setLikeId] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const isOwner = userId === businessOwner?.id;
+  const isOwner = userId === businessOwner;
 
   const decodeJWT = (token: string) => {
     try {

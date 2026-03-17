@@ -891,7 +891,7 @@ export default function Page({
         <BusinessSidebar
           business={business}
           businessTypes={businessTypes}
-          businessOwner={business?.owner} 
+          businessOwner={business?.owner_user_id} 
           loading={loading}
           error={error}
           setOpenDetailPopup={setOpenDetailPopup}
@@ -906,7 +906,7 @@ export default function Page({
         <Maincontent
           business={business}
           businessImages={businessImages}
-          businessOwner={business?.owner} 
+          businessOwner={business?.owner_user_id} 
           loading={loading}
           error={error}
           setOpenVirtualTour={handleSetOpenVirtualTour}

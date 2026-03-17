@@ -256,9 +256,7 @@ type BusinessProfile = {
 interface MaincontentProps {
   business: BusinessProfile | null;
   businessImages: BusinessImage[];
-  businessOwner?: {
-    id: string;
-  };
+  businessOwner:null;
   loading: boolean;
   error: string | null;
 
@@ -369,7 +367,7 @@ export default function Maincontent({
   const [userId, setUserId] = useState<string | null>(null);
   const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const isLoggedIn = !!userId;
-  const isOwner = userId === businessOwner?.id;
+  const isOwner = userId === businessOwner;
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [openForgotPasswordModal, setOpenForgotPasswordModal] = useState(false);
@@ -659,7 +657,7 @@ export default function Maincontent({
         <div className="tour border p-6 rounded-3xl border-[#e5e5e7] w-full ">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
             <h3 className="text-lg sm:text-xl font-semibold">
-              Virtual Tours <span>{isOwner}</span> <span>{userId}</span>
+              Virtual Tours
             </h3>
 
             {canEdit && (
@@ -1270,7 +1268,7 @@ export default function Maincontent({
                     <div className="mt-2 border border-gray-200 bg-gray-50 rounded-lg p-3">
                       <p className="text-sm text-gray-800">{q.answer}</p>
                     </div>
-                  ) : userId === businessOwner?.id ? (
+                  ) : userId === businessOwner ? (
                     <textarea
                       rows={4}
                       placeholder="Write your answer here..."
