@@ -70,7 +70,7 @@ type StatusFilter =
   | "draft"
   | "pending review"
   | "pending approval"
-  | "approved"
+  | "submitted"
   | "pending claim"
   | "claimed";
 
@@ -78,7 +78,7 @@ type StatusKey =
   | "draft"
   | "pending review"
   | "pending approval"
-  | "approved"
+  | "submitted"
   | "pending claim"
   | "claimed";
 
@@ -123,7 +123,7 @@ const normalizeStatusKey = (raw: string | null | undefined): StatusKey | "" => {
 
   if (s === "pending claim" || s === "pending claim") return "pending claim";
 
-  if (s === "approved") return "approved";
+  if (s === "submitted") return "submitted";
   if (s === "draft") return "draft";
   if (s === "claimed") return "claimed";
 
@@ -146,7 +146,7 @@ const STATUS_UI: Record<
     bg: "#FFEFD5",
     text: "#B46A00",
   },
-  approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
+  submitted: { label: "Submitted", bg: "#e3f1ff", text: "#1e429e" },
   "pending claim": {
     label: "Pending Claim",
     bg: "#EDE9FE",
@@ -221,8 +221,8 @@ export default function Page() {
       ? "Pending Review"
       : statusFilter === "pending approval"
         ? "Pending Approval"
-        : statusFilter === "approved"
-          ? "Approved"
+        : statusFilter === "submitted"
+          ? "Submitted"
           : statusFilter === "pending claim"
             ? "Pending Claim"
             : statusFilter === "claimed"
@@ -411,8 +411,8 @@ export default function Page() {
         ? "draft"
         : s === "pending review" // ✅ ADD
           ? "pending review"
-          : s === "approved"
-            ? "approved"
+          : s === "submitted"
+            ? "submitted"
             : s === "claimed"
               ? "claimed"
               : s === "pending" ||
@@ -437,7 +437,7 @@ export default function Page() {
         bg: "#FFEFD5",
         text: "#B46A00",
       },
-      approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
+      submitted: { label: "Submitted", bg: "#e3f1ff", text: "#1e429e" },
       "pending claim": {
         label: "Pending Claim",
         bg: "#EDE9FE",
@@ -854,12 +854,12 @@ export default function Page() {
                         <button
                           type="button"
                           onClick={() => {
-                            setStatusFilter("approved");
+                            setStatusFilter("submitted");
                             setCurrentPage(1);
                           }}
                           className="w-full text-left block px-3 py-1 hover:bg-gray-100"
                         >
-                          Approved
+                          Submitted
                         </button>
                       </li>
                       <li>
