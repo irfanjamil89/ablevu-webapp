@@ -127,7 +127,7 @@ type StatusKey =
   | "draft"
   | "pending review"
   | "pending approval"
-  | "approved"
+  | "submitted"
   | "pending claim"
   | "claimed";
 
@@ -135,7 +135,7 @@ const STATUS_BADGE: Record<StatusKey, { label: string; bg: string; text: string 
   draft: { label: "Draft", bg: "#FFF3CD", text: "#C28A00" },
   "pending review": { label: "Pending Review", bg: "#F3E8FF", text: "#6B21A8" },
   "pending approval": { label: "Pending Approval", bg: "#FFEFD5", text: "#B46A00" },
-  approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
+  submitted: { label: "Submitted", bg: "#E0F2FE", text: "#1E40AF" },
   "pending claim": { label: "Pending Claim", bg: "#EEF2FF", text: "#3730A3" },
   claimed: { label: "Claimed", bg: "#dff7ed", text: "#03543f" },
 };
@@ -147,9 +147,9 @@ const toCanonicalStatus = (raw: string, b?: Business): StatusKey | null => {
   if (s === "pending claim") return "pending claim";
   if (s === "draft") return "draft";
   if (s === "pending approval") return "pending approval";
-  if (s === "approved") return "approved";
+  if (s === "submitted") return "submitted";
   if (s === "claimed") return "claimed";
-  if ((!s || s === "active") && b?.active === true && !b?.blocked) return "approved";
+  if ((!s || s === "active") && b?.active === true && !b?.blocked) return "submitted";
   return null;
 };
 
