@@ -78,7 +78,7 @@ type StatusFilter =
   | ""
   | "draft"
   | "pending approval"
-  | "approved"
+  | "submitted"
   | "pending claim"
   | "claimed";
 
@@ -173,8 +173,8 @@ export default function Page() {
       ? "Draft"
       : statusFilter === "pending approval"
         ? "Approval Request"
-        : statusFilter === "approved"
-          ? "Approved"
+        : statusFilter === "submitted"
+          ? "Submitted"
           : statusFilter === "pending claim"
             ? "Pending Claim"
             : statusFilter === "claimed"
@@ -356,7 +356,7 @@ export default function Page() {
   type StatusKey =
     | "draft"
     | "pending approval"
-    | "approved"
+    | "submitted"
     | "pending claim"
     | "claimed";
 
@@ -370,7 +370,7 @@ export default function Page() {
       bg: "#FFEFD5",
       text: "#B46A00",
     },
-    approved: { label: "Approved", bg: "#e3f1ff", text: "#1e429e" },
+    submitted: { label: "Submitted", bg: "#e3f1ff", text: "#1e429e" },
     "pending claim": {
       label: "Pending Claim",
       bg: "#EEF2FF",
@@ -388,12 +388,12 @@ export default function Page() {
 
     if (s === "draft") return "draft";
     if (s === "pending approval") return "pending approval";
-    if (s === "approved") return "approved";
+    if (s === "submitted") return "submitted";
     if (s === "claimed") return "claimed";
 
     // fallback: empty status but active + not blocked
     if ((!s || s === "active") && b.active === true && !b.blocked) {
-      return "approved";
+      return "submitted";
     }
 
     return null;
@@ -422,8 +422,8 @@ export default function Page() {
           case "pending approval":
             return canonical === "pending approval";
 
-          case "approved":
-            return canonical === "approved";
+          case "submitted":
+            return canonical === "submitted";
 
           case "pending claim":
             return canonical === "pending claim";
