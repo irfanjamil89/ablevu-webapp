@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import Link from "next/link";
 import Login from "./Login";
@@ -59,7 +65,7 @@ const isApprovedOrSubmitted = (status: string | null | undefined): boolean => {
 // ✅ Enhanced validation function with better error handling
 const validateCoordinates = (
   lat: any,
-  lng: any
+  lng: any,
 ): { lat: number; lng: number } | null => {
   // Check for null/undefined first
   if (lat == null || lng == null) {
@@ -109,7 +115,9 @@ export default function Mappp() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
-  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
+    null,
+  );
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [mapZoom, setMapZoom] = useState<number>(10);
   const [map, setMap] = useState<google.maps.Map | null>(null);
@@ -123,7 +131,9 @@ export default function Mappp() {
   const ITEMS_PER_PAGE = 30;
 
   // Old modal (login/signup)
-  const [businessForModal, setBusinessForModal] = useState<Business | null>(null);
+  const [businessForModal, setBusinessForModal] = useState<Business | null>(
+    null,
+  );
   const [openLoginModal, setOpenLoginModal] = useState(false);
   const [openSignupModal, setOpenSignupModal] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
@@ -163,6 +173,10 @@ export default function Mappp() {
   const isNormalUser = () => {
     const u = getUserFromSession();
     return u?.user_role === "User";
+  };
+  const isBusinessUser = () => {
+    const u = getUserFromSession();
+    return u?.user_role === "Business";
   };
 
   const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -214,7 +228,11 @@ export default function Mappp() {
 
   // ✅ Start background loading after totalPages is set
   useEffect(() => {
-    if (totalPages > 1 && !backgroundLoadingRef.current && businesses.length === ITEMS_PER_PAGE) {
+    if (
+      totalPages > 1 &&
+      !backgroundLoadingRef.current &&
+      businesses.length === ITEMS_PER_PAGE
+    ) {
       loadRemainingPages();
     }
   }, [totalPages]);
@@ -239,8 +257,8 @@ export default function Mappp() {
         business.business_status,
       ];
 
-      return searchableFields.some(field =>
-        field?.toLowerCase().includes(searchLower)
+      return searchableFields.some((field) =>
+        field?.toLowerCase().includes(searchLower),
       );
     });
   }, [businesses, debouncedSearch]);
@@ -249,16 +267,19 @@ export default function Mappp() {
   const validBusinesses = useMemo(() => {
     return filteredBusinesses
       .map((business) => {
-        const coords = validateCoordinates(business.latitude, business.longitude);
+        const coords = validateCoordinates(
+          business.latitude,
+          business.longitude,
+        );
         return coords
           ? { ...business, validLat: coords.lat, validLng: coords.lng }
           : null;
       })
       .filter(
         (
-          business
+          business,
         ): business is Business & { validLat: number; validLng: number } =>
-          business !== null
+          business !== null,
       );
   }, [filteredBusinesses]);
 
@@ -289,18 +310,19 @@ export default function Mappp() {
   // ✅ Debug: Log businesses with invalid coordinates
   useEffect(() => {
     if (businesses.length > 0) {
-      const invalid = businesses.filter(b => {
+      const invalid = businesses.filter((b) => {
         const coords = validateCoordinates(b.latitude, b.longitude);
         return !coords;
       });
 
       if (invalid.length > 0) {
-        console.warn(`Found ${invalid.length} businesses with invalid coordinates:`,
-          invalid.map(b => ({
+        console.warn(
+          `Found ${invalid.length} businesses with invalid coordinates:`,
+          invalid.map((b) => ({
             name: b.name,
             lat: b.latitude,
-            lng: b.longitude
-          }))
+            lng: b.longitude,
+          })),
         );
       }
     }
@@ -325,14 +347,18 @@ export default function Mappp() {
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Failed to fetch businesses");
 
       const result: ApiResponse = await response.json();
 
-      setBusinesses(prev => page === 1 && !isBackground ? result.data || [] : [...prev, ...(result.data || [])]);
+      setBusinesses((prev) =>
+        page === 1 && !isBackground
+          ? result.data || []
+          : [...prev, ...(result.data || [])],
+      );
       setTotalPages(result.totalPages || 1);
 
       if (!isBackground) {
@@ -364,15 +390,15 @@ export default function Mappp() {
     console.log(`Starting background loading: Pages 2 to ${totalPages}`);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       for (let page = 2; page <= totalPages; page++) {
         console.log(`Background loading page ${page}/${totalPages}`);
         await fetchBusinesses(page, true);
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
       }
 
-      console.log('Background loading complete!');
+      console.log("Background loading complete!");
     } catch (err) {
       console.error("Background loading error:", err);
     } finally {
@@ -429,16 +455,19 @@ export default function Mappp() {
       return;
     }
 
+    // ✅ Sirf Business user claim kar sakta hai
     if (!isTokenValid()) {
       setBusinessForModal(business);
       return;
     }
 
-    if (isNormalUser()) {
+    if (!isBusinessUser()) {
+      // Normal user ya koi bhi non-business user — claim nahi kar sakta
       setBusinessForModal(business);
       return;
     }
 
+    // ✅ Business user hai — claim flow chalao
     setBusinessForModal(null);
     setClaimBusiness(business);
     setClaimConfirmOpen(true);
@@ -544,7 +573,9 @@ export default function Mappp() {
           ) : error ? (
             <div className="w-full h-full flex items-center justify-center bg-red-50">
               <div className="text-center">
-                <p className="text-red-600 font-semibold mb-2">Error loading businesses</p>
+                <p className="text-red-600 font-semibold mb-2">
+                  Error loading businesses
+                </p>
                 <p className="text-gray-600 text-sm mb-4">{error}</p>
                 <button
                   onClick={() => fetchBusinesses(1)}
@@ -570,7 +601,9 @@ export default function Mappp() {
               {/* ✅ Render markers — lock icon for approved OR submitted */}
               {validBusinesses.map((business) => {
                 // ✅ CHANGE 1: isLocked = approved OR submitted
-                const isLocked = isApprovedOrSubmitted(business.business_status);
+                const isLocked = isApprovedOrSubmitted(
+                  business.business_status,
+                );
 
                 if (!business.validLat || !business.validLng) {
                   return null;
@@ -584,7 +617,10 @@ export default function Mappp() {
                       lng: business.validLng,
                     }}
                     onClick={() => {
-                      const coords = validateCoordinates(business.latitude, business.longitude);
+                      const coords = validateCoordinates(
+                        business.latitude,
+                        business.longitude,
+                      );
                       if (coords) {
                         setSelectedBusiness(business);
                       }
@@ -599,15 +635,18 @@ export default function Mappp() {
                 (() => {
                   const coords = validateCoordinates(
                     selectedBusiness.latitude,
-                    selectedBusiness.longitude
+                    selectedBusiness.longitude,
                   );
 
                   if (!coords) return null;
 
                   // ✅ CHANGE 2: isApproved = approved OR submitted
-                  const isApproved = isApprovedOrSubmitted(selectedBusiness.business_status);
+                  const isApproved = isApprovedOrSubmitted(
+                    selectedBusiness.business_status,
+                  );
                   const isClaimed =
-                    selectedBusiness.business_status?.toLowerCase() === "claimed";
+                    selectedBusiness.business_status?.toLowerCase() ===
+                    "claimed";
 
                   return (
                     <InfoWindow
@@ -681,7 +720,9 @@ export default function Mappp() {
                         )}
 
                         {/* ✅ CHANGE 2: "Claim Business" button for approved OR submitted */}
-                        {isApproved && (
+                        {/* Pehle tha: isApproved && (...) */}
+                        {/* Ab sirf Business user ko dikhao */}
+                        {isApproved && isTokenValid() && isBusinessUser() && (
                           <button
                             onClick={() =>
                               handleApprovedBusinessClick(selectedBusiness)
@@ -752,11 +793,13 @@ export default function Mappp() {
               <p className="text-sm text-gray-600">
                 {debouncedSearch ? (
                   <>
-                    Found {filteredBusinesses.length} of {businesses.length} businesses
+                    Found {filteredBusinesses.length} of {businesses.length}{" "}
+                    businesses
                   </>
                 ) : (
                   <>
-                    Showing {filteredBusinesses.length} business{filteredBusinesses.length !== 1 ? 'es' : ''}
+                    Showing {filteredBusinesses.length} business
+                    {filteredBusinesses.length !== 1 ? "es" : ""}
                   </>
                 )}
               </p>
@@ -820,7 +863,9 @@ export default function Mappp() {
                 </svg>
                 {debouncedSearch ? (
                   <>
-                    <p className="text-gray-500 font-medium">No businesses found for &quot;{debouncedSearch}&quot;</p>
+                    <p className="text-gray-500 font-medium">
+                      No businesses found for &quot;{debouncedSearch}&quot;
+                    </p>
                     <p className="text-gray-400 text-sm mt-2">
                       {backgroundLoading
                         ? "Still loading more businesses..."
@@ -840,10 +885,12 @@ export default function Mappp() {
               <>
                 {filteredBusinesses.map((business) => {
                   // ✅ CHANGE 3: isApproved = approved OR submitted (sidebar)
-                  const isApproved = isApprovedOrSubmitted(business.business_status);
+                  const isApproved = isApprovedOrSubmitted(
+                    business.business_status,
+                  );
                   const hasValidCoords = validateCoordinates(
                     business.latitude,
-                    business.longitude
+                    business.longitude,
                   );
 
                   if (isApproved) {
@@ -854,13 +901,16 @@ export default function Mappp() {
                           if (hasValidCoords) {
                             handleApprovedBusinessClick(business);
                           } else {
-                            alert("This business location is not available on the map");
+                            alert(
+                              "This business location is not available on the map",
+                            );
                           }
                         }}
-                        className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${hasValidCoords
-                          ? "hover:bg-gray-50 cursor-pointer"
-                          : "opacity-60 cursor-not-allowed"
-                          }`}
+                        className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${
+                          hasValidCoords
+                            ? "hover:bg-gray-50 cursor-pointer"
+                            : "opacity-60 cursor-not-allowed"
+                        }`}
                       >
                         <img
                           src={business?.logo_url || "assets/images/b-img.png"}
@@ -877,7 +927,8 @@ export default function Mappp() {
                               {business.name}
                             </h3>
                             <span className="px-2 py-0.5 text-xs font-semibold capitalize rounded bg-blue-100 text-blue-800">
-                              {business.business_status?.toLowerCase() === "approved"
+                              {business.business_status?.toLowerCase() ===
+                              "approved"
                                 ? "Submitted"
                                 : business.business_status}
                             </span>
@@ -898,10 +949,13 @@ export default function Mappp() {
                   return (
                     <Link
                       key={business.id}
-                      onClick={() => hasValidCoords && handleBusinessClick(business)}
+                      onClick={() =>
+                        hasValidCoords && handleBusinessClick(business)
+                      }
                       href={`/business-profile/${business.id}`}
-                      className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${!hasValidCoords ? "opacity-60" : "hover:bg-gray-50"
-                        }`}
+                      className={`w-full flex items-center gap-4 bg-white rounded-xl shadow hover:shadow-md p-3 transition text-left ${
+                        !hasValidCoords ? "opacity-60" : "hover:bg-gray-50"
+                      }`}
                     >
                       <img
                         src={business?.logo_url || "assets/images/b-img.png"}
@@ -947,7 +1001,10 @@ export default function Mappp() {
                   >
                     {loadingMore ? (
                       <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <svg
+                          className="animate-spin h-5 w-5"
+                          viewBox="0 0 24 24"
+                        >
                           <circle
                             className="opacity-25"
                             cx="12"
@@ -1050,10 +1107,11 @@ export default function Mappp() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Monthly Plan */}
               <div
-                className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${selectedPlan === "monthly"
-                  ? "ring-4 ring-blue-400"
-                  : "hover:shadow-xl"
-                  }`}
+                className={`rounded-[36px] border shadow-lg relative cursor-pointer transition flex flex-col ${
+                  selectedPlan === "monthly"
+                    ? "ring-4 ring-blue-400"
+                    : "hover:shadow-xl"
+                }`}
                 onClick={() => setSelectedPlan("monthly")}
               >
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
@@ -1098,10 +1156,11 @@ export default function Mappp() {
 
               {/* Yearly Plan */}
               <div
-                className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${selectedPlan === "yearly"
-                  ? "ring-4 ring-blue-400"
-                  : "hover:shadow-xl"
-                  }`}
+                className={`rounded-[36px] shadow-lg relative cursor-pointer transition flex flex-col ${
+                  selectedPlan === "yearly"
+                    ? "ring-4 ring-blue-400"
+                    : "hover:shadow-xl"
+                }`}
                 onClick={() => setSelectedPlan("yearly")}
               >
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-gray-200 text-gray-700 px-10 py-3 rounded-full shadow">
